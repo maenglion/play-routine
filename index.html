@@ -748,7 +748,8 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebas
 import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
   from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, updateDoc, collection,
-  addDoc, getDocs, deleteDoc, onSnapshot, query, orderBy }
+  addDoc, getDocs, deleteDoc, onSnapshot, query, orderBy,
+  writeBatch, serverTimestamp }
   from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -904,28 +905,108 @@ window.onboardBack = () => {
 async function saveOnboarding() {
   try {
     const uid = currentUser.uid;
-    const viewToken = Math.random().toString(36).slice(2,10);
     const childId = 'child_' + Date.now();
-    await setDoc(doc(db,'users',uid), {
+    const viewToken = Math.random().toString(36).slice(2, 10);
+    const monthId = getMonthId();
+    const { startDate, endDate } = getMonthRange();
+
+    const batch = writeBatch(db);
+
+    // 1) 유저 루트 문서 (기존 호환용)
+    const userRef = doc(db, 'users', uid);
+    batch.set(userRef, {
       onboarded: true,
-      email: currentUser.email,
-      displayName: currentUser.displayName,
-      createdAt: new Date().toISOString()
-    });
-    await setDoc(doc(db,'users',uid,'children',childId), {
+      email: currentUser.email || '',
+      displayName: currentUser.displayName || '',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }, { merge: true });
+
+    // 2) 유저 profile / settings
+    batch.set(doc(db, 'users', uid, 'profile', 'main'), {
+      displayName: currentUser.displayName || '',
+      email: currentUser.email || '',
+      createdAt: serverTimestamp(),
+    }, { merge: true });
+
+    batch.set(doc(db, 'users', uid, 'settings', 'main'), {
+      alertEmail: currentUser.email || '',
+      designLink: '',
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    // 3) child 루트 문서 (기존 화면/함수 호환용)
+    const childRootRef = doc(db, 'users', uid, 'children', childId);
+    batch.set(childRootRef, {
       name: obData.name,
-      age: parseInt(obData.age),
-      goal: obData.goal,
+      age: parseInt(obData.age, 10),
+      goal: obData.goal || '',
       rewardType: obData.rewardType,
       totalMinutes: 0,
+      totalMoney: 0,
       viewToken,
       todos: [],
       todoChecked: {},
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
     });
+
+    // 4) child/profile
+    batch.set(doc(db, 'users', uid, 'children', childId, 'profile', 'main'), {
+      name: obData.name,
+      age: parseInt(obData.age, 10),
+      goalType: 'behavior',
+      rewardType: obData.rewardType,   // both | time | money
+      goalText: obData.goal || '',
+      viewToken,
+      createdAt: serverTimestamp(),
+    });
+
+    // 5) child/balance
+    batch.set(doc(db, 'users', uid, 'children', childId, 'balance', 'main'), {
+      totalMinutes: 0,
+      totalMoney: 0,
+      coupon1hCount: 0,
+      coupon10mCount: 0,
+      updatedAt: serverTimestamp(),
+    });
+
+    // 6) child/settings
+    batch.set(doc(db, 'users', uid, 'children', childId, 'settings', 'main'), {
+      childViewEnabled: true,
+      weekendMinFreeMinutes: 240,
+      penaltyDailyCap: 180,
+      notifyLowBalance: true,
+      updatedAt: serverTimestamp(),
+    });
+
+    // 7) 이번 달 meta
+    batch.set(doc(db, 'users', uid, 'children', childId, 'months', monthId), {
+      monthId,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    }, { merge: true });
+
+    batch.set(doc(db, 'users', uid, 'children', childId, 'months', monthId, 'meta', 'main'), {
+      goalText: obData.goal || '',
+      startDate,
+      endDate,
+      weekendMinFreeMinutes: 240,
+      penaltyDailyCap: 180,
+      carryOverMinutes: 0,
+      status: 'active',
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    await batch.commit();
+
     toast('등록 완료! 🎉');
     await loadHome();
-  } catch(e) { toast('저장 실패: '+e.message); }
+  } catch (e) {
+    toast('저장 실패: ' + e.message);
+    console.error(e);
+  }
 }
 
 // ── HOME ──
@@ -994,14 +1075,78 @@ window.startAddChild = () => {
     if (obStep === 1 && !obData.rewardType) { toast('리워드 방식을 선택해주세요'); return; }
     if (obStep === 3) {
       // Save new child
-      const uid = currentUser.uid;
-      const viewToken = Math.random().toString(36).slice(2,10);
-      const childId = 'child_' + Date.now();
-      await setDoc(doc(db,'users',uid,'children',childId), {
-        name:obData.name, age:parseInt(obData.age), goal:obData.goal,
-        rewardType:obData.rewardType, totalMinutes:0, viewToken,
-        todos:[], todoChecked:{}, createdAt: new Date().toISOString()
-      });
+     const uid = currentUser.uid;
+const childId = 'child_' + Date.now();
+const viewToken = Math.random().toString(36).slice(2, 10);
+const monthId = getMonthId();
+const { startDate, endDate } = getMonthRange();
+
+const batch = writeBatch(db);
+
+// child 루트
+batch.set(doc(db, 'users', uid, 'children', childId), {
+  name: obData.name,
+  age: parseInt(obData.age, 10),
+  goal: obData.goal || '',
+  rewardType: obData.rewardType,
+  totalMinutes: 0,
+  totalMoney: 0,
+  viewToken,
+  todos: [],
+  todoChecked: {},
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+});
+
+// child/profile
+batch.set(doc(db, 'users', uid, 'children', childId, 'profile', 'main'), {
+  name: obData.name,
+  age: parseInt(obData.age, 10),
+  goalType: 'behavior',
+  rewardType: obData.rewardType,
+  goalText: obData.goal || '',
+  viewToken,
+  createdAt: serverTimestamp(),
+});
+
+// child/balance
+batch.set(doc(db, 'users', uid, 'children', childId, 'balance', 'main'), {
+  totalMinutes: 0,
+  totalMoney: 0,
+  coupon1hCount: 0,
+  coupon10mCount: 0,
+  updatedAt: serverTimestamp(),
+});
+
+// child/settings
+batch.set(doc(db, 'users', uid, 'children', childId, 'settings', 'main'), {
+  childViewEnabled: true,
+  weekendMinFreeMinutes: 240,
+  penaltyDailyCap: 180,
+  notifyLowBalance: true,
+  updatedAt: serverTimestamp(),
+});
+
+// months/meta
+batch.set(doc(db, 'users', uid, 'children', childId, 'months', monthId), {
+  monthId,
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+}, { merge: true });
+
+batch.set(doc(db, 'users', uid, 'children', childId, 'months', monthId, 'meta', 'main'), {
+  goalText: obData.goal || '',
+  startDate,
+  endDate,
+  weekendMinFreeMinutes: 240,
+  penaltyDailyCap: 180,
+  carryOverMinutes: 0,
+  status: 'active',
+  createdAt: serverTimestamp(),
+  updatedAt: serverTimestamp(),
+});
+
+await batch.commit();
       toast(obData.name + ' 추가 완료!');
       await loadHome();
       return;
@@ -1272,6 +1417,24 @@ window.copyChildLink = () => {
   const url = `${location.origin}${location.pathname}?uid=${uid}&child=${cid}`;
   navigator.clipboard.writeText(url).then(()=>toast('아이 링크 복사됨 📋'));
 };
+
+
+function getMonthId(date = new Date()) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
+function getMonthRange(date = new Date()) {
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  const start = new Date(y, m, 1);
+  const end = new Date(y, m + 1, 0);
+  return {
+    startDate: start.toISOString().split('T')[0],
+    endDate: end.toISOString().split('T')[0],
+  };
+}
 
 // ── TAB NAV ──
 window.cdTab = (panel, btn) => {

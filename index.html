@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0d0d12">
+<title>Play Routine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+/* ─── TOKENS ─── */
+:root {
+  --bg:        #0d0d12;
+  --bg2:       #13131a;
+  --surface:   #1c1c27;
+  --surface2:  #242433;
+  --border:    #2a2a3d;
+  --border2:   #333348;
+  --reward:    #5eead4;
+  --reward-d:  rgba(94,234,212,.12);
+  --penalty:   #fb7185;
+  --penalty-d: rgba(251,113,133,.12);
+  --event:     #fcd34d;
+  --event-d:   rgba(252,211,77,.12);
+  --accent:    #a78bfa;
+  --accent-d:  rgba(167,139,250,.15);
+  --text:      #e2e2f0;
+  --dim:       #6b6b90;
+  --dim2:      #44445a;
+  --google:    #4285f4;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px;height:100%}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+  min-height:100vh;max-width:480px;margin:0 auto;
+  overflow-x:hidden;
+}
+
+/* ─── SCREENS ─── */
+.screen{display:none;min-height:100vh;animation:fadeUp .3s ease}
+.screen.active{display:flex;flex-direction:column}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* ─── SPLASH / LOGIN ─── */
+#screen-login{
+  align-items:center;justify-content:center;
+  padding:40px 32px;
+  background:
+    radial-gradient(ellipse 60% 40% at 80% 20%, rgba(167,139,250,.08) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 20% 80%, rgba(94,234,212,.06) 0%, transparent 70%),
+    var(--bg);
+}
+.login-logo{
+  font-family:'Syne',sans-serif;font-size:38px;font-weight:800;
+  letter-spacing:-1px;color:var(--text);
+  margin-bottom:8px;text-align:center;
+}
+.login-logo span{color:var(--accent)}
+.login-tagline{font-size:13px;color:var(--dim);text-align:center;margin-bottom:60px;line-height:1.6}
+.google-btn{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  width:100%;padding:16px;border-radius:14px;
+  background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all .2s;
+}
+.google-btn:hover{background:var(--surface2);border-color:var(--accent)}
+.google-btn:active{transform:scale(.98)}
+.google-icon{width:20px;height:20px}
+.login-note{font-size:11px;color:var(--dim2);text-align:center;margin-top:20px;line-height:1.8}
+
+/* ─── ONBOARDING ─── */
+#screen-onboard{padding:0;background:var(--bg)}
+.onboard-wrap{flex:1;padding:32px 24px;overflow-y:auto}
+.onboard-step{display:none}
+.onboard-step.active{display:block;animation:fadeUp .25s ease}
+.step-indicator{
+  display:flex;gap:6px;margin-bottom:32px;
+}
+.step-dot{
+  height:3px;flex:1;border-radius:2px;background:var(--border);
+  transition:background .3s;
+}
+.step-dot.done{background:var(--accent)}
+.onboard-title{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;margin-bottom:6px;line-height:1.3}
+.onboard-sub{font-size:13px;color:var(--dim);margin-bottom:32px;line-height:1.6}
+
+/* ─── FORM ELEMENTS ─── */
+.field{margin-bottom:20px}
+.field-label{font-size:11px;letter-spacing:.8px;color:var(--dim);margin-bottom:8px;display:block;font-weight:700;text-transform:uppercase}
+.field-input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:14px 16px;color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;font-size:15px;
+  outline:none;transition:border-color .15s;
+}
+.field-input:focus{border-color:var(--accent)}
+.field-input::placeholder{color:var(--dim2)}
+select.field-input{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b6b90' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center}
+
+.choice-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.choice-grid.single{grid-template-columns:1fr}
+.choice-card{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:12px;padding:16px;cursor:pointer;
+  transition:all .15s;text-align:left;color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+}
+.choice-card:active{transform:scale(.97)}
+.choice-card.selected{background:var(--accent-d);border-color:var(--accent)}
+.choice-card .cc-icon{font-size:24px;margin-bottom:8px;display:block}
+.choice-card .cc-title{font-size:13px;font-weight:700}
+.choice-card .cc-desc{font-size:11px;color:var(--dim);margin-top:3px;line-height:1.4}
+
+.notice-box{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;padding:16px;margin-bottom:20px;
+}
+.notice-box .nb-title{font-size:13px;font-weight:700;margin-bottom:8px;color:var(--event)}
+.notice-box .nb-body{font-size:12px;color:var(--dim);line-height:1.8}
+.notice-box .nb-body li{margin-left:16px;margin-bottom:4px}
+
+.onboard-footer{padding:20px 24px 40px;border-top:1px solid var(--border)}
+.btn-primary{
+  width:100%;padding:16px;border-radius:14px;border:none;
+  background:var(--accent);color:#0d0d12;
+  font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+}
+.btn-primary:active{transform:scale(.98)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-secondary{
+  width:100%;padding:14px;border-radius:14px;
+  background:none;border:1px solid var(--border);
+  color:var(--dim);font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;cursor:pointer;margin-top:10px;
+}
+
+/* ─── HOME (엄마 메인) ─── */
+#screen-home{background:var(--bg);padding-bottom:90px}
+.home-header{
+  padding:20px 20px 0;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.home-logo{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--text)}
+.home-logo span{color:var(--accent)}
+.user-avatar{
+  width:34px;height:34px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;cursor:pointer;overflow:hidden;
+}
+.user-avatar img{width:100%;height:100%;object-fit:cover}
+
+.home-greeting{padding:20px 20px 16px}
+.home-greeting .gr-name{font-size:20px;font-weight:700}
+.home-greeting .gr-sub{font-size:12px;color:var(--dim);margin-top:2px}
+
+.child-list{padding:0 16px}
+.child-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:18px 18px;margin-bottom:12px;
+  cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+}
+.child-card::before{
+  content:'';position:absolute;top:-20px;right:-20px;
+  width:80px;height:80px;border-radius:50%;
+  background:var(--accent-d);pointer-events:none;
+}
+.child-card:active{transform:scale(.99)}
+.child-card:hover{border-color:var(--border2)}
+.cc-top{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.cc-avatar{
+  width:42px;height:42px;border-radius:12px;
+  background:var(--accent-d);border:1px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;flex-shrink:0;
+}
+.cc-name{font-size:17px;font-weight:700}
+.cc-age{font-size:11px;color:var(--dim);margin-top:2px}
+.cc-balance{
+  display:flex;gap:10px;
+}
+.cc-bal-item{
+  flex:1;background:var(--bg2);border-radius:10px;padding:10px 12px;
+}
+.cc-bal-label{font-size:10px;color:var(--dim);letter-spacing:.5px;margin-bottom:4px}
+.cc-bal-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--accent)}
+.cc-bal-unit{font-size:10px;color:var(--dim)}
+
+.add-child-btn{
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  background:none;border:1.5px dashed var(--border2);
+  border-radius:16px;padding:18px;width:100%;
+  color:var(--dim);font-family:'Noto Sans KR',sans-serif;
+  font-size:14px;cursor:pointer;transition:all .2s;margin-bottom:12px;
+}
+.add-child-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* ─── CHILD DASHBOARD ─── */
+#screen-child{padding-bottom:90px}
+.child-header{
+  padding:16px 20px;
+  display:flex;align-items:center;gap:12px;
+}
+.back-btn{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;width:36px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;color:var(--dim);font-size:18px;
+}
+.child-header-name{font-size:18px;font-weight:700;flex:1}
+.child-view-link{
+  font-size:11px;color:var(--accent);background:var(--accent-d);
+  border:1px solid var(--accent);border-radius:20px;
+  padding:5px 10px;cursor:pointer;white-space:nowrap;
+}
+
+.balance-hero{
+  margin:0 16px 16px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:18px;padding:20px;
+  background-image:radial-gradient(ellipse 80% 60% at 90% 10%, var(--accent-d) 0%, transparent 60%);
+}
+.bh-label{font-size:11px;color:var(--dim);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.bh-time{
+  font-family:'DM Mono',monospace;font-size:48px;font-weight:500;
+  color:var(--accent);line-height:1;
+}
+.bh-time .bh-unit{font-size:20px;color:var(--dim)}
+.bh-physical{
+  margin-top:14px;padding-top:14px;border-top:1px solid var(--border);
+  display:flex;gap:10px;
+}
+.phys-pill{
+  flex:1;background:var(--bg2);border-radius:10px;padding:10px 12px;
+}
+.phys-num{font-family:'DM Mono',monospace;font-size:22px;font-weight:500;color:var(--accent)}
+.phys-lbl{font-size:10px;color:var(--dim);margin-top:2px}
+
+.alert-bar{
+  margin:0 16px 14px;
+  background:var(--event-d);border:1px solid var(--event);
+  border-radius:12px;padding:12px 14px;
+  font-size:12px;color:var(--event);
+  display:none;gap:8px;align-items:flex-start;
+}
+.alert-bar.show{display:flex}
+.alert-bar strong{font-weight:700;display:block;margin-bottom:2px}
+
+/* ─── INPUT SECTION ─── */
+.section-pad{padding:0 16px;margin-bottom:16px}
+.sec-title{font-size:10px;letter-spacing:1.5px;color:var(--dim);font-weight:700;text-transform:uppercase;margin-bottom:10px}
+
+.input-tabs{display:flex;gap:6px;margin-bottom:16px}
+.itab{
+  flex:1;background:var(--surface);border:1px solid var(--border);
+  border-radius:8px;padding:9px 0;font-size:12px;font-weight:700;
+  color:var(--dim);cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .15s;
+}
+.itab.r.on{background:var(--reward-d);border-color:var(--reward);color:var(--reward)}
+.itab.p.on{background:var(--penalty-d);border-color:var(--penalty);color:var(--penalty)}
+.itab.e.on{background:var(--event-d);border-color:var(--event);color:var(--event)}
+
+.input-panel{display:none}
+.input-panel.active{display:block;animation:fadeUp .2s ease}
+
+.preset-wrap{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.preset-chip{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:11px 10px;cursor:pointer;
+  text-align:left;color:var(--text);font-family:'Noto Sans KR',sans-serif;
+  transition:all .15s;
+}
+.preset-chip:active{transform:scale(.97)}
+.preset-chip .pc-name{font-size:11px;line-height:1.4;color:var(--dim)}
+.preset-chip .pc-val{font-family:'DM Mono',monospace;font-size:15px;font-weight:500;margin-top:3px}
+.preset-chip.r-chip{border-color:rgba(94,234,212,.2)}
+.preset-chip.r-chip .pc-val{color:var(--reward)}
+.preset-chip.p-chip{border-color:rgba(251,113,133,.2)}
+.preset-chip.p-chip .pc-val{color:var(--penalty)}
+.preset-chip.sel.r-chip{background:var(--reward-d);border-color:var(--reward)}
+.preset-chip.sel.p-chip{background:var(--penalty-d);border-color:var(--penalty)}
+
+.time-row{display:flex;gap:8px;margin-bottom:12px}
+.time-box{flex:1;text-align:center}
+.time-box input{
+  width:100%;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:12px;color:var(--text);
+  font-family:'DM Mono',monospace;font-size:20px;font-weight:500;
+  text-align:center;outline:none;transition:border-color .15s;
+}
+.time-box input:focus{border-color:var(--accent)}
+.time-box .tb-lbl{font-size:10px;color:var(--dim);margin-top:4px}
+
+.submit-wrap{display:flex;gap:8px;margin-top:4px}
+.sbtn{
+  flex:1;padding:14px;border-radius:12px;border:none;
+  font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .15s;
+}
+.sbtn:active{transform:scale(.98)}
+.sbtn.r{background:var(--reward);color:#0d0d12}
+.sbtn.p{background:var(--penalty);color:#0d0d12}
+.sbtn.e{background:var(--event);color:#0d0d12}
+
+/* ─── TODAY LOG ─── */
+.log-item{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;padding:11px 13px;margin-bottom:8px;
+}
+.log-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.log-dot.r{background:var(--reward)}
+.log-dot.p{background:var(--penalty)}
+.log-dot.e{background:var(--event)}
+.log-desc{flex:1;font-size:13px}
+.log-val{font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
+.log-val.pos{color:var(--reward)}
+.log-val.neg{color:var(--penalty)}
+.log-val.ev{color:var(--event)}
+.log-del{background:none;border:none;color:var(--dim2);cursor:pointer;font-size:13px;padding:4px;opacity:.6}
+.log-del:hover{color:var(--penalty);opacity:1}
+
+/* ─── TODO ─── */
+.todo-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 0;border-bottom:1px solid var(--border);
+}
+.todo-item:last-child{border:none}
+.todo-cb{
+  width:20px;height:20px;border-radius:6px;
+  border:2px solid var(--border2);background:none;
+  cursor:pointer;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.todo-cb.done{background:var(--reward);border-color:var(--reward)}
+.todo-cb.done::after{content:'✓';color:#0d0d12;font-size:11px;font-weight:900}
+.todo-text{flex:1;font-size:13px}
+.todo-item.is-done .todo-text{text-decoration:line-through;color:var(--dim)}
+.todo-time{font-size:11px;color:var(--dim);white-space:nowrap}
+
+/* ─── NAV ─── */
+.bottom-nav{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:480px;
+  background:var(--bg2);border-top:1px solid var(--border);
+  display:flex;z-index:100;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+.nav-btn{
+  flex:1;background:none;border:none;color:var(--dim);
+  padding:12px 0 10px;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  font-family:'Noto Sans KR',sans-serif;font-size:10px;
+  transition:color .2s;
+}
+.nav-btn.on{color:var(--accent)}
+.nav-btn svg{width:21px;height:21px}
+
+/* ─── CHILD VIEW (읽기전용) ─── */
+#screen-childview{
+  padding:0;
+  background:
+    radial-gradient(ellipse 70% 40% at 50% 0%, rgba(94,234,212,.07) 0%, transparent 60%),
+    var(--bg);
+}
+.cv-header{padding:24px 20px 0;text-align:center}
+.cv-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--dim);margin-bottom:20px}
+.cv-avatar{
+  width:72px;height:72px;border-radius:20px;
+  background:var(--accent-d);border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;margin:0 auto 10px;
+}
+.cv-name{font-size:24px;font-weight:900;margin-bottom:4px}
+.cv-goal{font-size:12px;color:var(--dim);margin-bottom:24px;padding:0 20px;line-height:1.6}
+.cv-balance{
+  margin:0 16px 20px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:18px;padding:20px;text-align:center;
+}
+.cv-bal-num{font-family:'DM Mono',monospace;font-size:52px;font-weight:500;color:var(--accent);line-height:1}
+.cv-bal-label{font-size:12px;color:var(--dim);margin-top:6px}
+.cv-coupons{display:flex;gap:10px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.cv-coup{flex:1;text-align:center}
+.cv-coup-num{font-family:'DM Mono',monospace;font-size:28px;color:var(--accent)}
+.cv-coup-lbl{font-size:10px;color:var(--dim);margin-top:2px}
+.cv-todo{margin:0 16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+.cv-todo-title{font-size:11px;letter-spacing:1px;color:var(--dim);font-weight:700;text-transform:uppercase;margin-bottom:12px}
+
+/* ─── MODAL ─── */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.75);
+  display:none;align-items:flex-end;justify-content:center;
+  z-index:200;
+}
+.modal-overlay.open{display:flex}
+.modal{
+  background:var(--surface);border-radius:20px 20px 0 0;
+  padding:20px 20px 40px;width:100%;max-width:480px;
+  animation:slideUp .25s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:10px}
+.modal-body{font-size:13px;color:var(--dim);line-height:1.6;margin-bottom:20px}
+.modal-btns{display:flex;gap:8px}
+.mbtn{flex:1;padding:13px;border-radius:10px;border:none;font-family:'Noto Sans KR',sans-serif;font-size:14px;font-weight:700;cursor:pointer}
+.mbtn.cancel{background:var(--surface2);color:var(--dim)}
+.mbtn.ok{background:var(--accent);color:#0d0d12}
+.mbtn.warn{background:var(--penalty);color:#0d0d12}
+
+/* ─── TOAST ─── */
+.toast{
+  position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(10px);
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:10px;padding:10px 18px;font-size:13px;
+  opacity:0;transition:all .2s;pointer-events:none;z-index:300;white-space:nowrap;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.empty{text-align:center;padding:30px;color:var(--dim);font-size:13px}
+.empty-icon{font-size:28px;margin-bottom:8px}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ SCREEN: LOGIN ══════════════ -->
+<div class="screen active" id="screen-login">
+  <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 32px">
+    <div style="font-size:48px;margin-bottom:20px">🎫</div>
+    <div class="login-logo">Play <span>Routine</span></div>
+    <div class="login-tagline">아이의 행동을 리워드로 설계하는<br>쿠폰 기반 행동교육 도구</div>
+    <button class="google-btn" onclick="signInGoogle()">
+      <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+      Google로 시작하기
+    </button>
+    <div class="login-note">보호자 계정으로만 가입할 수 있습니다<br>아이는 별도 링크로 접근합니다</div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: ONBOARDING ══════════════ -->
+<div class="screen" id="screen-onboard">
+  <div class="onboard-wrap" id="onboard-body">
+    <div class="step-indicator">
+      <div class="step-dot" id="sd0"></div>
+      <div class="step-dot" id="sd1"></div>
+      <div class="step-dot" id="sd2"></div>
+      <div class="step-dot" id="sd3"></div>
+    </div>
+
+    <!-- STEP 0: 아이 정보 -->
+    <div class="onboard-step active" id="step-0">
+      <div class="onboard-title">첫 아이를<br>등록해볼게요</div>
+      <div class="onboard-sub">나중에 아이를 더 추가할 수 있어요</div>
+      <div class="field">
+        <label class="field-label">아이 이름</label>
+        <input class="field-input" type="text" id="ob-name" placeholder="예: 민후" maxlength="10">
+      </div>
+      <div class="field">
+        <label class="field-label">나이</label>
+        <select class="field-input" id="ob-age">
+          <option value="">선택해주세요</option>
+          <option value="5">5세</option><option value="6">6세</option>
+          <option value="7">7세</option><option value="8">8세</option>
+          <option value="9">9세</option><option value="10">10세</option>
+          <option value="11">11세</option><option value="12">12세</option>
+          <option value="13">13세</option><option value="14">14세</option>
+          <option value="15">15세</option><option value="16">16세</option>
+          <option value="17">17세</option>
+        </select>
+      </div>
+      <div class="field">
+        <label class="field-label">이번 달 목표</label>
+        <input class="field-input" type="text" id="ob-goal" placeholder="예: 구구단 50개 5분컷 달성">
+      </div>
+    </div>
+
+    <!-- STEP 1: 리워드 타입 -->
+    <div class="onboard-step" id="step-1">
+      <div class="onboard-title">리워드 방식을<br>선택해주세요</div>
+      <div class="onboard-sub">나중에 변경할 수 있어요</div>
+      <div class="choice-grid single">
+        <button class="choice-card" data-reward="both" onclick="selectReward(this)">
+          <span class="cc-icon">⏱️💰</span>
+          <div class="cc-title">시간 + 용돈</div>
+          <div class="cc-desc">쿠폰 시간과 현금 보상을 함께 사용</div>
+        </button>
+        <button class="choice-card" data-reward="time" onclick="selectReward(this)">
+          <span class="cc-icon">⏱️</span>
+          <div class="cc-title">시간만</div>
+          <div class="cc-desc">미디어 사용 시간 쿠폰만 운영</div>
+        </button>
+        <button class="choice-card" data-reward="money" onclick="selectReward(this)">
+          <span class="cc-icon">💰</span>
+          <div class="cc-title">용돈만</div>
+          <div class="cc-desc">현금 보상만 운영</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- STEP 2: 주의사항 -->
+    <div class="onboard-step" id="step-2">
+      <div class="onboard-title">운영 원칙을<br>확인해주세요</div>
+      <div class="onboard-sub">이 원칙은 아이와 함께 읽어보세요</div>
+      <div class="notice-box">
+        <div class="nb-title">📌 쿠폰 사용 원칙</div>
+        <div class="nb-body">
+          <ul>
+            <li>당일 획득 쿠폰은 다음날부터 사용 가능</li>
+            <li>모아서 한번에 사용 가능</li>
+            <li>패널티가 잔액보다 많으면 선 차감</li>
+            <li>거짓말 적발 시 전체 쿠폰 몰수</li>
+          </ul>
+        </div>
+      </div>
+      <div class="notice-box">
+        <div class="nb-title">⚖️ 변경 원칙</div>
+        <div class="nb-body">
+          <ul>
+            <li>소급 적용 없음 — 새 규칙은 익일부터</li>
+            <li>규칙 변경 시 아이와 사전 상의 필수</li>
+            <li>변경된 규칙은 아이에게 프린트 제공</li>
+          </ul>
+        </div>
+      </div>
+      <div class="notice-box">
+        <div class="nb-title">🎫 실물 쿠폰 안내</div>
+        <div class="nb-body">
+          실물 쿠폰이 없어도 앱만으로 운영할 수 있지만,
+          <strong>실물 쿠폰이 있으면 아이의 참여도가 훨씬 높아집니다.</strong>
+          <br><br>
+          쿠폰 디자인 파일 다운로드 링크는 설정 메뉴에 추가될 예정입니다.
+        </div>
+      </div>
+    </div>
+
+    <!-- STEP 3: 완료 -->
+    <div class="onboard-step" id="step-3">
+      <div class="onboard-title">준비됐어요! 🎉</div>
+      <div class="onboard-sub">지금부터 쿠폰을 쌓아봐요</div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px" id="ob-summary"></div>
+      <div class="notice-box">
+        <div class="nb-title">📱 아이용 링크</div>
+        <div class="nb-body">
+          시작 후 설정에서 아이 전용 읽기전용 링크를 복사할 수 있어요.
+          아이는 로그인 없이 자신의 잔액과 TO DO를 볼 수 있습니다.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="onboard-footer">
+    <button class="btn-primary" id="ob-next-btn" onclick="onboardNext()">다음</button>
+    <button class="btn-secondary" id="ob-back-btn" onclick="onboardBack()" style="display:none">이전</button>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: HOME (엄마 메인) ══════════════ -->
+<div class="screen" id="screen-home">
+  <div class="home-header">
+    <div class="home-logo">Play <span>Routine</span></div>
+    <div class="user-avatar" id="user-avatar" onclick="showUserMenu()">👤</div>
+  </div>
+  <div class="home-greeting">
+    <div class="gr-name" id="home-greeting-name">안녕하세요</div>
+    <div class="gr-sub" id="home-date"></div>
+  </div>
+  <div class="child-list" id="child-list"></div>
+  <div style="padding:0 16px">
+    <button class="add-child-btn" onclick="startAddChild()">
+      <span style="font-size:20px">＋</span> 아이 추가
+    </button>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: CHILD DASHBOARD ══════════════ -->
+<div class="screen" id="screen-child">
+  <div class="child-header">
+    <div class="back-btn" onclick="goHome()">‹</div>
+    <div class="child-header-name" id="cd-name"></div>
+    <div class="child-view-link" onclick="copyChildLink()">아이 링크 복사</div>
+  </div>
+
+  <!-- 잔액 히어로 -->
+  <div class="balance-hero">
+    <div class="bh-label">현재 잔액</div>
+    <div class="bh-time">
+      <span id="cd-h">0</span><span class="bh-unit">h </span><span id="cd-m">0</span><span class="bh-unit">min</span>
+    </div>
+    <div class="bh-physical">
+      <div class="phys-pill">
+        <div class="phys-num" id="cd-1h">0</div>
+        <div class="phys-lbl">1h 쿠폰</div>
+      </div>
+      <div class="phys-pill">
+        <div class="phys-num" id="cd-10m">0</div>
+        <div class="phys-lbl">10min 쿠폰</div>
+      </div>
+      <div style="margin-left:auto;font-size:10px;color:var(--dim);text-align:right;line-height:1.6">실물<br>맞춤기준</div>
+    </div>
+  </div>
+
+  <div class="alert-bar" id="cd-alert">
+    <span style="font-size:16px">⚠️</span>
+    <div><strong>쿠폰 부족 경고</strong>주말 4시간 확보가 어렵습니다. 이벤트 쿠폰을 설계하세요!</div>
+  </div>
+
+  <!-- 탭 네비 -->
+  <nav class="bottom-nav" id="child-nav">
+    <button class="nav-btn on" onclick="cdTab('input',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      기록
+    </button>
+    <button class="nav-btn" onclick="cdTab('todo',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      TO DO
+    </button>
+    <button class="nav-btn" onclick="cdTab('log',this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      내역
+    </button>
+  </nav>
+
+  <!-- 기록 패널 -->
+  <div id="cd-panel-input" style="padding:0 16px 100px">
+    <div class="input-tabs" style="margin-top:12px">
+      <button class="itab r on" onclick="inputTab('r',this)">🟢 리워드</button>
+      <button class="itab p" onclick="inputTab('p',this)">🔴 패널티</button>
+      <button class="itab e" onclick="inputTab('e',this)">🟡 이벤트</button>
+    </div>
+
+    <!-- REWARD -->
+    <div class="input-panel active" id="ip-r">
+      <div class="sec-title">빠른 선택</div>
+      <div class="preset-wrap" id="pr-presets"></div>
+      <div class="field"><label class="field-label">사유</label>
+        <input class="field-input" id="r-label" placeholder="예: 독서 30분 완료" style="padding:12px 14px;font-size:14px">
+      </div>
+      <div class="time-row">
+        <div class="time-box"><input type="number" id="r-h" placeholder="0" min="0"><div class="tb-lbl">시간</div></div>
+        <div class="time-box"><input type="number" id="r-m" placeholder="0" min="0" max="59"><div class="tb-lbl">분</div></div>
+      </div>
+      <div class="submit-wrap"><button class="sbtn r" onclick="submit('r')">리워드 추가 ＋</button></div>
+    </div>
+
+    <!-- PENALTY -->
+    <div class="input-panel" id="ip-p">
+      <div class="sec-title">빠른 선택</div>
+      <div class="preset-wrap" id="pp-presets"></div>
+      <div class="field"><label class="field-label">사유</label>
+        <input class="field-input" id="p-label" placeholder="예: 공부량 미달" style="padding:12px 14px;font-size:14px">
+      </div>
+      <div class="time-row">
+        <div class="time-box"><input type="number" id="p-h" placeholder="0" min="0"><div class="tb-lbl">시간</div></div>
+        <div class="time-box"><input type="number" id="p-m" placeholder="0" min="0" max="59"><div class="tb-lbl">분</div></div>
+      </div>
+      <div class="submit-wrap"><button class="sbtn p" onclick="submit('p')">패널티 차감 −</button></div>
+    </div>
+
+    <!-- EVENT -->
+    <div class="input-panel" id="ip-e">
+      <div style="background:var(--event-d);border:1px solid var(--event);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:12px;color:var(--event);line-height:1.6">
+        <strong>📌 이벤트 쿠폰</strong> — 잔액 부족 시 당일 사용 가능한 특별 쿠폰<br>
+        <em>아이와 사전 상의 후 발행하세요</em>
+      </div>
+      <div class="field"><label class="field-label">이벤트 이름</label>
+        <input class="field-input" id="e-label" placeholder="예: 엄마 심부름 특별 보상" style="padding:12px 14px;font-size:14px">
+      </div>
+      <div class="time-row">
+        <div class="time-box"><input type="number" id="e-h" placeholder="0" min="0"><div class="tb-lbl">시간</div></div>
+        <div class="time-box"><input type="number" id="e-m" placeholder="0" min="0" max="59"><div class="tb-lbl">분</div></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+          <input type="checkbox" id="e-agreed" style="width:16px;height:16px">
+          아이와 사전 상의 완료
+        </label>
+      </div>
+      <div class="submit-wrap"><button class="sbtn e" onclick="submit('e')">이벤트 쿠폰 발행 ★</button></div>
+    </div>
+  </div>
+
+  <!-- TO DO 패널 -->
+  <div id="cd-panel-todo" style="display:none;padding:0 16px 100px">
+    <div style="margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:14px">
+      <div id="cd-todo-list"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:8px">
+      <input class="field-input" id="new-todo" placeholder="할 일 추가..." style="flex:1;padding:10px 12px;font-size:13px">
+      <input class="field-input" id="new-todo-time" placeholder="40분" style="width:70px;padding:10px;font-size:13px;text-align:center">
+      <button class="sbtn r" style="padding:0 14px;white-space:nowrap;font-size:13px" onclick="addTodo()">추가</button>
+    </div>
+  </div>
+
+  <!-- 내역 패널 -->
+  <div id="cd-panel-log" style="display:none;padding:0 16px 100px">
+    <div style="margin-top:12px" id="cd-log-list"></div>
+  </div>
+</div>
+
+<!-- ══════════════ SCREEN: CHILD VIEW (읽기전용) ══════════════ -->
+<div class="screen" id="screen-childview">
+  <div class="cv-header">
+    <div class="cv-logo">Play Routine</div>
+    <div class="cv-avatar" id="cv-avatar">😊</div>
+    <div class="cv-name" id="cv-name">민후</div>
+    <div class="cv-goal" id="cv-goal"></div>
+  </div>
+  <div class="cv-balance">
+    <div class="cv-bal-label">내 쿠폰 잔액</div>
+    <div class="cv-bal-num"><span id="cv-h">0</span>h <span id="cv-m">0</span>min</div>
+    <div class="cv-coupons">
+      <div class="cv-coup"><div class="cv-coup-num" id="cv-1h">0</div><div class="cv-coup-lbl">1h 쿠폰</div></div>
+      <div class="cv-coup"><div class="cv-coup-num" id="cv-10m">0</div><div class="cv-coup-lbl">10min 쿠폰</div></div>
+    </div>
+  </div>
+  <div class="cv-todo">
+    <div class="cv-todo-title">오늘 할 일</div>
+    <div id="cv-todo-list"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-btns" id="modal-btns"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════ FIREBASE + LOGIC ══════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
+  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection,
+  addDoc, getDocs, deleteDoc, onSnapshot, query, orderBy }
+  from "https://www.gstatic.com/firebasejs/11.0.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCNKfBWWxY8h7If57KaIQll_Ppi-u58aVs",
+  authDomain: "play-routine-39981.firebaseapp.com",
+  projectId: "play-routine-39981",
+  storageBucket: "play-routine-39981.firebasestorage.app",
+  messagingSenderId: "923218433635",
+  appId: "1:923218433635:web:0ea6758f808b03b6740a56",
+  measurementId: "G-K56GBL206V"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// ── STATE ──
+let currentUser = null;
+let currentChildId = null;
+let children = {};       // { childId: { name, age, goal, rewardType, totalMinutes, todos, viewToken } }
+let currentChildUnsub = null;
+
+// ── PRESETS ──
+const REWARD_P = [
+  {l:'매일 공부 완료', m:60}, {l:'학교 숙제 스스로', m:60},
+  {l:'독서 30분', m:30},      {l:'학교 수학 100점', m:60},
+  {l:'응용심화 80+', m:90},   {l:'화장실 청소', m:30},
+  {l:'고양이 화장실', m:20},  {l:'9시반 전 취침', m:20},
+  {l:'3일 연속 보너스', m:60},{l:'구구단 시험 통과🎉', m:600},
+];
+const PENALTY_P = [
+  {l:'숙제 엄마 시켜서', m:-30},   {l:'공부량 미달(기탄無)', m:-72},
+  {l:'공부량 미달(기탄有)', m:-48}, {l:'아침약 미복용', m:-180},
+  {l:'시험지 화풀이', m:-120},      {l:'응용심화 50점 미만', m:-60},
+  {l:'10시까지 미취침', m:-90},     {l:'방정리 미이행', m:-180},
+  {l:'아침독서 안함', m:-30},       {l:'거짓말 적발', m:0, allClear:true},
+];
+
+function minFmt(m) {
+  const abs = Math.abs(m), sign = m < 0 ? '-' : '+';
+  const h = Math.floor(abs/60), min = abs%60;
+  if (h && min) return sign+h+'h '+min+'min';
+  if (h) return sign+h+'h';
+  return sign+min+'min';
+}
+
+// ── SCREENS ──
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+}
+
+// ── AUTH ──
+window.signInGoogle = async () => {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch(e) { toast('로그인 실패: '+e.message); }
+};
+
+onAuthStateChanged(auth, async user => {
+  // Check child view token in URL
+  const path = location.pathname;
+  const tokenMatch = path.match(/\/view\/([^/]+)/);
+  if (tokenMatch) { loadChildView(tokenMatch[1]); return; }
+  // Check hash for child view
+  const hash = location.hash;
+  if (hash.startsWith('#view/')) { loadChildViewByToken(hash.slice(6)); return; }
+
+  if (!user) { show('login'); return; }
+  currentUser = user;
+
+  // Update avatar
+  const av = document.getElementById('user-avatar');
+  if (user.photoURL) av.innerHTML = `<img src="${user.photoURL}">`;
+  else av.textContent = user.displayName?.[0] || '👤';
+
+  // Check if user has profile
+  const userDoc = await getDoc(doc(db, 'users', user.uid));
+  if (!userDoc.exists() || !userDoc.data().onboarded) {
+    show('onboard');
+    updateStepDots(0);
+  } else {
+    await loadHome();
+  }
+});
+
+// ── ONBOARDING ──
+let obStep = 0;
+let obData = { name:'', age:'', goal:'', rewardType:'' };
+
+window.selectReward = (btn) => {
+  document.querySelectorAll('.choice-card').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  obData.rewardType = btn.dataset.reward;
+};
+
+function updateStepDots(step) {
+  for (let i=0;i<4;i++) {
+    document.getElementById('sd'+i).classList.toggle('done', i <= step);
+  }
+}
+
+function updateObSummary() {
+  document.getElementById('ob-summary').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;font-size:13px">
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--dim)">아이 이름</span><strong>${obData.name}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--dim)">나이</span><strong>${obData.age}세</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--dim)">목표</span><strong style="text-align:right;max-width:60%">${obData.goal||'미설정'}</strong>
+      </div>
+      <div style="display:flex;justify-content:space-between">
+        <span style="color:var(--dim)">리워드 방식</span>
+        <strong>${{both:'시간+용돈',time:'시간만',money:'용돈만'}[obData.rewardType]||'미설정'}</strong>
+      </div>
+    </div>`;
+}
+
+window.onboardNext = async () => {
+  if (obStep === 0) {
+    obData.name = document.getElementById('ob-name').value.trim();
+    obData.age  = document.getElementById('ob-age').value;
+    obData.goal = document.getElementById('ob-goal').value.trim();
+    if (!obData.name || !obData.age) { toast('이름과 나이를 입력해주세요'); return; }
+  }
+  if (obStep === 1) {
+    if (!obData.rewardType) { toast('리워드 방식을 선택해주세요'); return; }
+  }
+  if (obStep === 3) {
+    await saveOnboarding(); return;
+  }
+  obStep++;
+  document.querySelectorAll('.onboard-step').forEach((s,i) => s.classList.toggle('active', i===obStep));
+  updateStepDots(obStep);
+  document.getElementById('ob-back-btn').style.display = obStep > 0 ? 'block' : 'none';
+  document.getElementById('ob-next-btn').textContent = obStep === 3 ? '시작하기 🚀' : '다음';
+  if (obStep === 3) updateObSummary();
+};
+
+window.onboardBack = () => {
+  if (obStep === 0) return;
+  obStep--;
+  document.querySelectorAll('.onboard-step').forEach((s,i) => s.classList.toggle('active', i===obStep));
+  updateStepDots(obStep);
+  document.getElementById('ob-back-btn').style.display = obStep > 0 ? 'block' : 'none';
+  document.getElementById('ob-next-btn').textContent = '다음';
+};
+
+async function saveOnboarding() {
+  try {
+    const uid = currentUser.uid;
+    const viewToken = Math.random().toString(36).slice(2,10);
+    const childId = 'child_' + Date.now();
+    await setDoc(doc(db,'users',uid), {
+      onboarded: true,
+      email: currentUser.email,
+      displayName: currentUser.displayName,
+      createdAt: new Date().toISOString()
+    });
+    await setDoc(doc(db,'users',uid,'children',childId), {
+      name: obData.name,
+      age: parseInt(obData.age),
+      goal: obData.goal,
+      rewardType: obData.rewardType,
+      totalMinutes: 0,
+      viewToken,
+      todos: [],
+      todoChecked: {},
+      createdAt: new Date().toISOString()
+    });
+    toast('등록 완료! 🎉');
+    await loadHome();
+  } catch(e) { toast('저장 실패: '+e.message); }
+}
+
+// ── HOME ──
+async function loadHome() {
+  show('home');
+  const uid = currentUser.uid;
+  const now = new Date();
+  const days = ['일','월','화','수','목','금','토'];
+  document.getElementById('home-date').textContent =
+    `${now.getMonth()+1}월 ${now.getDate()}일 (${days[now.getDay()]})`;
+  document.getElementById('home-greeting-name').textContent =
+    (currentUser.displayName||'').split(' ')[0] + '님, 안녕하세요 👋';
+
+  const snap = await getDocs(collection(db,'users',uid,'children'));
+  children = {};
+  snap.forEach(d => { children[d.id] = d.data(); });
+  renderChildList();
+}
+
+function renderChildList() {
+  const list = document.getElementById('child-list');
+  list.innerHTML = '';
+  Object.entries(children).forEach(([cid, c]) => {
+    const total = c.totalMinutes || 0;
+    const h = Math.floor(total/60), m = total%60;
+    const div = document.createElement('div');
+    div.className = 'child-card';
+    div.innerHTML = `
+      <div class="cc-top">
+        <div class="cc-avatar">${c.name[0]||'😊'}</div>
+        <div><div class="cc-name">${c.name}</div><div class="cc-age">${c.age}세 · ${{both:'시간+용돈',time:'시간만',money:'용돈만'}[c.rewardType]||''}</div></div>
+      </div>
+      <div class="cc-balance">
+        <div class="cc-bal-item">
+          <div class="cc-bal-label">잔액</div>
+          <div><span class="cc-bal-val">${h}</span><span class="cc-bal-unit">h ${m}min</span></div>
+        </div>
+        <div class="cc-bal-item">
+          <div class="cc-bal-label">이번달 목표</div>
+          <div style="font-size:12px;color:var(--dim);margin-top:4px;line-height:1.4">${c.goal||'미설정'}</div>
+        </div>
+      </div>`;
+    div.onclick = () => openChild(cid);
+    list.appendChild(div);
+  });
+}
+
+window.goHome = async () => {
+  if (currentChildUnsub) { currentChildUnsub(); currentChildUnsub = null; }
+  await loadHome();
+};
+
+window.startAddChild = () => {
+  obStep = 0; obData = {};
+  document.querySelectorAll('.onboard-step').forEach((s,i) => s.classList.toggle('active', i===0));
+  updateStepDots(0);
+  document.getElementById('ob-back-btn').style.display = 'none';
+  document.getElementById('ob-next-btn').textContent = '다음';
+  document.getElementById('ob-next-btn').onclick = async () => {
+    if (obStep === 0) {
+      obData.name = document.getElementById('ob-name').value.trim();
+      obData.age  = document.getElementById('ob-age').value;
+      obData.goal = document.getElementById('ob-goal').value.trim();
+      if (!obData.name || !obData.age) { toast('이름과 나이를 입력해주세요'); return; }
+    }
+    if (obStep === 1 && !obData.rewardType) { toast('리워드 방식을 선택해주세요'); return; }
+    if (obStep === 3) {
+      // Save new child
+      const uid = currentUser.uid;
+      const viewToken = Math.random().toString(36).slice(2,10);
+      const childId = 'child_' + Date.now();
+      await setDoc(doc(db,'users',uid,'children',childId), {
+        name:obData.name, age:parseInt(obData.age), goal:obData.goal,
+        rewardType:obData.rewardType, totalMinutes:0, viewToken,
+        todos:[], todoChecked:{}, createdAt: new Date().toISOString()
+      });
+      toast(obData.name + ' 추가 완료!');
+      await loadHome();
+      return;
+    }
+    obStep++;
+    document.querySelectorAll('.onboard-step').forEach((s,i) => s.classList.toggle('active', i===obStep));
+    updateStepDots(obStep);
+    document.getElementById('ob-back-btn').style.display = obStep > 0 ? 'block' : 'none';
+    document.getElementById('ob-next-btn').textContent = obStep === 3 ? '추가하기' : '다음';
+    if (obStep === 3) updateObSummary();
+  };
+  show('onboard');
+};
+
+// ── CHILD DASHBOARD ──
+async function openChild(cid) {
+  currentChildId = cid;
+  const child = children[cid];
+  show('child');
+  document.getElementById('cd-name').textContent = child.name;
+  renderPresets();
+  await loadChildData(cid);
+  cdTab('input', document.querySelector('#child-nav .nav-btn'));
+}
+
+async function loadChildData(cid) {
+  const uid = currentUser.uid;
+  const childRef = doc(db,'users',uid,'children',cid);
+  if (currentChildUnsub) currentChildUnsub();
+  currentChildUnsub = onSnapshot(childRef, snap => {
+    if (!snap.exists()) return;
+    children[cid] = snap.data();
+    updateCdBalance(children[cid]);
+    renderTodoList(children[cid]);
+    renderLogList(cid);
+  });
+}
+
+function updateCdBalance(child) {
+  const total = child.totalMinutes || 0;
+  document.getElementById('cd-h').textContent = Math.floor(total/60);
+  document.getElementById('cd-m').textContent = total%60;
+  document.getElementById('cd-1h').textContent = Math.floor(total/60);
+  document.getElementById('cd-10m').textContent = Math.floor((total%60)/10);
+  const alert = document.getElementById('cd-alert');
+  alert.classList.toggle('show', total < 240);
+}
+
+function renderTodoList(child) {
+  const container = document.getElementById('cd-todo-list');
+  const todos = child.todos || [];
+  if (!todos.length) { container.innerHTML = '<div class="empty"><div class="empty-icon">📝</div>할 일을 추가해주세요</div>'; return; }
+  const today = new Date().toISOString().split('T')[0];
+  const checked = child.todoChecked || {};
+  container.innerHTML = '';
+  todos.forEach((t,i) => {
+    const key = today+'_'+i;
+    const done = !!checked[key];
+    const div = document.createElement('div');
+    div.className = 'todo-item' + (done?' is-done':'');
+    div.innerHTML = `
+      <div class="todo-cb ${done?'done':''}" onclick="toggleTodo(${i})"></div>
+      <span class="todo-text">${t.text}</span>
+      ${t.time?`<span class="todo-time">${t.time}</span>`:''}
+      <button class="log-del" onclick="removeTodo(${i})">✕</button>`;
+    container.appendChild(div);
+  });
+}
+
+window.toggleTodo = async (idx) => {
+  const uid = currentUser.uid;
+  const child = children[currentChildId];
+  const today = new Date().toISOString().split('T')[0];
+  const key = today+'_'+idx;
+  const checked = child.todoChecked || {};
+  checked[key] = !checked[key];
+  await updateDoc(doc(db,'users',uid,'children',currentChildId), { todoChecked: checked });
+};
+
+window.addTodo = async () => {
+  const text = document.getElementById('new-todo').value.trim();
+  const time = document.getElementById('new-todo-time').value.trim();
+  if (!text) { toast('할 일을 입력해주세요'); return; }
+  const uid = currentUser.uid;
+  const child = children[currentChildId];
+  const todos = [...(child.todos||[]), {text, time}];
+  await updateDoc(doc(db,'users',uid,'children',currentChildId), {todos});
+  document.getElementById('new-todo').value = '';
+  document.getElementById('new-todo-time').value = '';
+  toast('추가됨');
+};
+
+window.removeTodo = async (idx) => {
+  const uid = currentUser.uid;
+  const child = children[currentChildId];
+  const todos = (child.todos||[]).filter((_,i) => i!==idx);
+  await updateDoc(doc(db,'users',uid,'children',currentChildId), {todos});
+};
+
+async function renderLogList(cid) {
+  const uid = currentUser.uid;
+  const entriesSnap = await getDocs(
+    query(collection(db,'users',uid,'children',cid,'entries'), orderBy('ts','desc'))
+  );
+  const container = document.getElementById('cd-log-list');
+  container.innerHTML = '';
+  if (entriesSnap.empty) { container.innerHTML = '<div class="empty"><div class="empty-icon">📭</div>기록이 없습니다</div>'; return; }
+  entriesSnap.forEach(d => {
+    const e = d.data();
+    const dotClass = e.type==='r'?'r':e.type==='p'?'p':'e';
+    const valClass = e.minutes>=0?(e.type==='e'?'ev':'pos'):'neg';
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    div.innerHTML = `
+      <div class="log-dot ${dotClass}"></div>
+      <div style="flex:1"><div class="log-desc">${e.label}</div>
+        <div style="font-size:10px;color:var(--dim)">${e.date}</div>
+      </div>
+      <div class="log-val ${valClass}">${minFmt(e.minutes)}</div>
+      <button class="log-del" onclick="deleteEntry('${d.id}')">✕</button>`;
+    container.appendChild(div);
+  });
+}
+
+// ── INPUT ──
+function renderPresets() {
+  renderP('pr-presets', REWARD_P, 'r');
+  renderP('pp-presets', PENALTY_P, 'p');
+}
+function renderP(containerId, presets, type) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  presets.forEach(p => {
+    const btn = document.createElement('button');
+    btn.className = 'preset-chip '+(type==='r'?'r-chip':'p-chip');
+    const val = p.allClear ? '전체몰수' : minFmt(p.m);
+    btn.innerHTML = `<div class="pc-name">${p.l}</div><div class="pc-val">${val}</div>`;
+    btn.onclick = () => {
+      document.querySelectorAll('#'+containerId+' .preset-chip').forEach(b=>b.classList.remove('sel'));
+      btn.classList.add('sel');
+      if (!p.allClear) {
+        const abs = Math.abs(p.m);
+        document.getElementById(type+'-h').value = Math.floor(abs/60)||'';
+        document.getElementById(type+'-m').value = abs%60||'';
+        document.getElementById(type+'-label').value = p.l;
+      } else {
+        document.getElementById(type+'-label').value = '거짓말 적발 — 전체 몰수';
+        document.getElementById(type+'-h').value='';
+        document.getElementById(type+'-m').value='';
+      }
+    };
+    el.appendChild(btn);
+  });
+}
+
+window.inputTab = (t, btn) => {
+  document.querySelectorAll('.itab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  document.querySelectorAll('.input-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('ip-'+t).classList.add('active');
+};
+
+window.submit = async (type) => {
+  const uid = currentUser.uid;
+  let label, h, m;
+  if (type==='e') {
+    label = document.getElementById('e-label').value.trim();
+    h = parseInt(document.getElementById('e-h').value)||0;
+    m = parseInt(document.getElementById('e-m').value)||0;
+    if (!document.getElementById('e-agreed').checked) { toast('아이와 상의 완료 체크 필요'); return; }
+  } else {
+    label = document.getElementById(type+'-label').value.trim();
+    h = parseInt(document.getElementById(type+'-h').value)||0;
+    m = parseInt(document.getElementById(type+'-m').value)||0;
+  }
+  if (!label) { toast('사유를 입력해주세요'); return; }
+
+  if (label.includes('전체 몰수')) {
+    openModal('⚠️ 전체 몰수', '거짓말 적발로 전체 쿠폰을 몰수합니다. 진행할까요?', [
+      {text:'취소', cls:'cancel', fn: closeModal},
+      {text:'몰수', cls:'warn', fn: async()=>{
+        const child = children[currentChildId];
+        const minutes = -(child.totalMinutes||0);
+        await applyEntry(uid, type, label, minutes);
+        closeModal();
+      }}
+    ]); return;
+  }
+  if (h===0 && m===0) { toast('시간을 입력해주세요'); return; }
+  const minutes = (h*60+m) * (type==='p'?-1:1);
+  await applyEntry(uid, type, label, minutes);
+};
+
+async function applyEntry(uid, type, label, minutes) {
+  const cid = currentChildId;
+  const child = children[cid];
+  const newTotal = Math.max(0, (child.totalMinutes||0) + minutes);
+  const entry = { type, label, minutes, date: new Date().toISOString().split('T')[0], ts: Date.now() };
+  await addDoc(collection(db,'users',uid,'children',cid,'entries'), entry);
+  await updateDoc(doc(db,'users',uid,'children',cid), {totalMinutes: newTotal});
+  ['label','h','m'].forEach(f => { const el=document.getElementById(type+'-'+f); if(el)el.value=''; });
+  if(type==='e') { document.getElementById('e-agreed').checked=false; }
+  document.querySelectorAll('.preset-chip').forEach(b=>b.classList.remove('sel'));
+  toast(type==='p'? '패널티 적용 '+minFmt(minutes) : '리워드 추가 '+minFmt(minutes));
+  await renderLogList(cid);
+}
+
+window.deleteEntry = async (entryId) => {
+  openModal('기록 삭제', '이 항목을 삭제할까요?', [
+    {text:'취소', cls:'cancel', fn:closeModal},
+    {text:'삭제', cls:'warn', fn: async()=>{
+      const uid = currentUser.uid;
+      const cid = currentChildId;
+      const entryRef = doc(db,'users',uid,'children',cid,'entries',entryId);
+      const snap = await getDoc(entryRef);
+      if(snap.exists()) {
+        const child = children[cid];
+        const newTotal = Math.max(0,(child.totalMinutes||0)-snap.data().minutes);
+        await deleteDoc(entryRef);
+        await updateDoc(doc(db,'users',uid,'children',cid),{totalMinutes:newTotal});
+        await renderLogList(cid);
+      }
+      closeModal(); toast('삭제됨');
+    }}
+  ]);
+};
+
+// ── CHILD VIEW (읽기전용) ──
+async function loadChildViewByToken(token) {
+  // Search all users for this token
+  // For MVP: store token lookup in a separate collection
+  show('childview');
+  // Simple approach: token is stored as ?uid=X&child=Y in URL
+  const params = new URLSearchParams(location.search);
+  const uid = params.get('uid');
+  const cid = params.get('child');
+  if (!uid || !cid) { document.getElementById('cv-name').textContent = '링크 오류'; return; }
+  const snap = await getDoc(doc(db,'users',uid,'children',cid));
+  if (!snap.exists()) { document.getElementById('cv-name').textContent = '찾을 수 없음'; return; }
+  const child = snap.data();
+  document.getElementById('cv-name').textContent = child.name;
+  document.getElementById('cv-goal').textContent = child.goal || '';
+  document.getElementById('cv-avatar').textContent = child.name[0]||'😊';
+  const total = child.totalMinutes||0;
+  document.getElementById('cv-h').textContent = Math.floor(total/60);
+  document.getElementById('cv-m').textContent = total%60;
+  document.getElementById('cv-1h').textContent = Math.floor(total/60);
+  document.getElementById('cv-10m').textContent = Math.floor((total%60)/10);
+  // todos
+  const todos = child.todos||[];
+  const today = new Date().toISOString().split('T')[0];
+  const checked = child.todoChecked||{};
+  const cvList = document.getElementById('cv-todo-list');
+  cvList.innerHTML = todos.length ? '' : '<div class="empty">할 일 없음</div>';
+  todos.forEach((t,i)=>{
+    const done = !!checked[today+'_'+i];
+    const div = document.createElement('div');
+    div.className='todo-item'+(done?' is-done':'');
+    div.style.pointerEvents='none';
+    div.innerHTML=`<div class="todo-cb ${done?'done':''}"></div><span class="todo-text">${t.text}</span>${t.time?`<span class="todo-time">${t.time}</span>`:''}`;
+    cvList.appendChild(div);
+  });
+}
+
+window.copyChildLink = () => {
+  const uid = currentUser.uid;
+  const cid = currentChildId;
+  const url = `${location.origin}${location.pathname}?uid=${uid}&child=${cid}`;
+  navigator.clipboard.writeText(url).then(()=>toast('아이 링크 복사됨 📋'));
+};
+
+// ── TAB NAV ──
+window.cdTab = (panel, btn) => {
+  document.querySelectorAll('#child-nav .nav-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  ['input','todo','log'].forEach(p=>{
+    document.getElementById('cd-panel-'+p).style.display = p===panel?'block':'none';
+  });
+};
+
+// ── MODAL ──
+function openModal(title, body, btns) {
+  document.getElementById('modal-title').textContent = title;
+  document.getElementById('modal-body').textContent = body;
+  const ba = document.getElementById('modal-btns');
+  ba.innerHTML = '';
+  btns.forEach(b=>{
+    const btn = document.createElement('button');
+    btn.className='mbtn '+b.cls;
+    btn.textContent = b.text;
+    btn.onclick = b.fn;
+    ba.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('open');
+}
+window.closeModal = (e) => {
+  if (e && e.target !== document.getElementById('modal')) return;
+  document.getElementById('modal').classList.remove('open');
+};
+
+// ── TOAST ──
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>el.classList.remove('show'), 2200);
+}
+window.toast = toast;
+
+// ── USER MENU ──
+window.showUserMenu = () => {
+  openModal('계정', currentUser?.email||'', [
+    {text:'취소', cls:'cancel', fn:closeModal},
+    {text:'로그아웃', cls:'warn', fn:()=>{ signOut(auth); closeModal(); }}
+  ]);
+};
+
+// ── INIT ──
+// Check if this is a child view URL
+const params = new URLSearchParams(location.search);
+if (params.get('uid') && params.get('child')) {
+  show('childview');
+  loadChildViewByToken('');
+}
+</script>
+</body>
+</html>

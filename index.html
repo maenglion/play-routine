@@ -429,6 +429,42 @@ select.field-input{cursor:pointer;appearance:none;background-image:url("data:ima
 
 .empty{text-align:center;padding:30px;color:var(--dim);font-size:13px}
 .empty-icon{font-size:28px;margin-bottom:8px}
+
+/* ─── EXCHANGE ─── */
+.exchange-banner{
+  margin:0 16px 14px;
+  background:linear-gradient(135deg,rgba(252,211,77,.15),rgba(167,139,250,.15));
+  border:1px solid var(--event);
+  border-radius:14px;padding:14px 16px;
+  display:none;align-items:center;gap:12px;cursor:pointer;
+  transition:all .2s;
+}
+.exchange-banner.show{display:flex}
+.exchange-banner:active{transform:scale(.99)}
+.exch-icon{font-size:24px;flex-shrink:0}
+.exch-body{flex:1}
+.exch-title{font-size:13px;font-weight:700;color:var(--event)}
+.exch-desc{font-size:11px;color:var(--dim);margin-top:2px}
+.exch-arrow{font-size:18px;color:var(--event);flex-shrink:0}
+
+.exch-modal-rate{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  background:var(--bg2);border-radius:12px;padding:16px;margin:12px 0;
+  font-size:14px;
+}
+.exch-modal-rate .rate-box{text-align:center}
+.exch-modal-rate .rate-num{font-family:'DM Mono',monospace;font-size:22px;font-weight:500}
+.exch-modal-rate .rate-lbl{font-size:10px;color:var(--dim);margin-top:3px}
+.exch-modal-rate .rate-arrow{font-size:20px;color:var(--dim)}
+.exch-slider-wrap{margin:12px 0}
+.exch-slider{width:100%;accent-color:var(--event)}
+.exch-preview{
+  display:flex;justify-content:space-between;
+  background:var(--bg2);border-radius:10px;padding:12px 14px;
+  font-size:13px;margin-top:10px;
+}
+.exch-preview .ep-label{color:var(--dim)}
+.exch-preview .ep-val{font-family:'DM Mono',monospace;font-weight:500}
 </style>
 </head>
 <body>
@@ -614,6 +650,16 @@ select.field-input{cursor:pointer;appearance:none;background-image:url("data:ima
     <div><strong>쿠폰 부족 경고</strong>주말 4시간 확보가 어렵습니다. 이벤트 쿠폰을 설계하세요!</div>
   </div>
 
+  <!-- 환전 배너 (10h 이상일 때 표시) -->
+  <div class="exchange-banner" id="exch-banner" onclick="openExchange()">
+    <div class="exch-icon">💱</div>
+    <div class="exch-body">
+      <div class="exch-title">쿠폰 → 용돈 환전 가능</div>
+      <div class="exch-desc">잔액이 10시간을 넘었어요. 일부를 용돈으로 바꿀 수 있어요.</div>
+    </div>
+    <div class="exch-arrow">›</div>
+  </div>
+
   <!-- 탭 네비 -->
   <nav class="bottom-nav" id="child-nav">
     <button class="nav-btn on" onclick="cdTab('input',this)">
@@ -627,6 +673,10 @@ select.field-input{cursor:pointer;appearance:none;background-image:url("data:ima
     <button class="nav-btn" onclick="cdTab('log',this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       내역
+    </button>
+    <button class="nav-btn" id="nav-exch" onclick="cdTab('exch',this)" style="display:none">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 1l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 23l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      환전
     </button>
   </nav>
 
@@ -705,7 +755,53 @@ select.field-input{cursor:pointer;appearance:none;background-image:url("data:ima
   <div id="cd-panel-log" style="display:none;padding:0 16px 100px">
     <div style="margin-top:12px" id="cd-log-list"></div>
   </div>
-</div>
+
+  <!-- 환전 패널 -->
+  <div id="cd-panel-exch" style="display:none;padding:0 16px 100px">
+    <div style="margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px">
+      <div class="sec-title">환율 설정</div>
+      <div class="exch-modal-rate">
+        <div class="rate-box">
+          <div class="rate-num" style="color:var(--accent)">1h</div>
+          <div class="rate-lbl">쿠폰 시간</div>
+        </div>
+        <div class="rate-arrow">→</div>
+        <div class="rate-box" style="display:flex;align-items:center;gap:6px">
+          <input type="number" id="exch-rate-input" value="500" min="100" step="100"
+            style="width:90px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;
+            padding:8px;color:var(--event);font-family:'DM Mono',monospace;font-size:20px;
+            font-weight:500;text-align:center;outline:none">
+          <div class="rate-lbl">원</div>
+        </div>
+      </div>
+
+      <div class="sec-title" style="margin-top:16px">환전할 시간 선택</div>
+      <div class="exch-slider-wrap">
+        <input type="range" class="exch-slider" id="exch-slider"
+          min="1" max="10" value="1" step="1" oninput="updateExchPreview()">
+        <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--dim);margin-top:4px">
+          <span>1h</span><span id="exch-slider-max">10h</span>
+        </div>
+      </div>
+
+      <div class="exch-preview">
+        <div><div class="ep-label">차감 시간</div><div class="ep-val" id="ep-time" style="color:var(--penalty)">-1h</div></div>
+        <div style="color:var(--dim);font-size:18px;align-self:center">→</div>
+        <div><div class="ep-label">받을 용돈</div><div class="ep-val" id="ep-money" style="color:var(--event)">+500원</div></div>
+        <div style="color:var(--dim);font-size:18px;align-self:center">→</div>
+        <div><div class="ep-label">남은 잔액</div><div class="ep-val" id="ep-remain" style="color:var(--accent)">0h</div></div>
+      </div>
+
+      <button class="sbtn e" style="width:100%;margin-top:14px" onclick="doExchange()">환전하기 💱</button>
+    </div>
+
+    <div style="margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px">
+      <div class="sec-title">환전 내역</div>
+      <div id="exch-log-list"></div>
+    </div>
+  </div>
+
+</div><!-- /screen-child -->
 
 <!-- ══════════════ SCREEN: CHILD VIEW (읽기전용) ══════════════ -->
 <div class="screen" id="screen-childview">
@@ -1193,6 +1289,7 @@ function updateCdBalance(child) {
   document.getElementById('cd-10m').textContent = Math.floor((total%60)/10);
   const alert = document.getElementById('cd-alert');
   alert.classList.toggle('show', total < 240);
+  updateExchBanner(child);
 }
 
 function renderTodoList(child) {
@@ -1440,10 +1537,108 @@ function getMonthRange(date = new Date()) {
 window.cdTab = (panel, btn) => {
   document.querySelectorAll('#child-nav .nav-btn').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
-  ['input','todo','log'].forEach(p=>{
-    document.getElementById('cd-panel-'+p).style.display = p===panel?'block':'none';
+  ['input','todo','log','exch'].forEach(p=>{
+    const el = document.getElementById('cd-panel-'+p);
+    if (el) el.style.display = p===panel?'block':'none';
   });
+  if (panel === 'exch') updateExchPreview();
 };
+
+// ── EXCHANGE ──
+const EXCHANGE_THRESHOLD = 600; // 10h in minutes
+
+function updateExchBanner(child) {
+  const total = child.totalMinutes || 0;
+  const banner = document.getElementById('exch-banner');
+  const navBtn = document.getElementById('nav-exch');
+  const show = (child.rewardType === 'both' || child.rewardType === 'money') && total >= EXCHANGE_THRESHOLD;
+  banner?.classList.toggle('show', show);
+  if (navBtn) navBtn.style.display = show ? 'flex' : 'none';
+}
+
+window.openExchange = () => {
+  cdTab('exch', document.getElementById('nav-exch'));
+};
+
+window.updateExchPreview = () => {
+  const child = children[currentChildId];
+  const total = child?.totalMinutes || 0;
+  const maxH = Math.floor(total / 60);
+  const slider = document.getElementById('exch-slider');
+  const rate = parseInt(document.getElementById('exch-rate-input').value) || 500;
+  slider.max = Math.max(1, maxH);
+  document.getElementById('exch-slider-max').textContent = maxH + 'h';
+  const h = parseInt(slider.value) || 1;
+  const money = h * rate;
+  const remain = total - h * 60;
+  document.getElementById('ep-time').textContent = '-' + h + 'h';
+  document.getElementById('ep-money').textContent = '+' + money.toLocaleString() + '원';
+  document.getElementById('ep-remain').textContent = Math.floor(remain/60) + 'h ' + remain%60 + 'min';
+};
+
+window.doExchange = async () => {
+  const child = children[currentChildId];
+  const total = child?.totalMinutes || 0;
+  const h = parseInt(document.getElementById('exch-slider').value) || 1;
+  const rate = parseInt(document.getElementById('exch-rate-input').value) || 500;
+  const minutes = h * 60;
+  const money = h * rate;
+  if (minutes > total) { toast('잔액이 부족합니다'); return; }
+
+  openModal('환전 확인',
+    `${h}시간 쿠폰을 ${money.toLocaleString()}원으로 환전합니다.`,
+    [
+      {text:'취소', cls:'cancel', fn: closeModal},
+      {text:'환전', cls:'ok', fn: async () => {
+        const uid = currentUser.uid;
+        const cid = currentChildId;
+        const newTotal = total - minutes;
+        await addDoc(collection(db,'users',uid,'children',cid,'entries'), {
+          type: 'exchange',
+          label: `환전 ${h}h → ${money.toLocaleString()}원`,
+          minutes: -minutes,
+          money,
+          date: new Date().toISOString().split('T')[0],
+          ts: Date.now()
+        });
+        await updateDoc(doc(db,'users',uid,'children',cid), {
+          totalMinutes: newTotal,
+          totalMoney: (child.totalMoney||0) + money
+        });
+        closeModal();
+        toast(`환전 완료 💰 ${money.toLocaleString()}원`);
+        await renderExchLog(cid);
+        updateExchPreview();
+      }}
+    ]
+  );
+};
+
+async function renderExchLog(cid) {
+  const uid = currentUser.uid;
+  const snap = await getDocs(
+    query(collection(db,'users',uid,'children',cid,'entries'), orderBy('ts','desc'))
+  );
+  const container = document.getElementById('exch-log-list');
+  if (!container) return;
+  const exchEntries = [];
+  snap.forEach(d => { if (d.data().type === 'exchange') exchEntries.push(d.data()); });
+  if (!exchEntries.length) {
+    container.innerHTML = '<div class="empty">환전 내역 없음</div>'; return;
+  }
+  container.innerHTML = '';
+  exchEntries.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    div.innerHTML = `
+      <div class="log-dot e"></div>
+      <div style="flex:1"><div class="log-desc">${e.label}</div>
+        <div style="font-size:10px;color:var(--dim)">${e.date}</div>
+      </div>
+      <div class="log-val ev">+${(e.money||0).toLocaleString()}원</div>`;
+    container.appendChild(div);
+  });
+}
 
 // ── MODAL ──
 function openModal(title, body, btns) {

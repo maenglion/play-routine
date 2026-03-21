@@ -1,5 +1,6 @@
 {
   "hosting": {
+    "site": "play-routine-39981",
     "public": ".",
     "ignore": ["firebase.json", "**/.*", "**/node_modules/**", "functions/**"],
     "rewrites": [

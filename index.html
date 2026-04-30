@@ -257,7 +257,7 @@ a.innerHTML=`
   ${VIEW?'<div class="view-banner">👀 보기 모드 — 수정할 수 없어요</div>':""}
   <header>
     <div class="h-top">
-      <div class="h-left">${LG(36)}<div><div class="h-name">민후</div><div class="h-date">${tm}월 ${td}일 ${dw}요일</div></div></div>
+      <div class="h-left"><a href="https://docs.google.com/spreadsheets/d/1ppeiipQZXdMObkb7oHHymnx5Y5c2BcoQ/edit" target="_blank" style="text-decoration:none">${LG(36)}</a><div><div class="h-name">민후</div><div class="h-date">${tm}월 ${td}일 ${dw}요일</div></div></div>
       <div class="h-btns">
         ${VIEW?"":`<button class="h-btn" onclick="doShare()" title="공유">🔗</button>`}
         <button class="h-btn" onclick="st.ph='splash';R()">🔒</button>

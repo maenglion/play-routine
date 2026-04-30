@@ -93,10 +93,37 @@ const VIEW=new URLSearchParams(location.search).has("view");
 
 // ── SCHEDULE ──
 const SC={"4-28":{dow:"월",tasks:["T2(40min)","T1(60min)","T11(40min)","기탄3장"]},"4-29":{dow:"화",tasks:["T4(40min)","T7(40min)","기탄3장"]},"4-30":{dow:"목",tasks:["T1(40min)","기탄3장"]},"5-1":{dow:"금",tasks:["T2(40min)","T1(100min)","기탄3장"]},"5-2":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-3":{dow:"일",tasks:["T10(40min)","T12(60min)","기탄3장"]},"5-4":{dow:"월",tasks:["T3(40min)","T6(40min)","기탄3장"]},"5-5":{dow:"화",tasks:["T10(40min)","T5(40min)","기탄3장"],note:"어린이날"},"5-6":{dow:"수",tasks:["T8(40min)","T10(40min)","기탄3장"]},"5-7":{dow:"목",tasks:["T3(40min)","T7(40min)","T11(40min)","기탄3장"]},"5-8":{dow:"금",tasks:["T4(40min)","T5(40min)","기탄3장"]},"5-9":{dow:"토",tasks:["T2(40min)","T1(60min)","T12(60min)","기탄3장"]},"5-10":{dow:"일",tasks:["T12(60min)","T1(60min)","기탄3장"]},"5-11":{dow:"월",tasks:["T3(40min)","T5(40min)","기탄3장"]},"5-12":{dow:"화",tasks:["T3(40min)","T12(60min)","T11(40min)","기탄3장"]},"5-13":{dow:"수",tasks:["T4(40min)","T1(60min)","기탄3장"]},"5-14":{dow:"목",tasks:["T4(40min)","T11(40min)","T11(40min)","기탄3장"]},"5-15":{dow:"금",tasks:["T3(40min)","T7(40min)","기탄3장"]},"5-16":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-17":{dow:"일",tasks:["T12(60min)","기탄3장"]},"5-18":{dow:"월",tasks:["T4(40min)","T1(60min)","기탄3장"]},"5-19":{dow:"화",tasks:["T2(90min)","T5(40min)","T11(40min)","기탄3장"]},"5-20":{dow:"수",tasks:["T3(40min)","T2(60min)","기탄3장"]},"5-21":{dow:"목",tasks:["T3(40min)","T1(60min)","T11(40min)","기탄3장"]},"5-22":{dow:"금",tasks:["T4(40min)","T8(40min)","기탄3장"]},"5-23":{dow:"토",tasks:["T2(60min)","T1(90min)","T12(60min)","기탄3장"]},"5-24":{dow:"일",tasks:["T7(40min)","T5(40min)","T12(60min)","기탄3장"]},"5-25":{dow:"월",tasks:["T4(40min)","T6(40min)","기탄3장"]},"5-26":{dow:"화",tasks:["T3(40min)","T2(40min)","T11(40min)","기탄3장"]},"5-27":{dow:"수",tasks:["T3(40min)","T8(40min)","기탄3장"]},"5-28":{dow:"목",tasks:["T2(40min)","T1(60min)","T11(40min)","기탄3장"]},"5-29":{dow:"금",tasks:["T4(40min)","T7(40min)","기탄3장"]},"5-30":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-31":{dow:"일",tasks:["T12(60min)","기탄3장"]}};
+
+// ═══ Google Sheet Live Sync ═══
+const SHEET_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTuYyOFwB0hnt0gBo2gw6Mg77pV7mTwv5ck-09Mg86TnpC7NU33pPMjcSyvz5-aAg/pub?output=csv&sheet=5%EC%9B%94%20%EB%8B%AC%EB%A0%A5";
+let sheetLoaded=false;
+function loadSheet(){
+  fetch(SHEET_URL).then(r=>{if(!r.ok)throw 0;return r.text()}).then(csv=>{
+    const rows=csv.split("\n").map(r=>{
+      const cols=[];let cur="",inQ=false;
+      for(let i=0;i<r.length;i++){const c=r[i];if(c==='"')inQ=!inQ;else if(c===","&&!inQ){cols.push(cur.trim());cur=""}else cur+=c}
+      cols.push(cur.trim());return cols});
+    let updated=false;
+    rows.forEach(cols=>{
+      if(!cols[0]||!cols[0].match(/^\d{2}\/\d{2}$/))return;
+      const[mm,dd]=cols[0].split("/").map(Number);
+      const dow=cols[1]||"";
+      const tasks=[];
+      for(let i=2;i<=6;i++)if(cols[i]&&cols[i].trim()&&!cols[i].includes("T1~"))tasks.push(cols[i].trim().replace("T9 기탄 3장","기탄3장"));
+      const note=cols[7]||"";
+      const key=mm+"-"+dd;
+      SC[key]={dow,tasks,note:note.replace("아빠집 가는 날","아빠집")};
+      updated=true;
+    });
+    if(updated){sheetLoaded=true;console.log("📊 시트 연동 완료!");R()}
+  }).catch(e=>console.log("📊 시트 연동 실패, 하드코딩 사용",e))}
+setTimeout(loadSheet,500);
+setInterval(loadSheet,300000); // 5분마다 갱신
+
 const TN={T1:"영재원 과제",T2:"영재원 개념잡기",T3:"디딤돌 라이트",T4:"응용심화수학",T5:"1031 수/연산",T6:"1031 여러가지문제",T7:"1031 규칙/논리",T8:"1031 도형/측정",T9:"기탄수학",T10:"바이올린",T11:"기타 활동",T12:"명심보감"};
 const TI={T1:"🧩",T2:"🧩",T3:"📐",T4:"📐",T5:"🔢",T6:"🔢",T7:"🔢",T8:"🔢",T9:"✏️",T10:"🎻",T11:"📌",T12:"📖"};
 const RW=[{n:"매일 공부 완료",t:60,r:1,f:"study"},{n:"숙제/유인물 챙기기",t:40,r:1,f:"hw"},{n:"명심보감 토론",t:60,r:0,f:"read"},{n:"학교 수학 100점",t:60,r:0,f:"math"},{n:"응용심화 80점↑",t:90,r:0,f:"adv"},{n:"방정리",t:0,m:5000,r:0,f:"room"},{n:"화장실 청소",t:30,r:0,f:"wc"},{n:"고양이 화장실",t:20,r:0,f:"cat"},{n:"9시반 취침",t:30,r:1,f:"bed"}];
-const PN=[{n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},{n:"공부량 미달",t:-80,f:"stF"},{n:"아침약 미복용",t:-180,f:"med"},{n:"밤10시 미취침",t:-90,f:"late"},{n:"토론 준비 미흡",t:-90,f:"rdF"},{n:"거짓말/약속위반",t:-9999,f:"lie"},{n:"학교시간 미준수",t:-30,f:"ltS"}];
+const PN=[{n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},{n:"공부량 미달",t:-80,f:"stF"},{n:"아침약 미복용",t:-180,f:"med"},{n:"밤10시 미취침",t:-90,f:"late"},{n:"토론 준비 미흡",t:-90,f:"rdF"},{n:"거짓말/약속위반",t:-9999,f:"lie"},{n:"학교시간 미준수",t:-30,f:"ltS"},{n:"저녁약 미복용",t:-30,f:"dinM"}];
 const BAL=40;
 const LG=s=>`<img src="icon-512.png" width="${s}" height="${s}" style="border-radius:${Math.round(s*0.22)}px">`;
 
@@ -206,7 +233,7 @@ if(s.tab==="dash"){
   ${X.net<60?'<div class="warn">⚠️ 보상이 부족해요!</div>':""}
   <div class="card"><h3 class="ct">📊 필수 이행현황</h3>${ch}</div>
   <div class="card"><h3 class="ct">🔥 연속 보너스</h3><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="display:flex;gap:4px">${[1,2,3].map(v=>`<button style="width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;background:${s.sk.c>=v?"#F5D76E":"#F0F0F0"};color:${s.sk.c>=v?"#fff":"#ccc"}" onclick="${VIEW?"":`st.sk.c=${v===st.sk.c?0:v};sv('sk',st.sk);R()`}">${s.sk.c>=v?"🔥":v}</button>`).join("")}</div><div style="display:flex;align-items:center;gap:6px">${VIEW?`<span style="font-size:22px;font-weight:900;color:#5A9BBF">${s.sk.t}회</span>`:`<button class="mb" onclick="st.sk.t=Math.max(0,st.sk.t-1);sv('sk',st.sk);R()">−</button><span style="font-size:22px;font-weight:900;color:#5A9BBF">${s.sk.t}</span><button class="mb" onclick="st.sk.t++;sv('sk',st.sk);R()">+</button><span style="font-size:11px;color:#aaa">회</span>`}</div></div></div>
-  <div class="card"><h3 class="ct">🎯 월 목표</h3><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div><p style="font-weight:700;font-size:13px">2자리×1자리 24문제 4분</p><p style="font-size:11px;color:#999;margin-top:3px">5/15 예정 · 90점↑</p></div>${VIEW?`<span class="badge">${s.gl==="pass"?"통과":s.gl==="fail"?"미통과":"대기"}</span>`:`<select onchange="st.gl=this.value;sv('gl',st.gl)"><option value="pending"${s.gl==="pending"?" selected":""}>대기</option><option value="pass"${s.gl==="pass"?" selected":""}>통과</option><option value="fail"${s.gl==="fail"?" selected":""}>미통과</option></select>`}</div></div>
+  <div class="card"><h3 class="ct">🎯 월 목표</h3><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div><p style="font-weight:700;font-size:13px">1차: 24문제 5분 (5/15)</p><p style="font-size:11px;color:#6FA88F;margin-top:2px">+300분 +15,000원 / 미달 -200분</p><p style="font-weight:700;font-size:13px;margin-top:6px">2차: 48문제 8분 (5/30)</p><p style="font-size:11px;color:#6FA88F;margin-top:2px">+600분 +30,000원 / 미달 -400분</p></div>${VIEW?`<span class="badge">${s.gl==="pass"?"통과":s.gl==="fail"?"미통과":"대기"}</span>`:`<select onchange="st.gl=this.value;sv('gl',st.gl)"><option value="pending"${s.gl==="pending"?" selected":""}>대기</option><option value="pass1"${s.gl==="pass1"?" selected":""}>1차통과</option><option value="pass2"${s.gl==="pass2"?" selected":""}>2차통과</option><option value="fail"${s.gl==="fail"?" selected":""}>미통과</option></select>`}</div></div>
   <div class="card"><h3 class="ct">🎫 쿠폰 사용 내역</h3>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div><span style="font-size:13px;font-weight:600">총 사용: </span><span style="font-weight:900;color:#E8836B">${X.used}분</span></div>

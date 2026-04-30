@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Play Routine">
 <meta property="og:title" content="Play Routine">
-<meta property="og:description" content="잔소리없이 습관형성 ">
+<meta property="og:description" content="잔소리없는 습관형성">
 <meta property="og:image" content="https://play-routine-minhoo.netlify.app/og.png">
 <meta property="og:type" content="website">
 <title>Play Routine</title>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="icon" href="icon-512.png">
 <link rel="apple-touch-icon" href="icon-512.png">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Nunito',sans-serif;background:linear-gradient(180deg,#F7FBFE 0%,#F0F7F4 50%,#FFFDF5 100%);min-height:100vh}
@@ -81,6 +81,7 @@ select{padding:8px 12px;border-radius:10px;border:2px solid #E8F4F8;font-size:12
 .ml{font-size:11px;background:#E8F4F8;color:#5A9BBF;padding:2px 8px;border-radius:6px;font-weight:700;margin-left:6px}
 .exp-btn{display:flex;align-items:center;gap:6px;width:100%;padding:12px;background:#F7FBFE;border:2px dashed #D6E4F0;border-radius:12px;cursor:pointer;font-family:'Nunito';font-weight:700;font-size:13px;color:#5A9BBF;justify-content:center;margin-top:8px}
 .exp-btn:active{background:#E8F4F8}
+#useModal button:active{transform:scale(.96)}
 .toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#2C3E6B;color:#fff;padding:10px 20px;border-radius:12px;font-size:13px;font-weight:700;z-index:99;animation:fadeUp .3s ease}
 </style>
 </head>
@@ -97,12 +98,13 @@ const TI={T1:"🧩",T2:"🧩",T3:"📐",T4:"📐",T5:"🔢",T6:"🔢",T7:"🔢",
 const RW=[{n:"매일 공부 완료",t:60,r:1,f:"study"},{n:"숙제/유인물 챙기기",t:40,r:1,f:"hw"},{n:"명심보감 토론",t:60,r:0,f:"read"},{n:"학교 수학 100점",t:60,r:0,f:"math"},{n:"응용심화 80점↑",t:90,r:0,f:"adv"},{n:"방정리",t:0,m:5000,r:0,f:"room"},{n:"화장실 청소",t:30,r:0,f:"wc"},{n:"고양이 화장실",t:20,r:0,f:"cat"},{n:"9시반 취침",t:30,r:1,f:"bed"}];
 const PN=[{n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},{n:"공부량 미달",t:-80,f:"stF"},{n:"아침약 미복용",t:-180,f:"med"},{n:"밤10시 미취침",t:-90,f:"late"},{n:"토론 준비 미흡",t:-90,f:"rdF"},{n:"거짓말/약속위반",t:-9999,f:"lie"},{n:"학교시간 미준수",t:-30,f:"ltS"}];
 const BAL=40;
-const LG=s=>`<svg width="${s}" height="${s}" viewBox="0 0 100 100"><circle cx="50" cy="50" r="48" fill="white" opacity=".9"/><path d="M25 75 L25 25 Q25 15 35 15 L45 15 Q60 15 60 30 Q60 45 45 45 L35 45" stroke="#7EB6D9" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M45 45 L45 75" stroke="#7EB6D9" stroke-width="7" fill="none" stroke-linecap="round"/><path d="M50 75 L50 25 Q50 15 60 15 L70 15 Q85 15 85 30 Q85 42 73 44 L85 75" stroke="#8FBF9F" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const LG=s=>`<img src="icon-512.png" width="${s}" height="${s}" style="border-radius:${Math.round(s*0.22)}px">`;
 
 let st={ph:"splash",tab:"dash",d:{},sk:{c:0,t:0},gl:"pending",vd:null,or:"rw"};
 function ld(k,df){try{const v=localStorage.getItem("pr_"+k);return v?JSON.parse(v):df}catch{return df}}
 function sv(k,v){try{localStorage.setItem("pr_"+k,JSON.stringify(v))}catch{}}
 st.d=ld("d",{});st.sk=ld("sk",{c:0,t:0});st.gl=ld("gl","pending");
+st.use=ld("use",[]);
 
 function _tk(){const d=new Date();return(d.getMonth()+1)+"-"+d.getDate()}
 function _tm(){return new Date().getMonth()+1}
@@ -117,7 +119,8 @@ function cs(){
     RW.forEach(r=>{if(dd[r.f]==="O"){tr+=r.t||0;tm+=(r.m||0)}if(r.r&&cp[r.f]){if(dd[r.f]==="O"||dd[r.f]==="X")cp[r.f].t++;if(dd[r.f]==="O")cp[r.f].d++}});
     const sc=dd.as;if(typeof sc==="number"&&sc>=80)tr+=90;if(typeof sc==="number"&&sc<50)tp+=60;
     PN.forEach(p=>{if(dd[p.f]==="O"){if(p.t===-9999)tp=99999;else tp+=Math.abs(p.t)}})});
-  return{tr:tr+st.sk.t*60,tp,tm,net:tr+st.sk.t*60-tp+BAL,cp}}
+  const used=st.use.reduce((a,u)=>a+u.a,0);
+  return{tr:tr+st.sk.t*60,tp,tm,net:tr+st.sk.t*60-tp+BAL-used,cp,used}}
 
 function tg(k,f){if(VIEW)return;const dd=st.d[k]||{};const v=dd[f];dd[f]=v==="O"?"X":v==="X"?undefined:"O";if(!dd[f])delete dd[f];st.d[k]=dd;sv("d",st.d);R()}
 function ss(k,v){if(VIEW)return;const dd=st.d[k]||{};dd.as=v;st.d[k]=dd;sv("d",st.d);R()}
@@ -134,12 +137,43 @@ function doExport(){
     RW.forEach(r=>row+=","+(dd[r.f]||""));row+=","+(dd.as??"");
     PN.forEach(p=>row+=","+(dd[p.f]||""));csv+=row+"\n"});
   csv+="\n연속보너스횟수,"+st.sk.t+"\n누적초기잔고,"+BAL+"\n";
+  csv+="\n쿠폰사용기록\n날짜,사용량(분),시간\n";
+  st.use.forEach(u=>csv+=u.k.replace("-","월")+"일,"+u.a+"분,"+u.ts+"\n");
+  csv+="총사용,"+st.use.reduce((a,u)=>a+u.a,0)+"분\n";
   const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="PlayRoutine_데이터_"+new Date().toISOString().slice(0,10)+".csv";a.click();
   toast("📊 데이터가 다운로드되었어요!");
 }
 
+function addUse(amt,note){
+  if(VIEW)return;
+  const d=new Date();const k=(d.getMonth()+1)+"-"+d.getDate();
+  st.use.push({k,a:amt,n:note||"",ts:d.toISOString().slice(0,16)});
+  sv("use",st.use);R();toast("🎫 "+amt+"분 사용 완료!");}
+function delUse(i){if(VIEW)return;st.use.splice(i,1);sv("use",st.use);R();}
+function showUseModal(){
+  const m=document.getElementById("useModal");
+  if(m)m.remove();
+  const div=document.createElement("div");div.id="useModal";
+  div.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px";
+  div.innerHTML=`<div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:340px;font-family:Nunito">
+    <h3 style="font-weight:800;color:#5A9BBF;margin:0 0 16px">🎫 쿠폰 사용하기</h3>
+    <p style="font-size:12px;color:#999;margin:0 0 12px">10분 단위 · 당일 획득분 사용 불가</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+      ${[10,20,30,60,90,120].map(v=>'<button style="padding:8px 14px;border-radius:10px;border:2px solid #E8F4F8;background:#fff;font-weight:700;font-size:13px;color:#5A9BBF;cursor:pointer;font-family:Nunito" onclick="addUse('+v+');document.getElementById(\'useModal\').remove()">'+v+'분</button>').join("")}
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px">
+      <input id="useCustom" type="number" placeholder="직접입력" style="flex:1;padding:10px;border:2px solid #E8F4F8;border-radius:10px;font-size:14px;font-family:Nunito">
+      <span style="font-size:13px;color:#999">분</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button style="flex:1;padding:12px;border-radius:12px;border:2px solid #E8F4F8;background:#fff;font-weight:700;cursor:pointer;font-family:Nunito;color:#999" onclick="document.getElementById('useModal').remove()">취소</button>
+      <button style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#7EB6D9,#8FBF9F);color:#fff;font-weight:800;cursor:pointer;font-family:Nunito" onclick="const v=+document.getElementById('useCustom').value;if(v>0&&v%10===0){addUse(v);document.getElementById('useModal').remove()}else if(v>0){toast('10분 단위로 입력해주세요')}">사용하기</button>
+    </div>
+  </div>`;
+  document.body.appendChild(div);
+  div.addEventListener("click",e=>{if(e.target===div)div.remove()});}
 function toast(msg){const d=document.createElement("div");d.className="toast";d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),2500)}
 
 function ci(l,v,rq,rw,pe,k,f){
@@ -173,7 +207,14 @@ if(s.tab==="dash"){
   <div class="card"><h3 class="ct">📊 필수 이행현황</h3>${ch}</div>
   <div class="card"><h3 class="ct">🔥 연속 보너스</h3><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="display:flex;gap:4px">${[1,2,3].map(v=>`<button style="width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;background:${s.sk.c>=v?"#F5D76E":"#F0F0F0"};color:${s.sk.c>=v?"#fff":"#ccc"}" onclick="${VIEW?"":`st.sk.c=${v===st.sk.c?0:v};sv('sk',st.sk);R()`}">${s.sk.c>=v?"🔥":v}</button>`).join("")}</div><div style="display:flex;align-items:center;gap:6px">${VIEW?`<span style="font-size:22px;font-weight:900;color:#5A9BBF">${s.sk.t}회</span>`:`<button class="mb" onclick="st.sk.t=Math.max(0,st.sk.t-1);sv('sk',st.sk);R()">−</button><span style="font-size:22px;font-weight:900;color:#5A9BBF">${s.sk.t}</span><button class="mb" onclick="st.sk.t++;sv('sk',st.sk);R()">+</button><span style="font-size:11px;color:#aaa">회</span>`}</div></div></div>
   <div class="card"><h3 class="ct">🎯 월 목표</h3><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div><p style="font-weight:700;font-size:13px">2자리×1자리 24문제 4분</p><p style="font-size:11px;color:#999;margin-top:3px">5/15 예정 · 90점↑</p></div>${VIEW?`<span class="badge">${s.gl==="pass"?"통과":s.gl==="fail"?"미통과":"대기"}</span>`:`<select onchange="st.gl=this.value;sv('gl',st.gl)"><option value="pending"${s.gl==="pending"?" selected":""}>대기</option><option value="pass"${s.gl==="pass"?" selected":""}>통과</option><option value="fail"${s.gl==="fail"?" selected":""}>미통과</option></select>`}</div></div>
-  ${VIEW?"":`<button class="exp-btn" onclick="doExport()">📊 데이터 내려받기 (CSV)</button>`}`;
+  <div class="card"><h3 class="ct">🎫 쿠폰 사용 내역</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+          <div><span style="font-size:13px;font-weight:600">총 사용: </span><span style="font-weight:900;color:#E8836B">${X.used}분</span></div>
+          ${VIEW?"":'<button style="padding:8px 16px;border-radius:10px;border:none;background:linear-gradient(135deg,#7EB6D9,#8FBF9F);color:#fff;font-weight:800;font-size:12px;cursor:pointer;font-family:Nunito" onclick="showUseModal()">+ 사용하기</button>'}
+        </div>
+        ${s.use.length===0?'<p style="font-size:12px;color:#ccc;text-align:center;padding:8px 0">아직 사용 내역이 없어요</p>':s.use.slice().reverse().map((u,i)=>'<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #f8f8f8"><div><span style="font-size:12px;color:#5A9BBF;font-weight:600">'+u.k.replace("-","/")+' </span><span style="font-size:12px;color:#E8836B;font-weight:700">-'+u.a+'분</span></div>'+(VIEW?'':'<button style="background:none;border:none;font-size:11px;color:#ccc;cursor:pointer" onclick="if(confirm(\'삭제할까요?\'))delUse('+(s.use.length-1-i)+')">✕</button>')+'</div>').join("")}
+      </div>
+      ${VIEW?"":'<button class="exp-btn" onclick="doExport()">📊 데이터 내려받기 (CSV)</button>'}`;
 }
 
 else if(s.tab==="today"){const sd=SC[tk];if(!sd)c=`<div style="text-align:center;margin-top:40px"><span style="font-size:48px">😴</span><p style="color:#999;margin-top:12px">${tm}월 ${td}일 (${dw})<br>오늘은 등록된 일정이 없어요</p></div>`;else{let tc=sd.tasks.map(t=>{const p=pt(t);return`<div class="tc"><span style="font-size:24px">${p.i}</span><div style="flex:1"><p style="font-weight:700;font-size:14px">${p.n}</p><p style="font-size:11px;color:#999;margin-top:2px">${p.c} · ${p.t}</p></div></div>`}).join("");const wk=gw();let wh=wk.map(w=>`<button class="wd${w.f?" ac":""}" onclick="st.vd='${w.k}';st.tab='chk';R()"><span style="font-size:10px">${w.dw}</span><span style="font-weight:900;font-size:16px">${w.dt}</span><span style="font-size:10px">${w.s?w.s.tasks.length+"개":"—"}</span></button>`).join("");c=`<div style="text-align:center;margin-bottom:16px"><span style="font-size:48px">📅</span><h2 style="font-weight:900;color:#5A9BBF;margin:4px 0">${tm}월 ${td}일 (${dw})</h2>${sd.note?`<span class="badge">${sd.note}</span>`:""}</div>${tc}<div class="card" style="margin-top:16px"><h3 class="ct">📅 이번 주</h3><div class="wr">${wh}</div></div>`}}

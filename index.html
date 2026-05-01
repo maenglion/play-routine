@@ -95,10 +95,20 @@ const VIEW=new URLSearchParams(location.search).has("view");
 const SC={"4-28":{dow:"월",tasks:["T2(40min)","T1(60min)","T11(40min)","기탄3장"]},"4-29":{dow:"화",tasks:["T4(40min)","T7(40min)","기탄3장"]},"4-30":{dow:"목",tasks:["T1(40min)","기탄3장"]},"5-1":{dow:"금",tasks:["T2(40min)","T1(100min)","기탄3장"]},"5-2":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-3":{dow:"일",tasks:["T10(40min)","T12(60min)","기탄3장"]},"5-4":{dow:"월",tasks:["T3(40min)","T6(40min)","기탄3장"]},"5-5":{dow:"화",tasks:["T10(40min)","T5(40min)","기탄3장"],note:"어린이날"},"5-6":{dow:"수",tasks:["T8(40min)","T10(40min)","기탄3장"]},"5-7":{dow:"목",tasks:["T3(40min)","T7(40min)","T11(40min)","기탄3장"]},"5-8":{dow:"금",tasks:["T4(40min)","T5(40min)","기탄3장"]},"5-9":{dow:"토",tasks:["T2(40min)","T1(60min)","T12(60min)","기탄3장"]},"5-10":{dow:"일",tasks:["T12(60min)","T1(60min)","기탄3장"]},"5-11":{dow:"월",tasks:["T3(40min)","T5(40min)","기탄3장"]},"5-12":{dow:"화",tasks:["T3(40min)","T12(60min)","T11(40min)","기탄3장"]},"5-13":{dow:"수",tasks:["T4(40min)","T1(60min)","기탄3장"]},"5-14":{dow:"목",tasks:["T4(40min)","T11(40min)","T11(40min)","기탄3장"]},"5-15":{dow:"금",tasks:["T3(40min)","T7(40min)","기탄3장"]},"5-16":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-17":{dow:"일",tasks:["T12(60min)","기탄3장"]},"5-18":{dow:"월",tasks:["T4(40min)","T1(60min)","기탄3장"]},"5-19":{dow:"화",tasks:["T2(90min)","T5(40min)","T11(40min)","기탄3장"]},"5-20":{dow:"수",tasks:["T3(40min)","T2(60min)","기탄3장"]},"5-21":{dow:"목",tasks:["T3(40min)","T1(60min)","T11(40min)","기탄3장"]},"5-22":{dow:"금",tasks:["T4(40min)","T8(40min)","기탄3장"]},"5-23":{dow:"토",tasks:["T2(60min)","T1(90min)","T12(60min)","기탄3장"]},"5-24":{dow:"일",tasks:["T7(40min)","T5(40min)","T12(60min)","기탄3장"]},"5-25":{dow:"월",tasks:["T4(40min)","T6(40min)","기탄3장"]},"5-26":{dow:"화",tasks:["T3(40min)","T2(40min)","T11(40min)","기탄3장"]},"5-27":{dow:"수",tasks:["T3(40min)","T8(40min)","기탄3장"]},"5-28":{dow:"목",tasks:["T2(40min)","T1(60min)","T11(40min)","기탄3장"]},"5-29":{dow:"금",tasks:["T4(40min)","T7(40min)","기탄3장"]},"5-30":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-31":{dow:"일",tasks:["T12(60min)","기탄3장"]}};
 
 // ═══ Google Sheet Live Sync ═══
-const SHEET_URL="https://docs.google.com/spreadsheets/d/e/2PACX-1vTuYyOFwB0hnt0gBo2gw6Mg77pV7mTwv5ck-09Mg86TnpC7NU33pPMjcSyvz5-aAg/pub?output=csv&sheet=5%EC%9B%94%20%EB%8B%AC%EB%A0%A5";
+const SHEET_ID="1ppeiipQZXdMObkb7oHHymnx5Y5c2BcoQ";
+const SHEET_URLS=[
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=5%EC%9B%94%20%EB%8B%AC%EB%A0%A5`,
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=2`,
+  `https://docs.google.com/spreadsheets/d/e/2PACX-1vTuYyOFwB0hnt0gBo2gw6Mg77pV7mTwv5ck-09Mg86TnpC7NU33pPMjcSyvz5-aAg/pub?output=csv&gid=2`
+];
 let sheetLoaded=false;
-function loadSheet(){
-  fetch(SHEET_URL).then(r=>{if(!r.ok)throw 0;return r.text()}).then(csv=>{
+async function loadSheet(){
+  for(const url of SHEET_URLS){
+    try{const r=await fetch(url);if(!r.ok)continue;const csv=await r.text();
+      if(!csv.includes("04/30")&&!csv.includes("05/01"))continue;
+      parseCSV(csv);return}catch(e){continue}}
+  console.log("📊 시트 연동 실패, 하드코딩 사용")}
+function parseCSV(csv){
     const rows=csv.split("\n").map(r=>{
       const cols=[];let cur="",inQ=false;
       for(let i=0;i<r.length;i++){const c=r[i];if(c==='"')inQ=!inQ;else if(c===","&&!inQ){cols.push(cur.trim());cur=""}else cur+=c}
@@ -115,8 +125,7 @@ function loadSheet(){
       SC[key]={dow,tasks,note:note.replace("아빠집 가는 날","아빠집")};
       updated=true;
     });
-    if(updated){sheetLoaded=true;console.log("📊 시트 연동 완료!");R()}
-  }).catch(e=>console.log("📊 시트 연동 실패, 하드코딩 사용",e))}
+    if(updated){sheetLoaded=true;console.log("📊 시트 연동 완료!");R()}}
 setTimeout(loadSheet,500);
 setInterval(loadSheet,300000); // 5분마다 갱신
 

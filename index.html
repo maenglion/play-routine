@@ -21,8 +21,6 @@ body{font-family:'Nunito',sans-serif;background:linear-gradient(180deg,#F7FBFE 0
 @keyframes scaleIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 .fade-in{animation:fadeIn .3s ease}
-
-/* Splash */
 .splash{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:linear-gradient(160deg,#E8F5E9 0%,#FFF8E1 50%,#F0F7F4 100%);padding:20px;text-align:center}
 .sp-logo{animation:scaleIn .7s cubic-bezier(.34,1.56,.64,1) .1s both}
 .sp-title{font-weight:900;font-size:26px;color:#5A9BBF;margin:20px 0 8px;animation:fadeUp .5s ease .5s both}
@@ -30,11 +28,7 @@ body{font-family:'Nunito',sans-serif;background:linear-gradient(180deg,#F7FBFE 0
 .sp-enter{margin-top:36px;padding:14px 52px;background:linear-gradient(135deg,#7EB6D9,#8FBF9F);color:#fff;border:none;border-radius:16px;font-size:15px;font-weight:800;cursor:pointer;font-family:'Nunito';animation:fadeUp .5s ease .9s both;box-shadow:0 4px 20px rgba(126,182,217,.25)}
 .sp-enter:active{transform:scale(.96)}
 .sp-ver{font-size:9px;color:#ccc;margin-top:20px;animation:fadeUp .5s ease 1.1s both}
-
-/* View-only banner */
 .view-banner{background:#FFF8E1;color:#D4A843;text-align:center;padding:8px;font-size:12px;font-weight:700}
-
-/* Header */
 header{background:linear-gradient(135deg,#7EB6D9,#8FBF9F);color:#fff;padding:14px 18px;border-radius:0 0 20px 20px}
 .h-top{display:flex;justify-content:space-between;align-items:center}
 .h-left{display:flex;align-items:center;gap:16px}
@@ -42,13 +36,10 @@ header{background:linear-gradient(135deg,#7EB6D9,#8FBF9F);color:#fff;padding:14p
 .h-date{font-size:12px;opacity:.85;margin-top:2px}
 .h-btns{display:flex;gap:6px}
 .h-btn{background:rgba(255,255,255,.2);border:none;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:14px}
-
-/* Nav */
 nav{display:flex;background:#fff;border-bottom:1px solid #f0f0f0;position:sticky;top:0;z-index:10}
 nav button{flex:1;padding:10px 0;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;border-bottom:2px solid transparent;font-family:'Nunito'}
 nav button.on{border-bottom-color:#7EB6D9;background:#F7FBFE}
 nav .ic{font-size:18px}nav .lb{font-size:10px;font-weight:700;color:#888}
-
 main{padding:16px}
 .kr{display:flex;gap:8px;margin-bottom:8px}
 .kpi{flex:1;background:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
@@ -88,18 +79,16 @@ select{padding:8px 12px;border-radius:10px;border:2px solid #E8F4F8;font-size:12
 <body>
 <div class="app" id="app"></div>
 <script>
-// ── VIEW MODE ──
 const VIEW=new URLSearchParams(location.search).has("view");
-
-// ── SCHEDULE ──
 const SC={"4-28":{dow:"월",tasks:["T2(40min)","T1(60min)","T11(40min)","기탄3장"]},"4-29":{dow:"화",tasks:["T4(40min)","T7(40min)","기탄3장"]},"4-30":{dow:"목",tasks:["T1(40min)","기탄3장"]},"5-1":{dow:"금",tasks:["T2(40min)","T1(100min)","기탄3장"]},"5-2":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-3":{dow:"일",tasks:["T10(40min)","T12(60min)","기탄3장"]},"5-4":{dow:"월",tasks:["T3(40min)","T6(40min)","기탄3장"]},"5-5":{dow:"화",tasks:["T10(40min)","T5(40min)","기탄3장"],note:"어린이날"},"5-6":{dow:"수",tasks:["T8(40min)","T10(40min)","기탄3장"]},"5-7":{dow:"목",tasks:["T3(40min)","T7(40min)","T11(40min)","기탄3장"]},"5-8":{dow:"금",tasks:["T4(40min)","T5(40min)","기탄3장"]},"5-9":{dow:"토",tasks:["T2(40min)","T1(60min)","T12(60min)","기탄3장"]},"5-10":{dow:"일",tasks:["T12(60min)","T1(60min)","기탄3장"]},"5-11":{dow:"월",tasks:["T3(40min)","T5(40min)","기탄3장"]},"5-12":{dow:"화",tasks:["T3(40min)","T12(60min)","T11(40min)","기탄3장"]},"5-13":{dow:"수",tasks:["T4(40min)","T1(60min)","기탄3장"]},"5-14":{dow:"목",tasks:["T4(40min)","T11(40min)","T11(40min)","기탄3장"]},"5-15":{dow:"금",tasks:["T3(40min)","T7(40min)","기탄3장"]},"5-16":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-17":{dow:"일",tasks:["T12(60min)","기탄3장"]},"5-18":{dow:"월",tasks:["T4(40min)","T1(60min)","기탄3장"]},"5-19":{dow:"화",tasks:["T2(90min)","T5(40min)","T11(40min)","기탄3장"]},"5-20":{dow:"수",tasks:["T3(40min)","T2(60min)","기탄3장"]},"5-21":{dow:"목",tasks:["T3(40min)","T1(60min)","T11(40min)","기탄3장"]},"5-22":{dow:"금",tasks:["T4(40min)","T8(40min)","기탄3장"]},"5-23":{dow:"토",tasks:["T2(60min)","T1(90min)","T12(60min)","기탄3장"]},"5-24":{dow:"일",tasks:["T7(40min)","T5(40min)","T12(60min)","기탄3장"]},"5-25":{dow:"월",tasks:["T4(40min)","T6(40min)","기탄3장"]},"5-26":{dow:"화",tasks:["T3(40min)","T2(40min)","T11(40min)","기탄3장"]},"5-27":{dow:"수",tasks:["T3(40min)","T8(40min)","기탄3장"]},"5-28":{dow:"목",tasks:["T2(40min)","T1(60min)","T11(40min)","기탄3장"]},"5-29":{dow:"금",tasks:["T4(40min)","T7(40min)","기탄3장"]},"5-30":{dow:"토",tasks:["기탄3장"],note:"아빠집"},"5-31":{dow:"일",tasks:["T12(60min)","기탄3장"]}};
 
 // ═══ Google Sheet Live Sync ═══
 const SHEET_ID="1ucLwo5RfIvYoQDCOGzHZsdl5hr9JqigAZnseiuvn2Jw";
+const SHEET_PUB="2PACX-1vTKjhomMKQaHmCI9hcy_XcoG1tQuiaPLCSjqQhCS5T8VKGWAEOzhnR6rvImUGn_FTyGD_0AxIiYhhzq";
 const SHEET_URLS=[
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=5%EC%9B%94%20%EB%8B%AC%EB%A0%A5`,
-  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=2`,
-  `https://docs.google.com/spreadsheets/d/e/2PACX-1vTKjhomMKQaHmCI9hcy_XcoG1tQuiaPLCSjqQhCS5T8VKGWAEOzhnR6rvImUGn_FTyGD_0AxIiYhhzq/pub?output=csv&gid=2`
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=5%EC%9B%94+%EB%8B%AC%EB%A0%A5`,
+  `https://docs.google.com/spreadsheets/d/e/${SHEET_PUB}/pub?gid=1620806383&single=true&output=csv`,
+  `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=1620806383`
 ];
 let sheetLoaded=false;
 async function loadSheet(){
@@ -107,7 +96,7 @@ async function loadSheet(){
     try{const r=await fetch(url);if(!r.ok)continue;const csv=await r.text();
       if(!csv.includes("04/30")&&!csv.includes("05/01"))continue;
       parseCSV(csv);return}catch(e){continue}}
-  console.log("📊 시트 연동 실패, 하드코딩 사용")}
+  console.log("시트 연동 실패, 하드코딩 사용")}
 function parseCSV(csv){
     const rows=csv.split("\n").map(r=>{
       const cols=[];let cur="",inQ=false;
@@ -125,9 +114,11 @@ function parseCSV(csv){
       SC[key]={dow,tasks,note:note.replace("아빠집 가는 날","아빠집")};
       updated=true;
     });
-    if(updated){sheetLoaded=true;console.log("📊 시트 연동 완료!");R()}}
+    if(updated){sheetLoaded=true;console.log("시트 연동 완료!");R()}}
 setTimeout(loadSheet,500);
-setInterval(loadSheet,300000); // 5분마다 갱신
+setInterval(loadSheet,300000);
+
+const SHEET_EDIT="https://docs.google.com/spreadsheets/d/1ucLwo5RfIvYoQDCOGzHZsdl5hr9JqigAZnseiuvn2Jw/edit";
 
 const TN={T1:"영재원 과제",T2:"영재원 개념잡기",T3:"디딤돌 라이트",T4:"응용심화수학",T5:"1031 수/연산",T6:"1031 여러가지문제",T7:"1031 규칙/논리",T8:"1031 도형/측정",T9:"기탄수학",T10:"바이올린",T11:"기타 활동",T12:"명심보감"};
 const TI={T1:"🧩",T2:"🧩",T3:"📐",T4:"📐",T5:"🔢",T6:"🔢",T7:"🔢",T8:"🔢",T9:"✏️",T10:"🎻",T11:"📌",T12:"📖"};
@@ -242,7 +233,7 @@ if(s.tab==="dash"){
   ${X.net<60?'<div class="warn">⚠️ 보상이 부족해요!</div>':""}
   <div class="card"><h3 class="ct">📊 필수 이행현황</h3>${ch}</div>
   <div class="card"><h3 class="ct">🔥 연속 보너스</h3><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><div style="display:flex;gap:4px">${[1,2,3].map(v=>`<button style="width:34px;height:34px;border-radius:50%;border:none;cursor:pointer;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;background:${s.sk.c>=v?"#F5D76E":"#F0F0F0"};color:${s.sk.c>=v?"#fff":"#ccc"}" onclick="${VIEW?"":`st.sk.c=${v===st.sk.c?0:v};sv('sk',st.sk);R()`}">${s.sk.c>=v?"🔥":v}</button>`).join("")}</div><div style="display:flex;align-items:center;gap:6px">${VIEW?`<span style="font-size:22px;font-weight:900;color:#5A9BBF">${s.sk.t}회</span>`:`<button class="mb" onclick="st.sk.t=Math.max(0,st.sk.t-1);sv('sk',st.sk);R()">−</button><span style="font-size:22px;font-weight:900;color:#5A9BBF">${s.sk.t}</span><button class="mb" onclick="st.sk.t++;sv('sk',st.sk);R()">+</button><span style="font-size:11px;color:#aaa">회</span>`}</div></div></div>
-  <div class="card"><h3 class="ct">🎯 월 목표</h3><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div><p style="font-weight:700;font-size:13px">1차: 24문제 5분 (5/15)</p><p style="font-size:11px;color:#6FA88F;margin-top:2px">+300분 +15,000원 / 미달 -200분</p><p style="font-weight:700;font-size:13px;margin-top:6px">2차: 48문제 8분 (5/30)</p><p style="font-size:11px;color:#6FA88F;margin-top:2px">+600분 +30,000원 / 미달 -400분</p></div>${VIEW?`<span class="badge">${s.gl==="pass"?"통과":s.gl==="fail"?"미통과":"대기"}</span>`:`<select onchange="st.gl=this.value;sv('gl',st.gl)"><option value="pending"${s.gl==="pending"?" selected":""}>대기</option><option value="pass1"${s.gl==="pass1"?" selected":""}>1차통과</option><option value="pass2"${s.gl==="pass2"?" selected":""}>2차통과</option><option value="fail"${s.gl==="fail"?" selected":""}>미통과</option></select>`}</div></div>
+  <div class="card"><h3 class="ct">🎯 월 목표</h3><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div><p style="font-weight:700;font-size:13px">1차: 24문제 5분 (5/15)</p><p style="font-size:11px;color:#6FA88F;margin-top:2px">+300분 +15,000원 / 미달 -200분</p><p style="font-weight:700;font-size:13px;margin-top:6px">2차: 48문제 8분 (5/30)</p><p style="font-size:11px;color:#6FA88F;margin-top:2px">+600분 +30,000원 / 미달 -400분</p></div>${VIEW?`<span class="badge">${s.gl==="pass1"?"1차통과":s.gl==="pass2"?"2차통과":s.gl==="fail"?"미통과":"대기"}</span>`:`<select onchange="st.gl=this.value;sv('gl',st.gl)"><option value="pending"${s.gl==="pending"?" selected":""}>대기</option><option value="pass1"${s.gl==="pass1"?" selected":""}>1차통과</option><option value="pass2"${s.gl==="pass2"?" selected":""}>2차통과</option><option value="fail"${s.gl==="fail"?" selected":""}>미통과</option></select>`}</div></div>
   <div class="card"><h3 class="ct">🎫 쿠폰 사용 내역</h3>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
           <div><span style="font-size:13px;font-weight:600">총 사용: </span><span style="font-weight:900;color:#E8836B">${X.used}분</span></div>
@@ -255,8 +246,8 @@ if(s.tab==="dash"){
 
 else if(s.tab==="today"){const sd=SC[tk];if(!sd)c=`<div style="text-align:center;margin-top:40px"><span style="font-size:48px">😴</span><p style="color:#999;margin-top:12px">${tm}월 ${td}일 (${dw})<br>오늘은 등록된 일정이 없어요</p></div>`;else{let tc=sd.tasks.map(t=>{const p=pt(t);return`<div class="tc"><span style="font-size:24px">${p.i}</span><div style="flex:1"><p style="font-weight:700;font-size:14px">${p.n}</p><p style="font-size:11px;color:#999;margin-top:2px">${p.c} · ${p.t}</p></div></div>`}).join("");const wk=gw();let wh=wk.map(w=>`<button class="wd${w.f?" ac":""}" onclick="st.vd='${w.k}';st.tab='chk';R()"><span style="font-size:10px">${w.dw}</span><span style="font-weight:900;font-size:16px">${w.dt}</span><span style="font-size:10px">${w.s?w.s.tasks.length+"개":"—"}</span></button>`).join("");c=`<div style="text-align:center;margin-bottom:16px"><span style="font-size:48px">📅</span><h2 style="font-weight:900;color:#5A9BBF;margin:4px 0">${tm}월 ${td}일 (${dw})</h2>${sd.note?`<span class="badge">${sd.note}</span>`:""}</div>${tc}<div class="card" style="margin-top:16px"><h3 class="ct">📅 이번 주</h3><div class="wr">${wh}</div></div>`}}
 
-else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p=s.vd.split("-");let tl="";if(sc)tl=sc.tasks.map(t=>{const x=pt(t);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5"><span>${x.i}</span><span style="font-size:13px">${x.n}</span><span style="font-size:11px;color:#aaa;margin-left:auto">${x.t}</span></div>`}).join("");let rh=RW.map(r=>ci(r.n,dd[r.f],r.r,r.m?`+${r.m.toLocaleString()}원`:`+${r.t}분`,0,s.vd,r.f)).join("");let ph=PN.map(q=>ci(q.n,dd[q.f],0,q.t===-9999?"전액몰수":`${q.t}분`,1,s.vd,q.f)).join("");c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{let cl="";for(let d=1;d<=31;d++){const k="5-"+d;const dd=s.d[k]||{};const ck=Object.values(dd).filter(v=>v==="O").length;const sc=SC[k];const we=sc?.dow==="토"||sc?.dow==="일";const it=tm===5&&td===d;cl+=`<button class="cc${it?" td":we?" we":""}" onclick="st.vd='${k}';R()"><span style="font-weight:900;font-size:13px">${d}</span>${ck>0?`<span style="font-size:8px;background:${it?"rgba(255,255,255,.3)":"#D5F5E3"};color:${it?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${ck}✓</span>`:""}</button>`}// Apr 30 cell
-    const a30=st.d["4-30"]||{};const a30c=Object.values(a30).filter(v=>v==="O").length;const a30td=_tm===4&&_td===30;
+else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p=s.vd.split("-");let tl="";if(sc)tl=sc.tasks.map(t=>{const x=pt(t);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5"><span>${x.i}</span><span style="font-size:13px">${x.n}</span><span style="font-size:11px;color:#aaa;margin-left:auto">${x.t}</span></div>`}).join("");let rh=RW.map(r=>ci(r.n,dd[r.f],r.r,r.m?`+${r.m.toLocaleString()}원`:`+${r.t}분`,0,s.vd,r.f)).join("");let ph=PN.map(q=>ci(q.n,dd[q.f],0,q.t===-9999?"전액몰수":`${q.t}분`,1,s.vd,q.f)).join("");c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{let cl="";for(let d=1;d<=31;d++){const k="5-"+d;const dd=s.d[k]||{};const ck=Object.values(dd).filter(v=>v==="O").length;const sc=SC[k];const we=sc?.dow==="토"||sc?.dow==="일";const it=tm===5&&td===d;cl+=`<button class="cc${it?" td":we?" we":""}" onclick="st.vd='${k}';R()"><span style="font-weight:900;font-size:13px">${d}</span>${ck>0?`<span style="font-size:8px;background:${it?"rgba(255,255,255,.3)":"#D5F5E3"};color:${it?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${ck}✓</span>`:""}</button>`}
+    const a30=st.d["4-30"]||{};const a30c=Object.values(a30).filter(v=>v==="O").length;const a30td=_tm()===4&&_td()===30;
     const a30h=`<button class="cc${a30td?" td":""}" onclick="st.vd='4-30';R()" style="${a30td?"":"background:#E8F4F8"}"><span style="font-weight:900;font-size:11px;color:${a30td?"#fff":"#7EB6D9"}">4/30</span>${a30c>0?`<span style="font-size:8px;background:${a30td?"rgba(255,255,255,.3)":"#D5F5E3"};color:${a30td?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${a30c}✓</span>`:""}</button>`;
     c=`<h2 style="font-weight:900;color:#5A9BBF;margin:0 0 12px">✅ 5월 체크 <span class="ml">${tm}월 ${td}일</span></h2><div class="cg">${["일","월","화","수","목","금","토"].map(d=>`<div class="ch">${d}</div>`).join("")}${"<div></div>".repeat(3)}${a30h}${cl}</div>`}}
 
@@ -266,7 +257,7 @@ a.innerHTML=`
   ${VIEW?'<div class="view-banner">👀 보기 모드 — 수정할 수 없어요</div>':""}
   <header>
     <div class="h-top">
-      <div class="h-left">${VIEW?LG(36):`<a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTKjhomMKQaHmCI9hcy_XcoG1tQuiaPLCSjqQhCS5T8VKGWAEOzhnR6rvImUGn_FTyGD_0AxIiYhhzq/pubhtml">${LG(36)}</a>`}<div><div class="h-name">민후</div><div class="h-date">${tm}월 ${td}일 ${dw}요일</div></div></div>
+      <div class="h-left">${VIEW?LG(36):`<a href="${SHEET_EDIT}" target="_blank" style="text-decoration:none">${LG(36)}</a>`}<div><div class="h-name">민후</div><div class="h-date">${tm}월 ${td}일 ${dw}요일</div></div></div>
       <div class="h-btns">
         ${VIEW?"":`<button class="h-btn" onclick="doShare()" title="공유">🔗</button>`}
         <button class="h-btn" onclick="st.ph='splash';R()">🔒</button>

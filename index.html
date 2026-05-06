@@ -148,7 +148,7 @@ const TI={T1:"🧩",T2:"🧩",T3:"📐",T4:"📐",T5:"🔢",T6:"🔢",T7:"🔢",
 const RW=[{n:"매일 공부 완료",t:60,r:1,f:"study"},{n:"숙제/유인물 챙기기",t:40,r:1,f:"hw"},{n:"명심보감 토론",t:60,r:0,f:"read"},{n:"학교 수학 100점",t:60,r:0,f:"math"},{n:"응용심화 80점↑",t:90,r:0,f:"adv"},{n:"방정리",t:0,m:5000,r:0,f:"room"},{n:"화장실 청소",t:30,r:0,f:"wc"},{n:"고양이 화장실",t:20,r:0,f:"cat"},{n:"9시반 취침",t:30,r:1,f:"bed"}];
 const PN=[{n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},{n:"공부량 미달",t:-80,f:"stF"},{n:"아침약 미복용",t:-180,f:"med"},{n:"밤10시 미취침",t:-90,f:"late"},{n:"토론 준비 미흡",t:-90,f:"rdF"},{n:"거짓말/약속위반",t:-9999,f:"lie"},{n:"학교시간 미준수",t:-30,f:"ltS"},{n:"저녁약 미복용(8시전)",t:-60,f:"dinM"}];
 const BAL=40;
-const LIE_SENTINEL=-9999; // 거짓말/약속위반 패널티 마커 — 합산되지 않고 lieChecked 플래그로 처리됨
+const LIE_SENTINEL=-9999; // 거짓말/약속위반 패널티 마커 — 클릭 시 1회성 wipe 이벤트로 처리(applyLieWipe)
 const LG=s=>`<img src="icon-512.png" width="${s}" height="${s}" style="border-radius:${Math.round(s*0.22)}px">`;
 
 let st={ph:"splash",tab:"dash",d:{},sk:{c:0,t:0},gl:"pending",vd:null,or:"rw"};
@@ -157,7 +157,22 @@ function sv(k,v){try{localStorage.setItem("pr_"+k,JSON.stringify(v))}catch{}}
 st.d=ld("d",{});st.sk=ld("sk",{c:0,t:0});st.gl=ld("gl","pending");
 st.use=ld("use",[]);
 specialBonus=ld("spBonus",0);
-let adjust=ld("adj",0); // ★ 잔고 보정값
+let adjust=ld("adj",0); // ★ 잔고 보정값 (부모 수동 조정)
+let wipe=ld("wipe",0); // ★ 거짓말 누적 몰수 (1회성 이벤트의 합)
+let wipeLog=ld("wipeLog",[]); // 몰수 이벤트 기록 [{date,amount,ts}]
+
+// v2.0 마이그레이션: 기존 거짓말 O 표시는 1회성 이벤트로 바뀌었으므로 자동 정리
+(function migrateLie(){
+  let cleared=0;
+  Object.keys(st.d).forEach(k=>{
+    const dd=st.d[k];
+    PN.forEach(p=>{if(p.t===LIE_SENTINEL&&dd[p.f]==="O"){delete dd[p.f];cleared++}});
+  });
+  if(cleared>0){
+    sv("d",st.d);
+    setTimeout(()=>toast("⚙️ 거짓말 패널티가 1회성으로 변경됨 — 잔고 확인 후 [잔고 조정] 사용"),1200);
+  }
+})();
 
 function _tk(){const d=new Date();return(d.getMonth()+1)+"-"+d.getDate()}
 function _tm(){return new Date().getMonth()+1}
@@ -165,32 +180,49 @@ function _td(){return new Date().getDate()}
 function _dw(){return["일","월","화","수","목","금","토"][new Date().getDay()]}
 function pt(t){if(t.startsWith("기탄"))return{c:"T9",n:"기탄수학",t:"3장",i:"✏️"};const m=t.match(/^(T\d+)\((.+)\)$/);return m?{c:m[1],n:TN[m[1]]||m[1],t:m[2],i:TI[m[1]]||"📌"}:{c:"",n:t,t:"",i:"📌"}}
 
-// 잔고 계산: O/X 기록과 보너스/사용분/조정값을 종합해서 net(남은 보상)을 산출
-// 거짓말 패널티가 체크된 날이 하나라도 있으면 → 자동 적립분 전액 몰수, net은 adjust만 반영
+// 잔고 계산: 자동 적립(리워드+이월+보너스) + 부모 조정(adjust) - 패널티 - 사용분 - 거짓말몰수(wipe)
+// 거짓말 패널티는 1회성 이벤트라 cs() 자체에는 분기 없음 (applyLieWipe()에서 wipe로 누적)
 function cs(){
-  let tr=0,tp_other=0,tm=0;const cp={};RW.filter(r=>r.r).forEach(r=>cp[r.f]={d:0,t:0});
-  let lieChecked=false;
+  let tr=0,tp=0,tm=0;const cp={};RW.filter(r=>r.r).forEach(r=>cp[r.f]={d:0,t:0});
   Object.keys(st.d).forEach(k=>{const dd=st.d[k];
     RW.forEach(r=>{if(dd[r.f]==="O"){tr+=r.t||0;tm+=(r.m||0)}if(r.r&&cp[r.f]){if(dd[r.f]==="O"||dd[r.f]==="X")cp[r.f].t++;if(dd[r.f]==="O")cp[r.f].d++}});
-    const sc=dd.as;if(typeof sc==="number"&&sc>=80)tr+=90;if(typeof sc==="number"&&sc<50)tp_other+=60;
-    PN.forEach(p=>{if(dd[p.f]==="O"){if(p.t===LIE_SENTINEL)lieChecked=true;else tp_other+=Math.abs(p.t)}})});
+    const sc=dd.as;if(typeof sc==="number"&&sc>=80)tr+=90;if(typeof sc==="number"&&sc<50)tp+=60;
+    PN.forEach(p=>{if(dd[p.f]==="O"&&p.t!==LIE_SENTINEL)tp+=Math.abs(p.t)})}); // 거짓말은 wipe로 처리되므로 여기서 제외
   const totalRewards=tr+st.sk.t*60;
   const used=st.use.reduce((a,u)=>a+u.a,0);
-  const earnedBase=totalRewards+BAL+specialBonus; // 자동으로 쌓인 보상 (이월+리워드+보너스, adjust 제외)
-  let tp,net;
-  if(lieChecked){
-    // 거짓말 ON: 쌓인 보상 전액 몰수. tp는 표시용 몰수액(쿠폰 이미 쓴 만큼은 제외).
-    // 다른 패널티들은 거짓말에 흡수되어 별도 합산되지 않음.
-    tp=Math.max(0,earnedBase-used);
-    net=adjust; // 조정값만 살아남음
-  }else{
-    tp=tp_other;
-    net=earnedBase+adjust-tp-used;
-  }
-  return{tr:totalRewards,tp,tm,net,cp,used,adjust,lieChecked}}
+  const earnedBase=totalRewards+BAL+specialBonus;
+  const net=earnedBase+adjust-tp-used-wipe;
+  return{tr:totalRewards,tp,tm,net,cp,used,adjust,wipe}}
 
-function tg(k,f){if(VIEW)return;const dd=st.d[k]||{};const v=dd[f];dd[f]=v==="O"?"X":v==="X"?undefined:"O";if(!dd[f])delete dd[f];st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")}
+function tg(k,f){
+  if(VIEW)return;
+  // 거짓말은 1회성 이벤트 — 토글 대신 몰수 모달
+  const pn=PN.find(p=>p.f===f);
+  if(pn&&pn.t===LIE_SENTINEL){applyLieWipe(k);return}
+  // 일반 토글
+  const dd=st.d[k]||{};const v=dd[f];dd[f]=v==="O"?"X":v==="X"?undefined:"O";
+  if(!dd[f])delete dd[f];st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")
+}
 function ss(k,v){if(VIEW)return;const dd=st.d[k]||{};dd.as=v;st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")}
+
+// ★ 거짓말 1회성 몰수 — 클릭 시점의 잔고를 wipe에 누적, O/X 기록은 남기지 않음
+function applyLieWipe(k){
+  if(VIEW)return;
+  const X=cs();const cur=X.net;
+  const msg=cur>0
+    ?`🚫 거짓말 몰수 적용?\n\n현재 남은 보상: ${cur}분\n→ 즉시 0분으로 몰수\n\n이후 받는 리워드는 정상 누적됩니다.`
+    :`현재 남은 보상이 ${cur}분이에요.\n그래도 거짓말 몰수를 적용할까요?\n(잔고가 0으로 맞춰집니다)`;
+  if(!confirm(msg))return;
+  wipe+=cur;
+  wipeLog.push({date:k,amount:cur,ts:new Date().toISOString().slice(0,16)});
+  sv("wipe",wipe);sv("wipeLog",wipeLog);R();
+  toast("🚫 -"+cur+"분 몰수 적용");
+}
+function clearWipe(){
+  if(VIEW)return;
+  if(!confirm(`거짓말 누적 몰수 -${wipe}분을 모두 해제할까요?\n(잔고가 ${wipe}분 회복됩니다)`))return;
+  wipe=0;wipeLog=[];sv("wipe",0);sv("wipeLog",[]);R();toast("🔄 몰수 해제");
+}
 
 // ★ 잔고 보정 함수
 function setBalance(target){
@@ -214,7 +246,7 @@ function doShare(){
   navigator.clipboard.writeText(url).then(()=>toast("📋 보기전용 링크가 복사되었어요!")).catch(()=>{prompt("이 링크를 복사하세요:",url)})}
 
 function doSync(){
-  const data={d:st.d,sk:st.sk,gl:st.gl,use:st.use,adj:adjust};
+  const data={d:st.d,sk:st.sk,gl:st.gl,use:st.use,adj:adjust,wipe,wipeLog};
   const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   const syncUrl=location.origin+location.pathname+"?sync="+encoded;
   navigator.clipboard.writeText(syncUrl).then(()=>toast("📋 동기화 링크 복사! 아이 폰에서 열면 데이터 동기화됩니다")).catch(()=>{prompt("이 링크를 아이 폰에서 열어주세요:",syncUrl)})}
@@ -230,6 +262,8 @@ function checkSync(){
       if(json.gl){st.gl=json.gl;sv("gl",st.gl)}
       if(json.use){st.use=json.use;sv("use",st.use)}
       if(typeof json.adj==="number"){adjust=json.adj;sv("adj",adjust)}
+      if(typeof json.wipe==="number"){wipe=json.wipe;sv("wipe",wipe)}
+      if(Array.isArray(json.wipeLog)){wipeLog=json.wipeLog;sv("wipeLog",wipeLog)}
       history.replaceState(null,"",location.pathname);
       toast("✅ 데이터 동기화 완료!");
     }catch(e){console.log("sync parse error",e)}}}
@@ -241,10 +275,14 @@ function doExport(){
   allKeys.forEach(k=>{const dd=st.d[k];let row=k.replace("-","월")+"일";
     RW.forEach(r=>row+=","+(dd[r.f]||""));row+=","+(dd.as??"");
     PN.forEach(p=>row+=","+(dd[p.f]||""));csv+=row+"\n"});
-  csv+="\n연속보너스횟수,"+st.sk.t+"\n누적초기잔고,"+BAL+"\n특별이벤트보너스,"+specialBonus+"\n잔고조정,"+adjust+"\n";
+  csv+="\n연속보너스횟수,"+st.sk.t+"\n누적초기잔고,"+BAL+"\n특별이벤트보너스,"+specialBonus+"\n잔고조정,"+adjust+"\n거짓말누적몰수,"+wipe+"\n";
   csv+="\n쿠폰사용기록\n날짜,사용량(분),시간\n";
   st.use.forEach(u=>csv+=u.k.replace("-","월")+"일,"+u.a+"분,"+u.ts+"\n");
   csv+="총사용,"+st.use.reduce((a,u)=>a+u.a,0)+"분\n";
+  if(wipeLog.length>0){
+    csv+="\n거짓말몰수기록\n날짜,몰수액(분),시간\n";
+    wipeLog.forEach(w=>csv+=w.date.replace("-","월")+"일,"+w.amount+"분,"+w.ts+"\n");
+  }
   const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
   a.download="PlayRoutine_데이터_"+new Date().toISOString().slice(0,10)+".csv";a.click();
@@ -276,7 +314,7 @@ function gw(){const days=[];const now=new Date();for(let i=0;i<7;i++){const d=ne
 
 function R(){
 const a=document.getElementById("app"),s=st,tk=_tk(),tm=_tm(),td=_td(),dw=_dw();
-if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v1.4</div></div>`;return}
+if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v2.0</div></div>`;return}
 const X=cs();let c="";
 const tabs=[{id:"dash",ic:"📊",lb:"대시보드"},{id:"today",ic:"📅",lb:"오늘할일"},{id:"chk",ic:"✅",lb:"체크"},{id:"rules",ic:"📖",lb:"규칙"}];
 
@@ -287,7 +325,7 @@ if(s.tab==="dash"){
   c=`<div class="kr"><div class="kpi" style="border-top:3px solid #7EB6D9"><span class="kl">⏰ 남은 보상</span><span class="kv" style="color:#5A9BBF">${X.net}분</span><span class="ks">${(X.net/60).toFixed(1)}시간</span></div><div class="kpi" style="border-top:3px solid #8FBF9F"><span class="kl">✅ 리워드</span><span class="kv" style="color:#6FA88F">${X.tr}분</span></div><div class="kpi" style="border-top:3px solid #E8836B"><span class="kl">❌ 패널티</span><span class="kv" style="color:#E8836B">-${X.tp}분</span></div></div>
   <div class="kr"><div class="kpi" style="border-top:3px solid #F5D76E"><span class="kl">💰 금액</span><span class="kv" style="color:#D4A843">${X.tm.toLocaleString()}원</span></div><div class="kpi" style="border-top:3px solid #C9A0DC"><span class="kl">🔥 3일보너스</span><span class="kv" style="color:#A77BBF">${s.sk.t}회</span><span class="ks">+${s.sk.t*60}분</span></div></div>
   ${specialBonus>0?`<div style="background:#E8F5E9;color:#6FA88F;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">🎁 특별이벤트 +${specialBonus}분 반영됨 (이월${BAL}분 포함)</div>`:""}
-  ${X.lieChecked?`<div style="background:#FFF0ED;color:#E8836B;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">🚫 거짓말 패널티 적용 중 — 쌓인 보상 ${X.tp}분 전액 몰수</div>`:""}
+  ${X.wipe>0?`<div style="background:#FFF0ED;color:#E8836B;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">🚫 거짓말 누적 몰수: -${X.wipe}분 ${VIEW?"":`<button onclick="clearWipe()" style="background:none;border:none;color:#E8836B;font-size:11px;text-decoration:underline;cursor:pointer;font-family:Nunito;margin-left:4px">해제</button>`}</div>`:""}
   ${adjust!==0?`<div style="background:#FFF8E1;color:#D4A843;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">🔧 잔고 보정 ${adjust>0?"+":""}${adjust}분 적용 중 ${VIEW?"":`<button onclick="clearAdjust()" style="background:none;border:none;color:#D4A843;font-size:11px;text-decoration:underline;cursor:pointer;font-family:Nunito;margin-left:4px">해제</button>`}</div>`:""}
   ${X.net<60?'<div class="warn">⚠️ 보상이 부족해요!</div>':""}
   <div class="card"><h3 class="ct">📊 필수 이행현황</h3>${ch}</div>
@@ -311,12 +349,18 @@ if(s.tab==="dash"){
 
 else if(s.tab==="today"){const sd=SC[tk];if(!sd)c=`<div style="text-align:center;margin-top:40px"><span style="font-size:48px">😴</span><p style="color:#999;margin-top:12px">${tm}월 ${td}일 (${dw})<br>오늘은 등록된 일정이 없어요</p></div>`;else{let tc=sd.tasks.map(t=>{const p=pt(t);return`<div class="tc"><span style="font-size:24px">${p.i}</span><div style="flex:1"><p style="font-weight:700;font-size:14px">${p.n}</p><p style="font-size:11px;color:#999;margin-top:2px">${p.c} · ${p.t}</p></div></div>`}).join("");const wk=gw();let wh=wk.map(w=>`<button class="wd${w.f?" ac":""}" onclick="st.vd='${w.k}';st.tab='chk';R()"><span style="font-size:10px">${w.dw}</span><span style="font-weight:900;font-size:16px">${w.dt}</span><span style="font-size:10px">${w.s?w.s.tasks.length+"개":"—"}</span></button>`).join("");c=`<div style="text-align:center;margin-bottom:16px"><span style="font-size:48px">📅</span><h2 style="font-weight:900;color:#5A9BBF;margin:4px 0">${tm}월 ${td}일 (${dw})</h2>${sd.note?`<span class="badge">${sd.note}</span>`:""}</div>${tc}<div class="card" style="margin-top:16px"><h3 class="ct">📅 이번 주</h3><div class="wr">${wh}</div></div>`}}
 
-else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p=s.vd.split("-");let tl="";if(sc)tl=sc.tasks.map(t=>{const x=pt(t);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5"><span>${x.i}</span><span style="font-size:13px">${x.n}</span><span style="font-size:11px;color:#aaa;margin-left:auto">${x.t}</span></div>`}).join("");let rh=RW.map(r=>ci(r.n,dd[r.f],r.r,r.m?`+${r.m.toLocaleString()}원`:`+${r.t}분`,0,s.vd,r.f)).join("");let ph=PN.map(q=>ci(q.n,dd[q.f],0,q.t===LIE_SENTINEL?"전액몰수":`${q.t}분`,1,s.vd,q.f)).join("");c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{let cl="";for(let d=1;d<=31;d++){const k="5-"+d;const dd=s.d[k]||{};const ck=Object.values(dd).filter(v=>v==="O").length;const sc=SC[k];const we=sc?.dow==="토"||sc?.dow==="일";const it=tm===5&&td===d;cl+=`<button class="cc${it?" td":we?" we":""}" onclick="st.vd='${k}';R()"><span style="font-weight:900;font-size:13px">${d}</span>${ck>0?`<span style="font-size:8px;background:${it?"rgba(255,255,255,.3)":"#D5F5E3"};color:${it?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${ck}✓</span>`:""}</button>`}
+else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p=s.vd.split("-");let tl="";if(sc)tl=sc.tasks.map(t=>{const x=pt(t);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5"><span>${x.i}</span><span style="font-size:13px">${x.n}</span><span style="font-size:11px;color:#aaa;margin-left:auto">${x.t}</span></div>`}).join("");let rh=RW.map(r=>ci(r.n,dd[r.f],r.r,r.m?`+${r.m.toLocaleString()}원`:`+${r.t}분`,0,s.vd,r.f)).join("");let ph=PN.map(q=>{
+  if(q.t===LIE_SENTINEL){
+    // 거짓말은 1회성 이벤트 — O/X 표시 없이 빨간 액션 버튼
+    return `<button class="ci${VIEW?" disabled":""}" onclick="tg('${s.vd}','${q.f}')"><span class="cb" style="background:#E8836B;color:#fff">!</span><span style="flex:1;font-size:13px;font-weight:500">${q.n}</span><span style="font-size:11px;font-weight:700;color:#E8836B">전액몰수 (1회)</span></button>`;
+  }
+  return ci(q.n,dd[q.f],0,`${q.t}분`,1,s.vd,q.f);
+}).join("");c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{let cl="";for(let d=1;d<=31;d++){const k="5-"+d;const dd=s.d[k]||{};const ck=Object.values(dd).filter(v=>v==="O").length;const sc=SC[k];const we=sc?.dow==="토"||sc?.dow==="일";const it=tm===5&&td===d;cl+=`<button class="cc${it?" td":we?" we":""}" onclick="st.vd='${k}';R()"><span style="font-weight:900;font-size:13px">${d}</span>${ck>0?`<span style="font-size:8px;background:${it?"rgba(255,255,255,.3)":"#D5F5E3"};color:${it?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${ck}✓</span>`:""}</button>`}
     const a30=st.d["4-30"]||{};const a30c=Object.values(a30).filter(v=>v==="O").length;const a30td=_tm()===4&&_td()===30;
     const a30h=`<button class="cc${a30td?" td":""}" onclick="st.vd='4-30';R()" style="${a30td?"":"background:#E8F4F8"}"><span style="font-weight:900;font-size:11px;color:${a30td?"#fff":"#7EB6D9"}">4/30</span>${a30c>0?`<span style="font-size:8px;background:${a30td?"rgba(255,255,255,.3)":"#D5F5E3"};color:${a30td?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${a30c}✓</span>`:""}</button>`;
     c=`<h2 style="font-weight:900;color:#5A9BBF;margin:0 0 12px">✅ 5월 체크 <span class="ml">${tm}월 ${td}일</span></h2><div class="cg">${["일","월","화","수","목","금","토"].map(d=>`<div class="ch">${d}</div>`).join("")}${"<div></div>".repeat(3)}${a30h}${cl}</div>`}}
 
-else if(s.tab==="rules"){const sec=[{id:"rw",ti:"✅ 리워드",cl:"#8FBF9F",it:RW.map(r=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${r.n}</span><span style="font-size:12px;font-weight:700;color:#8FBF9F">+${r.t||""}${r.m?r.m.toLocaleString()+"원":r.t?"분":""}</span>${r.r?'<span class="rb">필수</span>':""}</div>`).join("")},{id:"pn",ti:"❌ 패널티",cl:"#E8836B",it:PN.map(p=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${p.n}</span><span style="font-size:12px;font-weight:700;color:#E8836B">${p.t===LIE_SENTINEL?"전액몰수":p.t+"분"}</span></div>`).join("")},{id:"df",ti:"📖 기준 정의",cl:"#5A9BBF",it:[{t:"🏠 방정리",i:["빨래/옷 바닥·책상에 없을 것","책상은 연필통 외 없는 상태","양말/옷 뒤집어 벗기 금지"]},{t:"📝 채점",i:["풀이과정 미작성 50%","단위 미작성 오답","화풀이 0점+패널티"]},{t:"🎫 쿠폰",i:["당일 사용 불가","패널티 많으면 선차감","3일보너스 후 다시 3일"]},{t:"📖 명심보감",i:["토/일 1시간씩","미인지 토론 불인정","일요일 농구 후"]}].map(d=>`<div><p style="font-weight:700;font-size:13px;margin:0 0 4px">${d.t}</p>${d.i.map(x=>`<p style="font-size:12px;color:#888;margin:2px 0 2px 12px">• ${x}</p>`).join("")}</div>`).join("")}];c=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="font-weight:900;color:#5A9BBF;margin:0">📖 규칙표</h2><span class="badge">VER 1.4</span></div>${sec.map(x=>`<button class="acc" style="border-left:4px solid ${x.cl}" onclick="st.or=st.or==='${x.id}'?null:'${x.id}';R()"><span>${x.ti}</span><span style="display:inline-block;transform:${s.or===x.id?"rotate(180deg)":""}">▾</span></button>${s.or===x.id?`<div class="ab">${x.it}</div>`:""}`).join("")}`}
+else if(s.tab==="rules"){const sec=[{id:"rw",ti:"✅ 리워드",cl:"#8FBF9F",it:RW.map(r=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${r.n}</span><span style="font-size:12px;font-weight:700;color:#8FBF9F">+${r.t||""}${r.m?r.m.toLocaleString()+"원":r.t?"분":""}</span>${r.r?'<span class="rb">필수</span>':""}</div>`).join("")},{id:"pn",ti:"❌ 패널티",cl:"#E8836B",it:PN.map(p=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${p.n}</span><span style="font-size:12px;font-weight:700;color:#E8836B">${p.t===LIE_SENTINEL?"전액몰수":p.t+"분"}</span></div>`).join("")},{id:"df",ti:"📖 기준 정의",cl:"#5A9BBF",it:[{t:"🏠 방정리",i:["빨래/옷 바닥·책상에 없을 것","책상은 연필통 외 없는 상태","양말/옷 뒤집어 벗기 금지"]},{t:"📝 채점",i:["풀이과정 미작성 50%","단위 미작성 오답","화풀이 0점+패널티"]},{t:"🎫 쿠폰",i:["당일 사용 불가","패널티 많으면 선차감","3일보너스 후 다시 3일"]},{t:"📖 명심보감",i:["토/일 1시간씩","미인지 토론 불인정","일요일 농구 후"]}].map(d=>`<div><p style="font-weight:700;font-size:13px;margin:0 0 4px">${d.t}</p>${d.i.map(x=>`<p style="font-size:12px;color:#888;margin:2px 0 2px 12px">• ${x}</p>`).join("")}</div>`).join("")}];c=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="font-weight:900;color:#5A9BBF;margin:0">📖 규칙표</h2><span class="badge">VER 2.0</span></div>${sec.map(x=>`<button class="acc" style="border-left:4px solid ${x.cl}" onclick="st.or=st.or==='${x.id}'?null:'${x.id}';R()"><span>${x.ti}</span><span style="display:inline-block;transform:${s.or===x.id?"rotate(180deg)":""}">▾</span></button>${s.or===x.id?`<div class="ab">${x.it}</div>`:""}`).join("")}`}
 
 a.innerHTML=`
   ${VIEW?'<div class="view-banner">👀 보기 모드</div>':""}

@@ -375,7 +375,7 @@ function todayYMD(){const d=new Date();return d.getFullYear()+"-"+String(d.getMo
    ═══════════════════════════════════════════════════════════════ */
 
 // 배포 후 한 줄만 교체. https://script.google.com/macros/s/.../exec 형태.
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwQA-R5mga-rrLELNClsgX-k9bRCM8eH1_8JHZgxJTYugTz_xZqlvu3rkyB6bM8Jj2n/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxD-5dGUj9juIzGFOTxE6jwaUWPOtHH9XokpCg9LwqQEFxyYYfWKGOTwIS9IbxntmOG/exec";
 const CHILD_ID = "CHILD_MINHOO";
 
 /* 프론트 UI 키 (RW의 f) → 시트 task_id suffix 매핑 (rule_engine의 RULE_TASK_MAP과 정합)
@@ -652,12 +652,16 @@ function tg(k,f){
 }
 function ss(k,v){if(VIEW)return;const dd=st.d[k]||{};dd.as=v;st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")}
 
-/* v3.2 — 아이 상태 저장 (medication/condition/focus/sleep_lack/memo) */
+/* v3.3 — 아이 상태 저장 (9번 + 10번 시트 분산)
+   payload 필드:
+   - am_med_taken, pm_med_taken (TRUE/FALSE) → 9번 focus_windows
+   - fatigue_level, irritability_level, anxiety_level (0~10), notes → 10번 child_state_snapshots
+   서버는 부분 업데이트(upsert) 지원하므로 일부 필드만 보내도 OK */
 function saveDailyState(dateKey, state){
   if(VIEW)return;
   // 1. localStorage 즉시 반영
   const dd = st.d[dateKey] || {};
-  dd._state = state;  // 상태 묶음을 _state 키 하나로 보관
+  dd._state = state;
   st.d[dateKey] = dd;
   sv("d", st.d);
   R();
@@ -669,48 +673,87 @@ function saveDailyState(dateKey, state){
     child_id: CHILD_ID,
     date: ymd,
     log_type: "daily_state",
-    medication: state.medication || "UNKNOWN",
-    condition:  state.condition  || "NORMAL",
-    focus:      state.focus      || "NORMAL",
-    sleep_lack: state.sleep_lack || "X",
-    memo:       state.memo       || "",
     actor: "parent",
     created_at: new Date().toISOString()
   };
+  // 정의된 값만 포함 (부분 업데이트)
+  if(state.am_med_taken !== undefined)      payload.am_med_taken = state.am_med_taken;
+  if(state.pm_med_taken !== undefined)      payload.pm_med_taken = state.pm_med_taken;
+  if(state.fatigue_level !== undefined)     payload.fatigue_level = state.fatigue_level;
+  if(state.irritability_level !== undefined)payload.irritability_level = state.irritability_level;
+  if(state.anxiety_level !== undefined)     payload.anxiety_level = state.anxiety_level;
+  if(state.notes !== undefined)             payload.notes = state.notes;
+
   syncPayload(payload);
 }
 
-/* v3.2 — 상태 한 필드만 토글 */
-function toggleStateField(dateKey, field, value){
+/* v3.3 — 약 복용 토글 (TRUE/FALSE/undefined 순환) */
+function toggleMed(dateKey, field){
   if(VIEW)return;
   const dd = st.d[dateKey] || {};
-  const cur = dd._state || {};
-  // 같은 값 다시 누르면 해제 → 디폴트값 매핑
-  const defaults = {medication:"UNKNOWN", condition:"NORMAL", focus:"NORMAL", sleep_lack:"X"};
-  cur[field] = (cur[field] === value && field !== "memo") ? defaults[field] : value;
+  const cur = {...(dd._state || {})};
+  // TRUE → FALSE → undefined → TRUE 순환
+  const v = cur[field];
+  cur[field] = v === "TRUE" ? "FALSE" : v === "FALSE" ? undefined : "TRUE";
+  if(cur[field] === undefined) delete cur[field];
   saveDailyState(dateKey, cur);
 }
 
-function saveStateMemo(dateKey, memo){
+/* v3.3 — 레벨 슬라이더 변경 (0~10) */
+function setStateLevel(dateKey, field, value){
   if(VIEW)return;
   const dd = st.d[dateKey] || {};
-  const cur = dd._state || {};
-  cur.memo = memo;
+  const cur = {...(dd._state || {})};
+  cur[field] = Number(value);
   saveDailyState(dateKey, cur);
 }
 
-/* v3.2 - 상태 라디오 그룹 렌더 */
-function renderStateRow_(dateKey, field, label, options, curValue){
-  const btns = options.map(([val,lbl])=>{
+/* v3.3 — 메모 */
+function saveStateMemo(dateKey, notes){
+  if(VIEW)return;
+  const dd = st.d[dateKey] || {};
+  const cur = {...(dd._state || {})};
+  cur.notes = notes;
+  saveDailyState(dateKey, cur);
+}
+
+/* v3.3 — 약 복용 라디오 (O/X 두 옵션) */
+function renderMedRow_(dateKey, field, label, curValue){
+  const opts = [["TRUE","O"],["FALSE","X"]];
+  const btns = opts.map(([val,lbl])=>{
     const on = val===curValue;
-    const bg = on ? "#A77BBF" : "#fff";
+    const bg = on ? (val==="TRUE"?"#6FA88F":"#E8836B") : "#fff";
     const fg = on ? "#fff" : "#888";
-    const bd = on ? "#A77BBF" : "#E4ECF5";
-    return `<button onclick="toggleStateField('${dateKey}','${field}','${val}')" style="flex:1;padding:8px 4px;border:1.5px solid ${bd};background:${bg};color:${fg};border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:Nunito">${lbl}</button>`;
+    const bd = on ? bg : "#E4ECF5";
+    return `<button onclick="toggleMed('${dateKey}','${field}')" style="flex:1;padding:10px 4px;border:1.5px solid ${bd};background:${bg};color:${fg};border-radius:8px;font-weight:800;font-size:14px;cursor:pointer;font-family:Nunito">${lbl}</button>`;
   }).join("");
   return `<div style="padding:8px 0;border-bottom:1px solid #f5f5f5">
     <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px">${label}</div>
     <div style="display:flex;gap:6px">${btns}</div>
+  </div>`;
+}
+
+/* v3.3 — 0~10 슬라이더 (피로도/예민도/불안도) */
+function renderLevelRow_(dateKey, field, label, curValue){
+  const v = (curValue===undefined||curValue===null||curValue==="") ? "" : Number(curValue);
+  const display = v===""?"–":v;
+  // 색상: 0~3 초록, 4~6 노랑, 7~10 빨강
+  let color = "#aaa";
+  if(v!==""){
+    if(v<=3) color = "#6FA88F";
+    else if(v<=6) color = "#D4A843";
+    else color = "#E8836B";
+  }
+  return `<div style="padding:8px 0;border-bottom:1px solid #f5f5f5">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+      <span style="font-size:12px;font-weight:600;color:#666">${label}</span>
+      <span style="font-size:18px;font-weight:900;color:${color}">${display}<span style="font-size:11px;color:#aaa;font-weight:600">/10</span></span>
+    </div>
+    <input type="range" min="0" max="10" step="1" value="${v===""?5:v}" 
+      oninput="this.nextElementSibling.textContent=this.value"
+      onchange="setStateLevel('${dateKey}','${field}',this.value)"
+      style="width:100%;accent-color:${color}">
+    <div style="display:none"></div>
   </div>`;
 }
 
@@ -852,7 +895,7 @@ function changeMonth(delta){
 
 function R(){
 const a=document.getElementById("app"),s=st,tk=_tk(),tm=_tm(),td=_td(),dw=_dw(),ty=_ty();
-if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.2</div></div>`;return}
+if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.3</div></div>`;return}
 const X=cs();let c="";
 const tabs=[{id:"dash",ic:"📊",lb:"대시보드"},{id:"today",ic:"📅",lb:"오늘할일"},{id:"chk",ic:"✅",lb:"체크"},{id:"rules",ic:"📖",lb:"규칙"}];
 
@@ -1075,18 +1118,21 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
     }
     return ci(q.n,dd[q.f],0,`${q.t}분`,1,s.vd,q.f);
   }).join("");
-  // v3.2 - 아이 상태 입력 카드
+  // v3.3 - 아이 상태 입력 카드
   const curState = (dd._state||{});
   const stateCard = VIEW ? "" : `
     <div class="card" style="border-left:4px solid #A77BBF">
       <h3 class="ct" style="color:#A77BBF;border-bottom:2px solid #A77BBF;padding-bottom:6px">🩺 오늘 상태</h3>
-      ${renderStateRow_(s.vd,"medication","약 복용",[["O","O"],["X","X"],["UNKNOWN","모름"]],curState.medication||"UNKNOWN")}
-      ${renderStateRow_(s.vd,"condition","컨디션",[["GOOD","좋음"],["NORMAL","보통"],["BAD","나쁨"]],curState.condition||"NORMAL")}
-      ${renderStateRow_(s.vd,"focus","집중도",[["GOOD","좋음"],["NORMAL","보통"],["LOW","낮음"]],curState.focus||"NORMAL")}
-      ${renderStateRow_(s.vd,"sleep_lack","수면 부족",[["O","O"],["X","X"]],curState.sleep_lack||"X")}
+      <div style="font-size:11px;color:#aaa;margin:4px 0 8px">약 복용 (9번 시트)</div>
+      ${renderMedRow_(s.vd,"am_med_taken","아침약 복용",curState.am_med_taken)}
+      ${renderMedRow_(s.vd,"pm_med_taken","저녁약 복용",curState.pm_med_taken)}
+      <div style="font-size:11px;color:#aaa;margin:12px 0 8px">상태 평가 (10번 시트) · 0~10</div>
+      ${renderLevelRow_(s.vd,"fatigue_level","피로도",curState.fatigue_level)}
+      ${renderLevelRow_(s.vd,"irritability_level","예민도",curState.irritability_level)}
+      ${renderLevelRow_(s.vd,"anxiety_level","불안도",curState.anxiety_level)}
       <div style="padding:8px 0">
         <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:4px">메모</div>
-        <textarea id="stateMemo_${s.vd}" style="width:100%;padding:8px;border:1px solid #E4ECF5;border-radius:8px;font-family:Nunito;font-size:12px;resize:vertical;min-height:50px" placeholder="특이사항 메모" onblur="saveStateMemo('${s.vd}',this.value)">${curState.memo||""}</textarea>
+        <textarea id="stateMemo_${s.vd}" style="width:100%;padding:8px;border:1px solid #E4ECF5;border-radius:8px;font-family:Nunito;font-size:12px;resize:vertical;min-height:50px" placeholder="특이사항 메모" onblur="saveStateMemo('${s.vd}',this.value)">${curState.notes||""}</textarea>
       </div>
     </div>`;
   c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}${stateCard}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{

@@ -52,9 +52,10 @@ header{background:linear-gradient(135deg,#7EB6D9,#8FBF9F);color:#fff;padding:14p
 .h-btns{display:flex;gap:6px}
 .h-btn{background:rgba(255,255,255,.2);border:none;border-radius:10px;padding:6px 10px;cursor:pointer;font-size:14px}
 nav{display:flex;background:#fff;border-bottom:1px solid #f0f0f0;position:sticky;top:0;z-index:10}
-nav button{flex:1;padding:10px 0;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;border-bottom:2px solid transparent;font-family:'Nunito'}
+nav button{flex:1;padding:14px 0;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;border-bottom:2px solid transparent;font-family:'Nunito'}
 nav button.on{border-bottom-color:#7EB6D9;background:#F7FBFE}
-nav .ic{font-size:18px}nav .lb{font-size:10px;font-weight:700;color:#888}
+nav .lb{font-size:13px;font-weight:700;color:#888}
+nav button.on .lb{color:#5A9BBF}
 main{padding:16px}
 
 /* ====== 상단 KPI 재구조화 ====== */
@@ -153,7 +154,8 @@ const ONTOLOGY_URLS={
   "03_nodes":            `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=2079410121&single=true&output=csv`,
   "04_edges":            `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=1441156318&single=true&output=csv`,
   "05_rule_conditions":  `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=296336425&single=true&output=csv`,
-  "06_message_templates":`https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=918528399&single=true&output=csv`
+  "06_message_templates":`https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=918528399&single=true&output=csv`,
+  "11_coupon_ledger":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=889727543&single=true&output=csv`
 };
 const ONTOLOGY={}; // { "01_node_types": [...], "03_nodes": [...], ... } — 헤더 기반 object 배열
 let ontologyLoaded=false;
@@ -193,16 +195,15 @@ async function loadOntology(){
   );
   const results=await Promise.all(tasks);
   const okCount=results.filter(r=>r.ok).length;
-  console.log(`[ontology] ${okCount}/6 시트 fetch 성공`);
+  console.log(`[ontology] ${okCount}/7 시트 fetch 성공`);
   results.forEach(r=>{
     if(r.ok)console.log(`  ✓ ${r.key}: ${r.count}행`);
     else console.warn(`  ✗ ${r.key}: ${r.err}`);
   });
-  if(okCount===6){
+  if(okCount>=6){  // 11번이 빈 경우도 정상 동작 가능 (정의층만 있어도)
     ontologyLoaded=true;
-    // v2.2: fetch만 (파싱 매핑은 v2.3에서 RW/PN 자동 구성 시 추가)
-    // ONTOLOGY는 콘솔에서 디버깅 가능 (window.ONTOLOGY로 확인)
     window.ONTOLOGY=ONTOLOGY;
+    R(); // ledger fetch 후 화면 다시 그리기
   }
 }
 
@@ -284,7 +285,8 @@ function computeAutoStreak(){
   return{autoBonusCount:total,currentRun:cur,maxRun:maxStreak};
 }
 
-let st={ph:"splash",tab:"dash",d:{},sk:{c:0,t:0},gl:"pending",vd:null,or:"rw",compTab:"day",usePage:0,sMode:"auto"};
+const _initToday=new Date();
+let st={ph:"splash",tab:"dash",d:{},sk:{c:0,t:0},gl:"pending",vd:null,or:"rw",compTab:"day",usePage:0,sMode:"auto",calYear:_initToday.getFullYear(),calMonth:_initToday.getMonth()+1,dashView:"main",histPage:0};
 function ld(k,df){try{const v=localStorage.getItem("pr_"+k);return v?JSON.parse(v):df}catch{return df}}
 function sv(k,v){try{localStorage.setItem("pr_"+k,JSON.stringify(v))}catch{}}
 st.d=ld("d",{});st.sk=ld("sk",{c:0,t:0});st.gl=ld("gl","pending");
@@ -328,73 +330,123 @@ function _dw(){return["일","월","화","수","목","금","토"][new Date().getD
 function pt(t){if(t.startsWith("기탄"))return{c:"T9",n:"기탄수학",t:"3장",i:"✏️"};const m=t.match(/^(T\d+)\((.+)\)$/);return m?{c:m[1],n:TN[m[1]]||m[1],t:m[2],i:TI[m[1]]||"📌"}:{c:"",n:t,t:"",i:"📌"}}
 
 /* ═══ 잔고 계산 — streak 자동/수동 모드 반영 ═══ */
+/* ═══ 잔고/리워드/패널티 계산 (v3.0: ledger 기반 진실) ═══
+   진실은 시트 11_coupon_ledger. 프론트는 read-only viewer.
+   ledger fetch 실패하면 net=0으로 graceful degradation. */
+/* v3.0: ledger source_id → 사람이 읽는 라벨 */
+const RULE_LABEL_MAP={
+  RULE_R01:"매일 공부 완료",
+  RULE_R02:"숙제/유인물 챙기기",
+  RULE_R03:"명심보감 토론",
+  RULE_R04:"학교 수학 100점",
+  RULE_R05:"응용심화 80점↑",
+  RULE_R06:"구구단 시험 통과",
+  RULE_R07:"방정리",
+  RULE_R08:"화장실 청소",
+  RULE_R09:"고양이 화장실",
+  RULE_R10:"3일 연속 이행 보너스",
+  RULE_R11:"9시반 취침",
+  RULE_P01:"숙제 누락",
+  RULE_P02:"일일 공부 미달",
+  RULE_P03:"월 목표 미달성",
+  RULE_P04:"쿠폰 시간 초과",
+  RULE_P05:"아침약 미복용",
+  RULE_P06:"응용심화 점수 미달",
+  RULE_P07:"밤10시 미취침",
+  RULE_P08:"방정리 미흡",
+  RULE_P09:"토론 준비 미흡",
+  RULE_P10:"거짓말/약속 위반",
+  RULE_P11:"학교/학원 시간 미준수",
+  RULE_P12:"저녁약 미복용"
+};
+function ruleLabel(source_id){
+  if(!source_id)return "기타";
+  if(RULE_LABEL_MAP[source_id])return RULE_LABEL_MAP[source_id];
+  if(String(source_id).indexOf("MANUAL_")===0)return "수동 보정";
+  if(String(source_id).indexOf("SYSTEM_")===0)return "시스템";
+  return source_id;
+}
+
+function todayYMD(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+
 function cs(){
-  let tr=0,tp=0,tm=0;const cp={};RW.filter(r=>r.r).forEach(r=>cp[r.f]={d:0,t:0});
-  Object.keys(st.d).forEach(k=>{const dd=st.d[k];
-    RW.forEach(r=>{if(dd[r.f]==="O"){tr+=r.t||0;tm+=(r.m||0)}if(r.r&&cp[r.f]){if(dd[r.f]==="O"||dd[r.f]==="X")cp[r.f].t++;if(dd[r.f]==="O")cp[r.f].d++}});
-    const sc=dd.as;if(typeof sc==="number"&&sc>=80)tr+=90;if(typeof sc==="number"&&sc<50)tp+=60;
-    PN.forEach(p=>{if(dd[p.f]==="O"&&p.t!==LIE_SENTINEL)tp+=Math.abs(p.t)})});
+  const today=todayYMD();
+  const ledgerRows=(ONTOLOGY["11_coupon_ledger"]||[]).filter(r=>
+    r.child_id==="CHILD_MINHOO" &&
+    r.status==="applied" &&
+    String(r.effective_date).slice(0,10)<=today
+  );
+
+  // ledger 누적
+  let net=0, cash=0, tr=0, tm=0, tp=0, used=0;
+  const rewardItems=[], penaltyItems=[], usageItems=[];
+
+  ledgerRows.forEach(r=>{
+    const min=Number(r.amount_minutes)||0;
+    const cashAmt=Number(r.cash_amount)||0;
+    net+=min; cash+=cashAmt;
+
+    const tx=r.transaction_type;
+    if(tx==="reward"){
+      tr+=min; tm+=cashAmt;
+      rewardItems.push(r);
+    } else if(tx==="penalty"||tx==="forfeit_all"){
+      tp+=Math.abs(min);
+      penaltyItems.push(r);
+    } else if(tx==="usage"){
+      used+=Math.abs(min);
+      usageItems.push(r);
+    }
+    // adjustment / special_bonus / opening_balance / carryover / reversal → net에만 반영
+  });
+
+  // 이행률 (v3.0: 월별 누적일이 분모. 그 달 1일~오늘)
+  const cp={}; RW.filter(r=>r.r).forEach(r=>cp[r.f]={d:0,t:0});
+  const now=new Date();
+  const curM=now.getMonth()+1, curD=now.getDate();
+  for(let day=1; day<=curD; day++){
+    const k=curM+"-"+day;
+    const dd=st.d[k]||{};
+    RW.forEach(r=>{
+      if(r.r&&cp[r.f]){
+        cp[r.f].t++;
+        if(dd[r.f]==="O")cp[r.f].d++;
+      }
+    });
+  }
+
+  // 3일 보너스 (자동/수동)
   const auto=computeAutoStreak();
-  const effectiveStreakCount = (streakMode==="manual") ? st.sk.t : auto.autoBonusCount;
-  const totalRewards=tr+effectiveStreakCount*60;
-  const used=st.use.reduce((a,u)=>a+u.a,0);
-  const earnedBase=totalRewards+BAL+specialBonus;
-  const net=earnedBase+adjust-tp-used-wipe;
-  return{tr:totalRewards,tp,tm,net,cp,used,adjust,wipe,auto,effectiveStreakCount}}
+  const effectiveStreakCount=(streakMode==="manual")?st.sk.t:auto.autoBonusCount;
+
+  return{net,cash,tr,tm,tp,used,cp,auto,effectiveStreakCount,
+         rewardItems,penaltyItems,usageItems,ledgerReady:ledgerRows.length>0}
+}
 
 function tg(k,f){
   if(VIEW)return;
+  // 거짓말은 시트에서 처리 (Apps Script). 프론트는 입력 불가.
   const pn=PN.find(p=>p.f===f);
-  if(pn&&pn.t===LIE_SENTINEL){applyLieWipe(k);return}
+  if(pn&&pn.t===LIE_SENTINEL){
+    toast("거짓말 항목은 시트에서 처리됩니다");
+    return;
+  }
   const dd=st.d[k]||{};const v=dd[f];dd[f]=v==="O"?"X":v==="X"?undefined:"O";
   if(!dd[f])delete dd[f];st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")
 }
 function ss(k,v){if(VIEW)return;const dd=st.d[k]||{};dd.as=v;st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")}
 
-function applyLieWipe(k){
-  if(VIEW)return;
-  const X=cs();const cur=X.net;
-  const msg=cur>0?`🚫 거짓말 몰수 적용?\n\n현재 사용가능시간: ${cur}분\n→ 즉시 0분으로 몰수\n\n이후 받는 리워드는 정상 누적됩니다.`
-    :`현재 사용가능시간이 ${cur}분이에요.\n그래도 거짓말 몰수를 적용할까요?\n(잔고가 0으로 맞춰집니다)`;
-  if(!confirm(msg))return;
-  wipe+=cur;
-  wipeLog.push({date:k,amount:cur,ts:new Date().toISOString().slice(0,16)});
-  sv("wipe",wipe);sv("wipeLog",wipeLog);
-  pushNotice("lie_wipe",-cur,`거짓말 몰수 -${cur}분 적용`);
-  R();
-  toast("🚫 -"+cur+"분 몰수 적용");
-}
-function clearWipe(){
-  if(VIEW)return;
-  if(!confirm(`거짓말 누적 몰수 -${wipe}분을 모두 해제할까요?\n(잔고가 ${wipe}분 회복됩니다)`))return;
-  const restored=wipe;
-  wipe=0;wipeLog=[];sv("wipe",0);sv("wipeLog",[]);
-  pushNotice("lie_wipe_clear",restored,`거짓말 몰수 해제 +${restored}분 복원`);
-  R();toast("🔄 몰수 해제");
-}
-
-function setBalance(target){
-  if(VIEW)return;const X=cs();const cur=X.net;
-  if(!confirm("현재 사용가능시간: "+cur+"분\n→ "+target+"분으로 맞출까요?\n\n(O/X 기록은 그대로 유지됩니다)"))return;
-  const diff=target-cur;
-  adjust=adjust+diff;sv("adj",adjust);
-  pushNotice("adjust",diff,`잔고 보정 ${diff>=0?"+":""}${diff}분 적용`);
-  R();toast("✅ 잔고 "+target+"분으로 조정됨");
-}
-function clearAdjust(){
-  if(VIEW)return;
-  if(!confirm("잔고 조정값을 해제할까요?\n(O/X 기록 기반의 원래 잔고로 돌아갑니다)"))return;
-  const prev=adjust;
-  adjust=0;sv("adj",0);
-  pushNotice("adjust_clear",-prev,`잔고 보정 해제 ${-prev>=0?"+":""}${-prev}분`);
-  R();toast("🔄 조정 해제됨");
-}
+/* v3.0: 잔고 조정 / 거짓말 몰수는 시트(11_coupon_ledger)에서 처리.
+   프론트 함수는 stub으로 유지 (외부 호출 안전성). */
+function applyLieWipe(k){toast("거짓말 몰수는 시트에서 처리됩니다")}
+function clearWipe(){toast("거짓말 몰수 해제는 시트에서 처리됩니다")}
+function setBalance(target){toast("잔고 조정은 시트에서 처리됩니다")}
+function clearAdjust(){toast("잔고 조정 해제는 시트에서 처리됩니다")}
 
 function toggleStreakMode(){
   if(VIEW)return;
   const newMode=streakMode==="auto"?"manual":"auto";
   if(newMode==="manual"){
-    // auto → manual: 현재 자동 계산값을 sk.t로 박아두기
     const auto=computeAutoStreak();
     st.sk.t=auto.autoBonusCount;
     sv("sk",st.sk);
@@ -466,14 +518,7 @@ function showUseModal(){
   div.innerHTML='<div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:340px;font-family:Nunito"><h3 style="font-weight:800;color:#5A9BBF;margin:0 0 16px">🎫 쿠폰 사용하기</h3><p style="font-size:12px;color:#999;margin:0 0 12px">10분 단위 · 당일 획득분 사용 불가</p><div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">'+[10,20,30,60,90,120].map(v=>'<button style="padding:8px 14px;border-radius:10px;border:2px solid #E8F4F8;background:#fff;font-weight:700;font-size:13px;color:#5A9BBF;cursor:pointer;font-family:Nunito" onclick="addUse('+v+');document.getElementById(\'useModal\').remove()">'+v+'분</button>').join("")+'</div><div style="display:flex;gap:8px;align-items:center;margin-bottom:16px"><input id="useCustom" type="number" placeholder="직접입력" style="flex:1;padding:10px;border:2px solid #E8F4F8;border-radius:10px;font-size:14px;font-family:Nunito"><span style="font-size:13px;color:#999">분</span></div><div style="display:flex;gap:8px"><button style="flex:1;padding:12px;border-radius:12px;border:2px solid #E8F4F8;background:#fff;font-weight:700;cursor:pointer;font-family:Nunito;color:#999" onclick="document.getElementById(\'useModal\').remove()">취소</button><button style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#7EB6D9,#8FBF9F);color:#fff;font-weight:800;cursor:pointer;font-family:Nunito" onclick="const v=+document.getElementById(\'useCustom\').value;if(v>0&&v%10===0){addUse(v);document.getElementById(\'useModal\').remove()}else if(v>0){toast(\'10분 단위로 입력해주세요\')}">사용하기</button></div></div>';
   document.body.appendChild(div);div.addEventListener("click",e=>{if(e.target===div)div.remove()})}
 
-function showAdjustModal(){
-  if(VIEW)return;
-  const m=document.getElementById("adjModal");if(m)m.remove();
-  const X=cs();
-  const div=document.createElement("div");div.id="adjModal";
-  div.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:center;justify-content:center;padding:20px";
-  div.innerHTML='<div style="background:#fff;border-radius:20px;padding:24px;width:100%;max-width:340px;font-family:Nunito"><h3 style="font-weight:800;color:#5A9BBF;margin:0 0 8px">🔧 잔고 조정</h3><p style="font-size:12px;color:#999;margin:0 0 12px">현재 사용가능시간: <b style="color:#5A9BBF">'+X.net+'분</b><br>O/X 기록은 그대로 유지됩니다.</p><div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">'+[0,-100,-200,-500].map(v=>'<button style="padding:8px 12px;border-radius:10px;border:2px solid #E8F4F8;background:#fff;font-weight:700;font-size:12px;color:#5A9BBF;cursor:pointer;font-family:Nunito" onclick="setBalance('+v+');document.getElementById(\'adjModal\').remove()">'+v+'분</button>').join("")+'</div><div style="display:flex;gap:8px;align-items:center;margin-bottom:12px"><input id="adjCustom" type="number" placeholder="직접입력" style="flex:1;padding:10px;border:2px solid #E8F4F8;border-radius:10px;font-size:14px;font-family:Nunito"><span style="font-size:13px;color:#999">분으로</span></div>'+(adjust!==0?'<p style="font-size:11px;color:#D4A843;margin-bottom:12px">현재 보정값: '+(adjust>0?"+":"")+adjust+'분 적용 중 <button style="background:none;border:none;color:#D4A843;font-size:11px;text-decoration:underline;cursor:pointer;font-family:Nunito" onclick="clearAdjust();document.getElementById(\'adjModal\').remove()">해제</button></p>':"")+'<div style="display:flex;gap:8px"><button style="flex:1;padding:12px;border-radius:12px;border:2px solid #E8F4F8;background:#fff;font-weight:700;cursor:pointer;font-family:Nunito;color:#999" onclick="document.getElementById(\'adjModal\').remove()">취소</button><button style="flex:1;padding:12px;border-radius:12px;border:none;background:linear-gradient(135deg,#7EB6D9,#8FBF9F);color:#fff;font-weight:800;cursor:pointer;font-family:Nunito" onclick="const v=document.getElementById(\'adjCustom\').value;if(v!==\'\'){setBalance(+v);document.getElementById(\'adjModal\').remove()}">맞추기</button></div></div>';
-  document.body.appendChild(div);div.addEventListener("click",e=>{if(e.target===div)div.remove()})}
+function showAdjustModal(){toast("잔고 조정은 시트에서 처리됩니다")}
 
 function toast(msg){const d=document.createElement("div");d.className="toast";d.textContent=msg;document.body.appendChild(d);setTimeout(()=>d.remove(),1500)}
 
@@ -511,35 +556,91 @@ function renderMonthlyCompliance(){
   }).join("");
 }
 
-/* ═══ 캘린더 첫 주 자동 계산 (v2.1 신규) ═══ */
-/* 5월 캘린더 첫 줄: 4/30(목)이 첫 셀로 보이려면 그 앞에 4칸 비워야 함.
-   4/30의 요일(getDay)이 곧 빈 셀 개수. 연도/월 hardcoded 해제. */
+/* ═══ 캘린더 — 첫 주 빈 셀 / 그 달의 마지막 일 (v2.3 수정) ═══ */
 function calendarLeadingBlanks(year, month){
-  // month는 1-indexed (5월 = 5)
-  const prev = new Date(year, month-1, 0); // 전월 마지막 날
-  return prev.getDay(); // 일요일=0 ... 토요일=6
+  // 그 달 1일이 무슨 요일인지 (일=0 ... 토=6) → 그만큼 첫 줄 빈 셀
+  return new Date(year, month-1, 1).getDay();
+}
+function monthDays(year, month){
+  // month 1-indexed (5월 = 5). 그 달의 마지막 일 (28/29/30/31)
+  return new Date(year, month, 0).getDate();
+}
+function changeMonth(delta){
+  let m=st.calMonth+delta, y=st.calYear;
+  if(m<1){m=12;y--}
+  else if(m>12){m=1;y++}
+  st.calMonth=m;st.calYear=y;st.vd=null;R();
 }
 
 function R(){
 const a=document.getElementById("app"),s=st,tk=_tk(),tm=_tm(),td=_td(),dw=_dw(),ty=_ty();
-if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v2.3</div></div>`;return}
+if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.0</div></div>`;return}
 const X=cs();let c="";
 const tabs=[{id:"dash",ic:"📊",lb:"대시보드"},{id:"today",ic:"📅",lb:"오늘할일"},{id:"chk",ic:"✅",lb:"체크"},{id:"rules",ic:"📖",lb:"규칙"}];
 
 if(s.tab==="dash"){
-  /* ───────── 상단 KPI 재구조화 ───────── */
-  // 1. 사용가능시간 (단독 큰 카드)
+  /* ═══ ledger 진실 미로딩 시 안내 ═══ */
+  const ledgerNotice = !X.ledgerReady ? `
+    <div style="background:#FFF8E1;color:#D4A843;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">📡 잔고 동기화 중… (시트 ledger 로딩)</div>` : "";
+
+  /* ═══ dashView 분기 (v3.0) ═══ */
+  if(s.dashView==="rewards" || s.dashView==="penalties"){
+    const isReward = s.dashView==="rewards";
+    const items = isReward ? X.rewardItems : X.penaltyItems;
+    const titleColor = isReward ? "#6FA88F" : "#E8836B";
+    const titleText = isReward ? "✅ 리워드 누적" : "❌ 패널티 누적";
+    // 최신순 정렬 (transaction_date desc)
+    const sorted = items.slice().sort((a,b)=>String(b.transaction_date).localeCompare(String(a.transaction_date)));
+    const PAGE_SIZE=10;
+    const totalPages=Math.max(1,Math.ceil(sorted.length/PAGE_SIZE));
+    if(s.histPage>=totalPages)s.histPage=totalPages-1;
+    if(s.histPage<0)s.histPage=0;
+    const pageItems=sorted.slice(s.histPage*PAGE_SIZE, s.histPage*PAGE_SIZE+PAGE_SIZE);
+    const rowsHTML = sorted.length===0 ? '<p style="font-size:12px;color:#ccc;text-align:center;padding:24px 0">아직 기록이 없어요</p>'
+      : pageItems.map(r=>{
+          const date=String(r.transaction_date).slice(0,10).replace(/-/g,".");
+          const min=Number(r.amount_minutes)||0;
+          const cashAmt=Number(r.cash_amount)||0;
+          const label=ruleLabel(r.source_id);
+          const amtStr = (isReward?"+":"") + min + "분" + (cashAmt!==0 ? ` · ${(isReward?"+":"")}${cashAmt.toLocaleString()}원` : "");
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f5f5f5">
+            <div style="display:flex;flex-direction:column;gap:2px;flex:1">
+              <span style="font-size:11px;color:#aaa;font-weight:600">${date}</span>
+              <span style="font-size:13px;font-weight:600;color:#555">${label}</span>
+            </div>
+            <span style="font-size:13px;font-weight:800;color:${titleColor}">${amtStr}</span>
+          </div>`;
+        }).join("");
+    const pagerHTML = sorted.length>PAGE_SIZE ? `
+      <div class="pager">
+        <button onclick="st.histPage=Math.max(0,st.histPage-1);R()" ${s.histPage===0?'disabled':''}>‹ 이전</button>
+        <span style="display:flex;align-items:center;font-size:11px;color:#999;font-weight:700">${s.histPage+1} / ${totalPages}</span>
+        <button onclick="st.histPage=Math.min(${totalPages-1},st.histPage+1);R()" ${s.histPage===totalPages-1?'disabled':''}>다음 ›</button>
+      </div>` : "";
+    c = `
+      <button class="bb" onclick="st.dashView='main';st.histPage=0;R()">← 대시보드</button>
+      <div class="card">
+        <h3 class="ct" style="color:${titleColor};border-bottom:2px solid ${titleColor};padding-bottom:6px">${titleText}</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f5f5f5;margin-bottom:4px">
+          <span style="font-size:12px;color:#999;font-weight:600">총 ${sorted.length}건</span>
+          <span style="font-size:14px;font-weight:900;color:${titleColor}">${isReward?"+":"-"}${isReward?X.tr:X.tp}분${isReward&&X.tm>0?` · +${X.tm.toLocaleString()}원`:""}</span>
+        </div>
+        ${rowsHTML}
+        ${pagerHTML}
+      </div>`;
+  } else {
+
+  /* ───────── 상단 KPI (v3.0: 카드 클릭으로 리스트 진입) ───────── */
   const heroBlock = `
     <div class="kpi-hero">
       <div class="kpi-hero-label">사용가능시간</div>
       <div class="kpi-hero-value">${X.net}분</div>
       <div class="kpi-hero-sub">${(X.net/60).toFixed(1)}시간</div>
     </div>`;
-  // 2. 작은 카드 4분할 (2x2)
   const smallBlock = `
     <div class="kr">
-      <div class="kpi"><span class="kl">리워드</span><span class="kv" style="color:#6FA88F">${X.tr}분</span></div>
-      <div class="kpi"><span class="kl">패널티</span><span class="kv" style="color:#E8836B">-${X.tp}분</span></div>
+      <div class="kpi" style="cursor:pointer" onclick="st.dashView='rewards';st.histPage=0;R()"><span class="kl">리워드 ›</span><span class="kv" style="color:#6FA88F">${X.tr}분</span></div>
+      <div class="kpi" style="cursor:pointer" onclick="st.dashView='penalties';st.histPage=0;R()"><span class="kl">패널티 ›</span><span class="kv" style="color:#E8836B">-${X.tp}분</span></div>
     </div>
     <div class="kr">
       <div class="kpi"><span class="kl">금액</span><span class="kv" style="color:#D4A843">${X.tm.toLocaleString()}원</span></div>
@@ -634,37 +735,54 @@ if(s.tab==="dash"){
       ${pagerHTML}
     </div>`;
 
-  /* ───────── 관리 버튼 (운영자) ───────── */
-  const hasAdjust = adjust!==0;
-  const hasWipe = wipe>0;
+  /* ───────── 관리 버튼 (v3.0: 잔고 조정/wipe 제거, sync/export만) ───────── */
   const adminBlock = VIEW?"":`
-    <div style="display:flex;gap:6px;margin-top:8px">
-      <button class="adj-btn" style="background:#FFF8E1;color:#D4A843" onclick="showAdjustModal()">🔧 잔고 조정${hasAdjust?` (${adjust>0?'+':''}${adjust}분)`:""}</button>
-      <button class="adj-btn" style="background:#E8F5E9;color:#6FA88F" onclick="setBalance(0)">잔고 0으로</button>
-    </div>
-    ${hasWipe?`<button class="adj-btn" style="background:#FFF0ED;color:#E8836B;margin-top:6px;width:100%" onclick="clearWipe()">🚫 거짓말 몰수 해제 (-${wipe}분 → 복원)</button>`:""}
     <button class="sync-btn" onclick="doSync()">📲 아이 기기에 데이터 동기화</button>
     <button class="exp-btn" onclick="doExport()">📊 데이터 내려받기 (CSV)</button>`;
 
-  c = heroBlock + smallBlock + alerts + compBlock + streakBlock + goalBlock + useBlock + adminBlock;
+  c = ledgerNotice + heroBlock + smallBlock + alerts + compBlock + streakBlock + goalBlock + useBlock + adminBlock;
+  } // end dashView==="main"
 }
 
 else if(s.tab==="today"){const sd=SC[tk];if(!sd)c=`<div style="text-align:center;margin-top:40px"><span style="font-size:48px">😴</span><p style="color:#999;margin-top:12px">${tm}월 ${td}일 (${dw})<br>오늘은 등록된 일정이 없어요</p></div>`;else{let tc=sd.tasks.map(t=>{const p=pt(t);return`<div class="tc"><span style="font-size:24px">${p.i}</span><div style="flex:1"><p style="font-weight:700;font-size:14px">${p.n}</p><p style="font-size:11px;color:#999;margin-top:2px">${p.c} · ${p.t}</p></div></div>`}).join("");const wk=gw();let wh=wk.map(w=>`<button class="wd${w.f?" ac":""}" onclick="st.vd='${w.k}';st.tab='chk';R()"><span style="font-size:10px">${w.dw}</span><span style="font-weight:900;font-size:16px">${w.dt}</span><span style="font-size:10px">${w.s?w.s.tasks.length+"개":"—"}</span></button>`).join("");c=`<div style="text-align:center;margin-bottom:16px"><span style="font-size:48px">📅</span><h2 style="font-weight:900;color:#5A9BBF;margin:4px 0">${tm}월 ${td}일 (${dw})</h2>${sd.note?`<span class="badge">${sd.note}</span>`:""}</div>${tc}<div class="card" style="margin-top:16px"><h3 class="ct">📅 이번 주</h3><div class="wr">${wh}</div></div>`}}
 
-else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p=s.vd.split("-");let tl="";if(sc)tl=sc.tasks.map(t=>{const x=pt(t);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5"><span>${x.i}</span><span style="font-size:13px">${x.n}</span><span style="font-size:11px;color:#aaa;margin-left:auto">${x.t}</span></div>`}).join("");let rh=RW.map(r=>ci(r.n,dd[r.f],r.r,r.m?`+${r.m.toLocaleString()}원`:`+${r.t}분`,0,s.vd,r.f)).join("");let ph=PN.map(q=>{
-  if(q.t===LIE_SENTINEL){
-    return `<button class="ci${VIEW?" disabled":""}" onclick="tg('${s.vd}','${q.f}')"><span class="cb" style="background:#E8836B;color:#fff">!</span><span style="flex:1;font-size:13px;font-weight:500">${q.n}</span><span style="font-size:11px;font-weight:700;color:#E8836B">전액몰수 (1회)</span></button>`;
-  }
-  return ci(q.n,dd[q.f],0,`${q.t}분`,1,s.vd,q.f);
-}).join("");c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{
-    /* ═══ 5월 캘린더 — leading blanks 자동 계산 (v2.1 수정) ═══ */
-    let cl="";for(let d=1;d<=31;d++){const k="5-"+d;const dd=s.d[k]||{};const ck=Object.values(dd).filter(v=>v==="O").length;const sc=SC[k];const we=sc?.dow==="토"||sc?.dow==="일";const it=tm===5&&td===d;cl+=`<button class="cc${it?" td":we?" we":""}" onclick="st.vd='${k}';R()"><span style="font-weight:900;font-size:13px">${d}</span>${ck>0?`<span style="font-size:8px;background:${it?"rgba(255,255,255,.3)":"#D5F5E3"};color:${it?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${ck}✓</span>`:""}</button>`}
-    const a30=st.d["4-30"]||{};const a30c=Object.values(a30).filter(v=>v==="O").length;const a30td=_tm()===4&&_td()===30;
-    const a30h=`<button class="cc${a30td?" td":""}" onclick="st.vd='4-30';R()" style="${a30td?"":"background:#E8F4F8"}"><span style="font-weight:900;font-size:11px;color:${a30td?"#fff":"#7EB6D9"}">4/30</span>${a30c>0?`<span style="font-size:8px;background:${a30td?"rgba(255,255,255,.3)":"#D5F5E3"};color:${a30td?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${a30c}✓</span>`:""}</button>`;
-    // 4/30이 무슨 요일인지 자동 계산 후 그만큼 빈 셀
-    const leadingBlanks = calendarLeadingBlanks(ty, 5); // ty=올해, 5월
-    const blanksHTML = '<div></div>'.repeat(leadingBlanks);
-    c=`<h2 style="font-weight:900;color:#5A9BBF;margin:0 0 12px">✅ 5월 체크 <span class="ml">${tm}월 ${td}일</span></h2><div class="cg">${["일","월","화","수","목","금","토"].map(d=>`<div class="ch">${d}</div>`).join("")}${blanksHTML}${a30h}${cl}</div>`}}
+else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p=s.vd.split("-");let tl="";if(sc)tl=sc.tasks.map(t=>{const x=pt(t);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5"><span>${x.i}</span><span style="font-size:13px">${x.n}</span><span style="font-size:11px;color:#aaa;margin-left:auto">${x.t}</span></div>`}).join("");let rh=RW.map(r=>ci(r.n,dd[r.f],r.r,r.m?`+${r.m.toLocaleString()}원`:`+${r.t}분`,0,s.vd,r.f)).join("");
+  // v3.0: 거짓말 체크박스 - ledger의 P10 트랜잭션을 기준으로 발생일만 빨강 표시
+  // 그 날 transaction_date == s.vd (변환 형식 YYYY-MM-DD) 매칭
+  const _yvd=ty+"-"+String(p[0]).padStart(2,"0")+"-"+String(p[1]).padStart(2,"0");
+  const lieRow=(ONTOLOGY["11_coupon_ledger"]||[]).find(r=>
+    r.child_id==="CHILD_MINHOO" && String(r.transaction_date).slice(0,10)===_yvd &&
+    (r.source_id==="RULE_P10"||r.transaction_type==="forfeit_all"));
+  let ph=PN.map(q=>{
+    if(q.t===LIE_SENTINEL){
+      const occurred=!!lieRow;
+      const bg=occurred?"#E8836B":"#F0F0F0";
+      const fg=occurred?"#fff":"#ddd";
+      const mark=occurred?"!":"";
+      const wipeAmt=occurred?Math.abs(Number(lieRow.amount_minutes)||0):0;
+      const note=occurred?`발생 (${wipeAmt}분 몰수)`:"전액몰수 · 시트에서 처리";
+      return `<button class="ci disabled" disabled><span class="cb" style="background:${bg};color:${fg}">${mark}</span><span style="flex:1;font-size:13px;font-weight:500">${q.n}</span><span style="font-size:11px;font-weight:700;color:#E8836B">${note}</span></button>`;
+    }
+    return ci(q.n,dd[q.f],0,`${q.t}분`,1,s.vd,q.f);
+  }).join("");c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{
+    /* ═══ 캘린더 — 월별 일반화 + 좌우 화살표 (v3.0) ═══ */
+    const cy=s.calYear, cmm=s.calMonth;
+    const daysInMonth=monthDays(cy,cmm);
+    const leading=calendarLeadingBlanks(cy,cmm);
+    let cl="";
+    for(let d=1;d<=daysInMonth;d++){
+      const k=cmm+"-"+d;
+      const dd=s.d[k]||{};
+      const ck=Object.values(dd).filter(v=>v==="O").length;
+      const sc=SC[k];
+      const we=sc?.dow==="토"||sc?.dow==="일";
+      const it=tm===cmm&&td===d&&ty===cy;
+      cl+=`<button class="cc${it?" td":we?" we":""}" onclick="st.vd='${k}';R()"><span style="font-weight:900;font-size:13px">${d}</span>${ck>0?`<span style="font-size:8px;background:${it?"rgba(255,255,255,.3)":"#D5F5E3"};color:${it?"#fff":"#6FA88F"};border-radius:4px;padding:0 3px">${ck}✓</span>`:""}</button>`;
+    }
+    const blanksHTML='<div></div>'.repeat(leading);
+    const isCurMonth=(cy===ty && cmm===tm);
+    const todayHint=isCurMonth?` <span style="font-size:13px;color:#aaa;font-weight:600">(${tm}월 ${td}일)</span>`:"";
+    c=`<div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 14px"><button onclick="changeMonth(-1)" style="background:none;border:none;font-size:22px;color:#7EB6D9;cursor:pointer;padding:4px 18px;font-family:Nunito;font-weight:900">‹</button><h2 style="font-weight:900;color:#5A9BBF;margin:0;font-size:18px">${cmm}월${todayHint}</h2><button onclick="changeMonth(1)" style="background:none;border:none;font-size:22px;color:#7EB6D9;cursor:pointer;padding:4px 18px;font-family:Nunito;font-weight:900">›</button></div><div class="cg">${["일","월","화","수","목","금","토"].map(d=>`<div class="ch">${d}</div>`).join("")}${blanksHTML}${cl}</div>`}}
 
 else if(s.tab==="rules"){const sec=[{id:"rw",ti:"✅ 리워드",cl:"#8FBF9F",it:RW.map(r=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${r.n}</span><span style="font-size:12px;font-weight:700;color:#8FBF9F">+${r.t||""}${r.m?r.m.toLocaleString()+"원":r.t?"분":""}</span>${r.r?'<span class="rb">필수</span>':""}</div>`).join("")},{id:"pn",ti:"❌ 패널티",cl:"#E8836B",it:PN.map(p=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${p.n}</span><span style="font-size:12px;font-weight:700;color:#E8836B">${p.t===LIE_SENTINEL?"전액몰수":p.t+"분"}</span></div>`).join("")},{id:"df",ti:"📖 기준 정의",cl:"#5A9BBF",it:[{t:"🏠 방정리",i:["빨래/옷 바닥·책상에 없을 것","책상은 연필통 외 없는 상태","양말/옷 뒤집어 벗기 금지"]},{t:"📝 채점",i:["풀이과정 미작성 50%","단위 미작성 오답","화풀이 0점+패널티"]},{t:"🎫 쿠폰",i:["당일 사용 불가","패널티 많으면 선차감","3일보너스 후 다시 3일"]},{t:"📖 명심보감",i:["토/일 1시간씩","미인지 토론 불인정","일요일 농구 후"]}].map(d=>`<div><p style="font-weight:700;font-size:13px;margin:0 0 4px">${d.t}</p>${d.i.map(x=>`<p style="font-size:12px;color:#888;margin:2px 0 2px 12px">• ${x}</p>`).join("")}</div>`).join("")}];c=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="font-weight:900;color:#5A9BBF;margin:0">📖 규칙표</h2><span class="badge">VER 2.1</span></div>${sec.map(x=>`<button class="acc" style="border-left:4px solid ${x.cl}" onclick="st.or=st.or==='${x.id}'?null:'${x.id}';R()"><span>${x.ti}</span><span style="display:inline-block;transform:${s.or===x.id?"rotate(180deg)":""}">▾</span></button>${s.or===x.id?`<div class="ab">${x.it}</div>`:""}`).join("")}`}
 
@@ -674,7 +792,7 @@ a.innerHTML=`
     <div class="h-left">${VIEW?LG(36):`<a href="${SHEET_EDIT}" target="_blank" style="text-decoration:none">${LG(36)}</a>`}<div><div class="h-name">민후</div><div class="h-date">${tm}월 ${td}일 ${dw}요일</div></div></div>
     <div class="h-btns">${VIEW?"":`<button class="h-btn" onclick="doShare()" title="공유">🔗</button>`}<button class="h-btn" onclick="st.ph='splash';R()">🔒</button></div>
   </div></header>
-  <nav>${tabs.map(t=>`<button class="${s.tab===t.id?"on":""}" onclick="st.tab='${t.id}';st.vd=null;R()"><span class="ic">${t.ic}</span><span class="lb">${t.lb}</span></button>`).join("")}</nav>
+  <nav>${tabs.map(t=>`<button class="${s.tab===t.id?"on":""}" onclick="st.tab='${t.id}';st.vd=null;st.dashView='main';R()"><span class="lb">${t.lb}</span></button>`).join("")}</nav>
   <main class="fade-in">${c}</main>`}
 R();
 </script>

@@ -155,7 +155,8 @@ const ONTOLOGY_URLS={
   "04_edges":            `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=1441156318&single=true&output=csv`,
   "05_rule_conditions":  `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=296336425&single=true&output=csv`,
   "06_message_templates":`https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=918528399&single=true&output=csv`,
-  "11_coupon_ledger":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=889727543&single=true&output=csv`
+  "11_coupon_ledger":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=889727543&single=true&output=csv`,
+  "15_child_notices":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=1620964460&single=true&output=csv`
 };
 const ONTOLOGY={}; // { "01_node_types": [...], "03_nodes": [...], ... } — 헤더 기반 object 배열
 let ontologyLoaded=false;
@@ -195,15 +196,15 @@ async function loadOntology(){
   );
   const results=await Promise.all(tasks);
   const okCount=results.filter(r=>r.ok).length;
-  console.log(`[ontology] ${okCount}/7 시트 fetch 성공`);
+  console.log(`[ontology] ${okCount}/8 시트 fetch 성공`);
   results.forEach(r=>{
     if(r.ok)console.log(`  ✓ ${r.key}: ${r.count}행`);
     else console.warn(`  ✗ ${r.key}: ${r.err}`);
   });
-  if(okCount>=6){  // 11번이 빈 경우도 정상 동작 가능 (정의층만 있어도)
+  if(okCount>=6){  // 정의층 6개만 있어도 정상 동작
     ontologyLoaded=true;
     window.ONTOLOGY=ONTOLOGY;
-    R(); // ledger fetch 후 화면 다시 그리기
+    R();
   }
 }
 
@@ -258,9 +259,9 @@ function parseDashboard(csv){
 setTimeout(loadSheet,500);
 setInterval(loadSheet,300000);
 
-const TN={T1:"영재원 과제",T2:"영재원 개념잡기",T3:"디딤돌 라이트",T4:"응용심화수학",T5:"1031 수/연산",T6:"1031 여러가지문제",T7:"1031 규칙/논리",T8:"1031 도형/측정",T9:"기탄수학",T10:"바이올린",T11:"기타 활동",T12:"명심보감"};
+const TN={T1:"영재원 과제",T2:"영재원 개념잡기",T3:"디딤돌 라이트",T4:"응용심화수학",T5:"1031 수/연산",T6:"1031 여러가지문제",T7:"1031 규칙/논리",T8:"1031 도형/측정",T9:"기탄수학",T10:"바이올린",T11:"기타 활동",T12:"독서 토론"};
 const TI={T1:"🧩",T2:"🧩",T3:"📐",T4:"📐",T5:"🔢",T6:"🔢",T7:"🔢",T8:"🔢",T9:"✏️",T10:"🎻",T11:"📌",T12:"📖"};
-const RW=[{n:"매일 공부 완료",t:60,r:1,f:"study"},{n:"숙제/유인물 챙기기",t:40,r:1,f:"hw"},{n:"명심보감 토론",t:60,r:0,f:"read"},{n:"학교 수학 100점",t:60,r:0,f:"math"},{n:"응용심화 80점↑",t:90,r:0,f:"adv"},{n:"방정리",t:0,m:5000,r:0,f:"room"},{n:"화장실 청소",t:30,r:0,f:"wc"},{n:"고양이 화장실",t:20,r:0,f:"cat"},{n:"9시반 취침",t:30,r:1,f:"bed"}];
+const RW=[{n:"매일 공부 완료",t:60,r:1,f:"study"},{n:"숙제/유인물 챙기기",t:40,r:1,f:"hw"},{n:"독서 토론",t:60,r:0,f:"read"},{n:"학교 수학 100점",t:60,r:0,f:"math"},{n:"응용심화 80점↑",t:90,r:0,f:"adv"},{n:"방정리",t:0,m:5000,r:0,f:"room"},{n:"화장실 청소",t:30,r:0,f:"wc"},{n:"고양이 화장실",t:20,r:0,f:"cat"},{n:"9시반 취침",t:30,r:1,f:"bed"}];
 const PN=[{n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},{n:"공부량 미달",t:-80,f:"stF"},{n:"아침약 미복용",t:-180,f:"med"},{n:"밤10시 미취침",t:-90,f:"late"},{n:"토론 준비 미흡",t:-90,f:"rdF"},{n:"거짓말/약속위반",t:-9999,f:"lie"},{n:"학교시간 미준수",t:-30,f:"ltS"},{n:"저녁약 미복용(8시전)",t:-60,f:"dinM"}];
 const BAL=40;
 const LIE_SENTINEL=-9999;
@@ -337,7 +338,7 @@ function pt(t){if(t.startsWith("기탄"))return{c:"T9",n:"기탄수학",t:"3장"
 const RULE_LABEL_MAP={
   RULE_R01:"매일 공부 완료",
   RULE_R02:"숙제/유인물 챙기기",
-  RULE_R03:"명심보감 토론",
+  RULE_R03:"독서 토론",
   RULE_R04:"학교 수학 100점",
   RULE_R05:"응용심화 80점↑",
   RULE_R06:"구구단 시험 통과",
@@ -368,6 +369,154 @@ function ruleLabel(source_id){
 }
 
 function todayYMD(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+
+/* ═══════════════════════════════════════════════════════════════
+   v3.2 — Web App 동기화 인프라
+   ═══════════════════════════════════════════════════════════════ */
+
+// 배포 후 한 줄만 교체. https://script.google.com/macros/s/.../exec 형태.
+const WEB_APP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
+const CHILD_ID = "CHILD_MINHOO";
+
+/* 프론트 UI 키 (RW의 f) → 시트 task_id suffix 매핑 (rule_engine의 RULE_TASK_MAP과 정합)
+   클릭값을 바로 ACT_T09로 쓰지 않고 TASK_<date>_<SUFFIX> 형태로 변환 */
+const FIELD_TO_TASK_SUFFIX = {
+  study: "DAILY_STUDY",       // R01 매일 공부 (bundle)
+  hw:    "HOMEWORK_01",        // R02 숙제/유인물
+  read:  "DISCUSSION_01",      // R03 독서 토론
+  math:  "SCHOOL_MATH_TEST",   // R04 학교 수학 100점
+  adv:   "ADV_MATH_SCORE",     // R05 응용심화 80점↑
+  room:  "ROOM_CLEAN",         // R07 방정리
+  wc:    "TOILET_CLEAN",       // R08 화장실 청소
+  cat:   "CAT_LITTER",         // R09 고양이 화장실
+  bed:   "SLEEP_01"            // R11 9시반 취침
+};
+
+/* 프론트 키 'M-D' (예: '5-11') + 활동 field → task_id 변환 */
+function buildTaskId(dateKey, field){
+  const suffix = FIELD_TO_TASK_SUFFIX[field];
+  if(!suffix)return null;
+  const [m,d] = dateKey.split("-");
+  const ymd = (new Date().getFullYear()) + String(m).padStart(2,"0") + String(d).padStart(2,"0");
+  return "TASK_" + ymd + "_" + suffix;
+}
+
+/* dateKey 'M-D' → 'YYYY-MM-DD' */
+function dateKeyToYMD(dateKey){
+  const [m,d] = dateKey.split("-");
+  return (new Date().getFullYear()) + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0");
+}
+
+/* client_event_id 생성 — 중복 방지 핵심 */
+function makeClientEventId(kind, dateYMD, key){
+  // kind: 'TASK' | 'STATE', key: task_id 또는 'STATE'
+  return CHILD_ID + "_" + dateYMD + "_" + (key||kind) + "_" + Date.now();
+}
+
+/* 동기화 상태 (전역) */
+let syncStatus = "idle"; // 'idle' | 'saving' | 'saved' | 'error'
+let syncMessage = "";
+
+function setSyncStatus(s, msg){
+  syncStatus = s;
+  syncMessage = msg || "";
+  renderSyncBadge();
+  if(s === "saved"){
+    // 2초 후 idle
+    setTimeout(()=>{ if(syncStatus==="saved"){ syncStatus="idle"; renderSyncBadge(); } }, 2000);
+  }
+}
+
+function renderSyncBadge(){
+  const el = document.getElementById("syncBadge");
+  if(!el) return;
+  const conf = {
+    idle:   {txt:"", bg:"transparent", color:"transparent"},
+    saving: {txt:"💾 저장 중…", bg:"#FFF8E1", color:"#D4A843"},
+    saved:  {txt:"✓ 저장됨",     bg:"#E8F5E9", color:"#6FA88F"},
+    error:  {txt:"⚠ 동기화 실패", bg:"#FFEBEE", color:"#E8836B"}
+  }[syncStatus] || {txt:"",bg:"transparent",color:"transparent"};
+  el.style.background = conf.bg;
+  el.style.color = conf.color;
+  el.textContent = conf.txt;
+}
+
+/* Pending queue — 실패 시 localStorage 보관 후 재시도 */
+function getPendingQueue(){
+  try{ return JSON.parse(localStorage.getItem("pr_pending")||"[]"); }
+  catch(e){ return []; }
+}
+function setPendingQueue(arr){
+  try{ localStorage.setItem("pr_pending", JSON.stringify(arr)); }catch(e){}
+}
+function enqueuePending(payload){
+  const q = getPendingQueue();
+  q.push({...payload, _enqueuedAt: new Date().toISOString()});
+  // 너무 많이 쌓이지 않도록 cap 100
+  if(q.length>100) q.shift();
+  setPendingQueue(q);
+}
+
+/* Web App POST — 단일 payload */
+async function postToWebApp(payload){
+  if(!WEB_APP_URL || WEB_APP_URL.indexOf("PASTE_YOUR")===0){
+    console.warn("[sync] WEB_APP_URL not configured, queueing", payload);
+    enqueuePending(payload);
+    setSyncStatus("error", "URL 미설정");
+    return {ok:false, error:"web_app_url_not_set"};
+  }
+  try{
+    const res = await fetch(WEB_APP_URL, {
+      method: "POST",
+      // CORS — Apps Script Web App은 GET/POST 둘 다 응답 가능
+      // 'no-cors'로 두면 응답을 읽지 못함. Apps Script는 simple request 받음.
+      // Content-Type을 text/plain으로 보내 preflight 회피.
+      headers: {"Content-Type":"text/plain;charset=utf-8"},
+      body: JSON.stringify(payload),
+      redirect: "follow"
+    });
+    if(!res.ok){
+      throw new Error("HTTP " + res.status);
+    }
+    const data = await res.json();
+    console.log("[sync] ok:", data);
+    return data;
+  } catch(err){
+    console.error("[sync] failed:", err);
+    enqueuePending(payload);
+    throw err;
+  }
+}
+
+/* Fire-and-forget — UI 안 막고 백그라운드 전송 */
+function syncPayload(payload){
+  setSyncStatus("saving");
+  postToWebApp(payload)
+    .then(()=> setSyncStatus("saved"))
+    .catch(()=> setSyncStatus("error", "pending에 보관"));
+}
+
+/* 재시도 — pending queue 전부 다시 전송 */
+async function retryPending(){
+  const q = getPendingQueue();
+  if(q.length===0){ toast("재시도할 항목 없음"); return; }
+  toast("재시도 시작: " + q.length + "건");
+  setSyncStatus("saving");
+  const remaining = [];
+  let ok = 0, fail = 0;
+  for(const p of q){
+    try{
+      const res = await postToWebApp(p);
+      if(res && res.ok) ok++;
+      else { remaining.push(p); fail++; }
+    } catch(e){
+      remaining.push(p); fail++;
+    }
+  }
+  setPendingQueue(remaining);
+  if(fail===0){ setSyncStatus("saved"); toast("재시도 완료: "+ok+"건 성공"); }
+  else { setSyncStatus("error", fail+"건 실패"); toast("재시도: 성공 "+ok+" / 실패 "+fail); }
+}
 
 function cs(){
   const today=todayYMD();
@@ -431,10 +580,107 @@ function tg(k,f){
     toast("거짓말 항목은 시트에서 처리됩니다");
     return;
   }
-  const dd=st.d[k]||{};const v=dd[f];dd[f]=v==="O"?"X":v==="X"?undefined:"O";
-  if(!dd[f])delete dd[f];st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")
+  // 1. localStorage 즉시 반영 (UI 빠른 반응)
+  const dd=st.d[k]||{};
+  const prev=dd[f];
+  dd[f]=prev==="O"?"X":prev==="X"?undefined:"O";
+  if(!dd[f])delete dd[f];
+  st.d[k]=dd;
+  sv("d",st.d);
+  R();
+
+  // 2. 매핑층 — UI key → task_id (Web App POST 전용)
+  //    O/X 둘 다 8번 시트에 기록 (event_type='completed'/'skipped')
+  //    undefined (=토글 해제)는 POST하지 않음 (취소 의미. 시트는 append-only)
+  const newVal = dd[f];
+  if(newVal !== "O" && newVal !== "X"){
+    toast("기록 해제됨 (시트엔 영향 없음)");
+    return;
+  }
+  const task_id = buildTaskId(k, f);
+  if(!task_id){
+    // RW에 있는 f지만 매핑 없으면 시트 동기화 안 함 (예: 향후 추가될 활동)
+    toast("💾 저장됨 (로컬)");
+    return;
+  }
+  const ymd = dateKeyToYMD(k);
+  const payload = {
+    client_event_id: makeClientEventId("TASK", ymd, task_id),
+    child_id: CHILD_ID,
+    date: ymd,
+    log_type: "task",
+    task_id: task_id,
+    value: newVal,
+    actor: "parent",
+    created_at: new Date().toISOString()
+  };
+
+  // 3. Fire-and-forget 백그라운드 POST
+  syncPayload(payload);
 }
 function ss(k,v){if(VIEW)return;const dd=st.d[k]||{};dd.as=v;st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")}
+
+/* v3.2 — 아이 상태 저장 (medication/condition/focus/sleep_lack/memo) */
+function saveDailyState(dateKey, state){
+  if(VIEW)return;
+  // 1. localStorage 즉시 반영
+  const dd = st.d[dateKey] || {};
+  dd._state = state;  // 상태 묶음을 _state 키 하나로 보관
+  st.d[dateKey] = dd;
+  sv("d", st.d);
+  R();
+
+  // 2. Web App POST
+  const ymd = dateKeyToYMD(dateKey);
+  const payload = {
+    client_event_id: makeClientEventId("STATE", ymd, "STATE"),
+    child_id: CHILD_ID,
+    date: ymd,
+    log_type: "daily_state",
+    medication: state.medication || "UNKNOWN",
+    condition:  state.condition  || "NORMAL",
+    focus:      state.focus      || "NORMAL",
+    sleep_lack: state.sleep_lack || "X",
+    memo:       state.memo       || "",
+    actor: "parent",
+    created_at: new Date().toISOString()
+  };
+  syncPayload(payload);
+}
+
+/* v3.2 — 상태 한 필드만 토글 */
+function toggleStateField(dateKey, field, value){
+  if(VIEW)return;
+  const dd = st.d[dateKey] || {};
+  const cur = dd._state || {};
+  // 같은 값 다시 누르면 해제 → 디폴트값 매핑
+  const defaults = {medication:"UNKNOWN", condition:"NORMAL", focus:"NORMAL", sleep_lack:"X"};
+  cur[field] = (cur[field] === value && field !== "memo") ? defaults[field] : value;
+  saveDailyState(dateKey, cur);
+}
+
+function saveStateMemo(dateKey, memo){
+  if(VIEW)return;
+  const dd = st.d[dateKey] || {};
+  const cur = dd._state || {};
+  cur.memo = memo;
+  saveDailyState(dateKey, cur);
+}
+
+/* v3.2 - 상태 라디오 그룹 렌더 */
+function renderStateRow_(dateKey, field, label, options, curValue){
+  const btns = options.map(([val,lbl])=>{
+    const on = val===curValue;
+    const bg = on ? "#A77BBF" : "#fff";
+    const fg = on ? "#fff" : "#888";
+    const bd = on ? "#A77BBF" : "#E4ECF5";
+    return `<button onclick="toggleStateField('${dateKey}','${field}','${val}')" style="flex:1;padding:8px 4px;border:1.5px solid ${bd};background:${bg};color:${fg};border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;font-family:Nunito">${lbl}</button>`;
+  }).join("");
+  return `<div style="padding:8px 0;border-bottom:1px solid #f5f5f5">
+    <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:6px">${label}</div>
+    <div style="display:flex;gap:6px">${btns}</div>
+  </div>`;
+}
 
 /* v3.0: 잔고 조정 / 거짓말 몰수는 시트(11_coupon_ledger)에서 처리.
    프론트 함수는 stub으로 유지 (외부 호출 안전성). */
@@ -574,7 +820,7 @@ function changeMonth(delta){
 
 function R(){
 const a=document.getElementById("app"),s=st,tk=_tk(),tm=_tm(),td=_td(),dw=_dw(),ty=_ty();
-if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.0</div></div>`;return}
+if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.2</div></div>`;return}
 const X=cs();let c="";
 const tabs=[{id:"dash",ic:"📊",lb:"대시보드"},{id:"today",ic:"📅",lb:"오늘할일"},{id:"chk",ic:"✅",lb:"체크"},{id:"rules",ic:"📖",lb:"규칙"}];
 
@@ -664,6 +910,38 @@ if(s.tab==="dash"){
 
   const alerts = noticeBlock + liveAlerts;
 
+  /* ───────── 공지사항 카드 (v3.1: 15_child_notices) ───────── */
+  // 컬럼명 후보를 다 시도 - title/body/publish_date 등 다양한 표기 허용
+  const notices = (ONTOLOGY["15_child_notices"]||[])
+    .filter(n => {
+      const status = (n.status || n.state || "").toString().toLowerCase();
+      // active / published / 빈값(default OK) 만 표시. archived/draft 제외.
+      return status === "" || status === "active" || status === "published";
+    })
+    .map(n => ({
+      date: n.publish_date || n.date || n.created_at || n.notice_date || "",
+      title: n.title || n.subject || n.headline || "",
+      body: n.body || n.content || n.message || n.text || ""
+    }))
+    .filter(n => n.title || n.body);
+  // 최신순 (날짜 desc)
+  notices.sort((a,b) => String(b.date).localeCompare(String(a.date)));
+  // 최근 2개만
+  const recentNotices2 = notices.slice(0,2);
+  const noticesBlock = recentNotices2.length === 0 ? "" : `
+    <div class="card" style="border-left:4px solid #7EB6D9">
+      <h3 class="ct">📢 공지사항</h3>
+      ${recentNotices2.map(n => `
+        <div style="padding:8px 0;border-bottom:1px solid #f5f5f5">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:700;color:#5A9BBF">${n.title || "공지"}</span>
+            <span style="font-size:10px;color:#aaa;font-weight:600">${String(n.date).slice(0,10).replace(/-/g,".")}</span>
+          </div>
+          ${n.body ? `<p style="font-size:12px;color:#666;line-height:1.5;margin:0">${n.body}</p>` : ""}
+        </div>
+      `).join("")}
+    </div>`;
+
   /* ───────── 필수 이행현황 (일별/월별 sub-tab) ───────── */
   const compBlock = `
     <div class="card">
@@ -740,7 +1018,7 @@ if(s.tab==="dash"){
     <button class="sync-btn" onclick="doSync()">📲 아이 기기에 데이터 동기화</button>
     <button class="exp-btn" onclick="doExport()">📊 데이터 내려받기 (CSV)</button>`;
 
-  c = ledgerNotice + heroBlock + smallBlock + alerts + compBlock + streakBlock + goalBlock + useBlock + adminBlock;
+  c = ledgerNotice + heroBlock + smallBlock + alerts + noticesBlock + compBlock + streakBlock + goalBlock + useBlock + adminBlock;
   } // end dashView==="main"
 }
 
@@ -764,7 +1042,22 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
       return `<button class="ci disabled" disabled><span class="cb" style="background:${bg};color:${fg}">${mark}</span><span style="flex:1;font-size:13px;font-weight:500">${q.n}</span><span style="font-size:11px;font-weight:700;color:#E8836B">${note}</span></button>`;
     }
     return ci(q.n,dd[q.f],0,`${q.t}분`,1,s.vd,q.f);
-  }).join("");c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{
+  }).join("");
+  // v3.2 - 아이 상태 입력 카드
+  const curState = (dd._state||{});
+  const stateCard = VIEW ? "" : `
+    <div class="card" style="border-left:4px solid #A77BBF">
+      <h3 class="ct" style="color:#A77BBF;border-bottom:2px solid #A77BBF;padding-bottom:6px">🩺 오늘 상태</h3>
+      ${renderStateRow_(s.vd,"medication","약 복용",[["O","O"],["X","X"],["UNKNOWN","모름"]],curState.medication||"UNKNOWN")}
+      ${renderStateRow_(s.vd,"condition","컨디션",[["GOOD","좋음"],["NORMAL","보통"],["BAD","나쁨"]],curState.condition||"NORMAL")}
+      ${renderStateRow_(s.vd,"focus","집중도",[["GOOD","좋음"],["NORMAL","보통"],["LOW","낮음"]],curState.focus||"NORMAL")}
+      ${renderStateRow_(s.vd,"sleep_lack","수면 부족",[["O","O"],["X","X"]],curState.sleep_lack||"X")}
+      <div style="padding:8px 0">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:4px">메모</div>
+        <textarea id="stateMemo_${s.vd}" style="width:100%;padding:8px;border:1px solid #E4ECF5;border-radius:8px;font-family:Nunito;font-size:12px;resize:vertical;min-height:50px" placeholder="특이사항 메모" onblur="saveStateMemo('${s.vd}',this.value)">${curState.memo||""}</textarea>
+      </div>
+    </div>`;
+  c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}${stateCard}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{
     /* ═══ 캘린더 — 월별 일반화 + 좌우 화살표 (v3.0) ═══ */
     const cy=s.calYear, cmm=s.calMonth;
     const daysInMonth=monthDays(cy,cmm);
@@ -784,13 +1077,18 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
     const todayHint=isCurMonth?` <span style="font-size:13px;color:#aaa;font-weight:600">(${tm}월 ${td}일)</span>`:"";
     c=`<div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 14px"><button onclick="changeMonth(-1)" style="background:none;border:none;font-size:22px;color:#7EB6D9;cursor:pointer;padding:4px 18px;font-family:Nunito;font-weight:900">‹</button><h2 style="font-weight:900;color:#5A9BBF;margin:0;font-size:18px">${cmm}월${todayHint}</h2><button onclick="changeMonth(1)" style="background:none;border:none;font-size:22px;color:#7EB6D9;cursor:pointer;padding:4px 18px;font-family:Nunito;font-weight:900">›</button></div><div class="cg">${["일","월","화","수","목","금","토"].map(d=>`<div class="ch">${d}</div>`).join("")}${blanksHTML}${cl}</div>`}}
 
-else if(s.tab==="rules"){const sec=[{id:"rw",ti:"✅ 리워드",cl:"#8FBF9F",it:RW.map(r=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${r.n}</span><span style="font-size:12px;font-weight:700;color:#8FBF9F">+${r.t||""}${r.m?r.m.toLocaleString()+"원":r.t?"분":""}</span>${r.r?'<span class="rb">필수</span>':""}</div>`).join("")},{id:"pn",ti:"❌ 패널티",cl:"#E8836B",it:PN.map(p=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${p.n}</span><span style="font-size:12px;font-weight:700;color:#E8836B">${p.t===LIE_SENTINEL?"전액몰수":p.t+"분"}</span></div>`).join("")},{id:"df",ti:"📖 기준 정의",cl:"#5A9BBF",it:[{t:"🏠 방정리",i:["빨래/옷 바닥·책상에 없을 것","책상은 연필통 외 없는 상태","양말/옷 뒤집어 벗기 금지"]},{t:"📝 채점",i:["풀이과정 미작성 50%","단위 미작성 오답","화풀이 0점+패널티"]},{t:"🎫 쿠폰",i:["당일 사용 불가","패널티 많으면 선차감","3일보너스 후 다시 3일"]},{t:"📖 독서토론",i:["토/일 1시간씩","미인지 토론 불인정","일요일 농구 후"]}].map(d=>`<div><p style="font-weight:700;font-size:13px;margin:0 0 4px">${d.t}</p>${d.i.map(x=>`<p style="font-size:12px;color:#888;margin:2px 0 2px 12px">• ${x}</p>`).join("")}</div>`).join("")}];c=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="font-weight:900;color:#5A9BBF;margin:0">📖 규칙표</h2><span class="badge">VER 2.1</span></div>${sec.map(x=>`<button class="acc" style="border-left:4px solid ${x.cl}" onclick="st.or=st.or==='${x.id}'?null:'${x.id}';R()"><span>${x.ti}</span><span style="display:inline-block;transform:${s.or===x.id?"rotate(180deg)":""}">▾</span></button>${s.or===x.id?`<div class="ab">${x.it}</div>`:""}`).join("")}`}
+else if(s.tab==="rules"){const sec=[{id:"rw",ti:"✅ 리워드",cl:"#8FBF9F",it:RW.map(r=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${r.n}</span><span style="font-size:12px;font-weight:700;color:#8FBF9F">+${r.t||""}${r.m?r.m.toLocaleString()+"원":r.t?"분":""}</span>${r.r?'<span class="rb">필수</span>':""}</div>`).join("")},{id:"pn",ti:"❌ 패널티",cl:"#E8836B",it:PN.map(p=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${p.n}</span><span style="font-size:12px;font-weight:700;color:#E8836B">${p.t===LIE_SENTINEL?"전액몰수":p.t+"분"}</span></div>`).join("")},{id:"df",ti:"📖 기준 정의",cl:"#5A9BBF",it:[{t:"🏠 방정리",i:["빨래/옷 바닥·책상에 없을 것","책상은 연필통 외 없는 상태","양말/옷 뒤집어 벗기 금지"]},{t:"📝 채점",i:["풀이과정 미작성 50%","단위 미작성 오답","화풀이 0점+패널티"]},{t:"🎫 쿠폰",i:["당일 사용 불가","패널티 많으면 선차감","3일보너스 후 다시 3일"]},{t:"📖 독서 토론",i:["토/일 1시간씩","미인지 토론 불인정","일요일 농구 후"]}].map(d=>`<div><p style="font-weight:700;font-size:13px;margin:0 0 4px">${d.t}</p>${d.i.map(x=>`<p style="font-size:12px;color:#888;margin:2px 0 2px 12px">• ${x}</p>`).join("")}</div>`).join("")}];c=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="font-weight:900;color:#5A9BBF;margin:0">📖 규칙표</h2><span class="badge">VER 2.1</span></div>${sec.map(x=>`<button class="acc" style="border-left:4px solid ${x.cl}" onclick="st.or=st.or==='${x.id}'?null:'${x.id}';R()"><span>${x.ti}</span><span style="display:inline-block;transform:${s.or===x.id?"rotate(180deg)":""}">▾</span></button>${s.or===x.id?`<div class="ab">${x.it}</div>`:""}`).join("")}`}
 
 a.innerHTML=`
   ${VIEW?'<div class="view-banner">👀 보기 모드</div>':""}
   <header><div class="h-top">
     <div class="h-left">${VIEW?LG(36):`<a href="${SHEET_EDIT}" target="_blank" style="text-decoration:none">${LG(36)}</a>`}<div><div class="h-name">민후</div><div class="h-date">${tm}월 ${td}일 ${dw}요일</div></div></div>
-    <div class="h-btns">${VIEW?"":`<button class="h-btn" onclick="doShare()" title="공유">🔗</button>`}<button class="h-btn" onclick="st.ph='splash';R()">🔒</button></div>
+    <div class="h-btns">
+      <span id="syncBadge" style="font-size:10px;font-weight:700;padding:4px 8px;border-radius:8px;margin-right:4px"></span>
+      ${VIEW?"":`<button class="h-btn" onclick="retryPending()" title="동기화 재시도" id="retryBtn" style="position:relative">🔄${getPendingQueue().length>0?`<span style="position:absolute;top:-2px;right:-2px;background:#E8836B;color:#fff;font-size:9px;border-radius:8px;padding:1px 5px;font-weight:800">${getPendingQueue().length}</span>`:""}</button>`}
+      ${VIEW?"":`<button class="h-btn" onclick="doShare()" title="공유">🔗</button>`}
+      <button class="h-btn" onclick="st.ph='splash';R()">🔒</button>
+    </div>
   </div></header>
   <nav>${tabs.map(t=>`<button class="${s.tab===t.id?"on":""}" onclick="st.tab='${t.id}';st.vd=null;st.dashView='main';R()"><span class="lb">${t.lb}</span></button>`).join("")}</nav>
   <main class="fade-in">${c}</main>`}

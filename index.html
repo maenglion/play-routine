@@ -245,7 +245,14 @@ function parseDashboard(csv){
         if(m)bonus+=parseInt(m[1]);
       }
     });
-    if(bonus>0){specialBonus=bonus;console.log("특별이벤트 +"+bonus+"분 반영!");sv("spBonus",bonus);R()}}
+    if(bonus>0){
+      if(bonus!==specialBonus){
+        // 변경분만 noticeLog에 기록 (직전 값 대비 증감)
+        const diff=bonus-specialBonus;
+        if(diff!==0)pushNotice("special_bonus",diff,`특별이벤트 ${diff>=0?"+":""}${diff}분 반영`);
+      }
+      specialBonus=bonus;console.log("특별이벤트 +"+bonus+"분 반영!");sv("spBonus",bonus);R()
+    }}
 
 setTimeout(loadSheet,500);
 setInterval(loadSheet,300000);
@@ -286,7 +293,20 @@ specialBonus=ld("spBonus",0);
 let adjust=ld("adj",0);
 let wipe=ld("wipe",0);
 let wipeLog=ld("wipeLog",[]);
+let noticeLog=ld("noticeLog",[]); // 통합 알림 로그 (v2.3): [{type, amount, ts, description}, ...]
 let streakMode=ld("sMode","auto"); // 'auto' | 'manual'
+
+/* noticeLog 헬퍼 — 최근 20개만 유지, append-only */
+function pushNotice(type, amount, description){
+  const ts=new Date().toISOString().slice(0,16);
+  noticeLog.push({type,amount,ts,description});
+  if(noticeLog.length>20)noticeLog=noticeLog.slice(-20);
+  sv("noticeLog",noticeLog);
+}
+function formatNoticeDate(ts){
+  // ISO 'YYYY-MM-DDTHH:MM' → 'YYYY.MM.DD'
+  return String(ts).slice(0,10).replace(/-/g,".");
+}
 
 (function migrateLie(){
   let cleared=0;
@@ -339,24 +359,35 @@ function applyLieWipe(k){
   if(!confirm(msg))return;
   wipe+=cur;
   wipeLog.push({date:k,amount:cur,ts:new Date().toISOString().slice(0,16)});
-  sv("wipe",wipe);sv("wipeLog",wipeLog);R();
+  sv("wipe",wipe);sv("wipeLog",wipeLog);
+  pushNotice("lie_wipe",-cur,`거짓말 몰수 -${cur}분 적용`);
+  R();
   toast("🚫 -"+cur+"분 몰수 적용");
 }
 function clearWipe(){
   if(VIEW)return;
   if(!confirm(`거짓말 누적 몰수 -${wipe}분을 모두 해제할까요?\n(잔고가 ${wipe}분 회복됩니다)`))return;
-  wipe=0;wipeLog=[];sv("wipe",0);sv("wipeLog",[]);R();toast("🔄 몰수 해제");
+  const restored=wipe;
+  wipe=0;wipeLog=[];sv("wipe",0);sv("wipeLog",[]);
+  pushNotice("lie_wipe_clear",restored,`거짓말 몰수 해제 +${restored}분 복원`);
+  R();toast("🔄 몰수 해제");
 }
 
 function setBalance(target){
   if(VIEW)return;const X=cs();const cur=X.net;
   if(!confirm("현재 사용가능시간: "+cur+"분\n→ "+target+"분으로 맞출까요?\n\n(O/X 기록은 그대로 유지됩니다)"))return;
-  adjust=adjust+(target-cur);sv("adj",adjust);R();toast("✅ 잔고 "+target+"분으로 조정됨");
+  const diff=target-cur;
+  adjust=adjust+diff;sv("adj",adjust);
+  pushNotice("adjust",diff,`잔고 보정 ${diff>=0?"+":""}${diff}분 적용`);
+  R();toast("✅ 잔고 "+target+"분으로 조정됨");
 }
 function clearAdjust(){
   if(VIEW)return;
   if(!confirm("잔고 조정값을 해제할까요?\n(O/X 기록 기반의 원래 잔고로 돌아갑니다)"))return;
-  adjust=0;sv("adj",0);R();toast("🔄 조정 해제됨");
+  const prev=adjust;
+  adjust=0;sv("adj",0);
+  pushNotice("adjust_clear",-prev,`잔고 보정 해제 ${-prev>=0?"+":""}${-prev}분`);
+  R();toast("🔄 조정 해제됨");
 }
 
 function toggleStreakMode(){
@@ -377,7 +408,7 @@ function doShare(){
   navigator.clipboard.writeText(url).then(()=>toast("📋 보기전용 링크가 복사되었어요!")).catch(()=>{prompt("이 링크를 복사하세요:",url)})}
 
 function doSync(){
-  const data={d:st.d,sk:st.sk,gl:st.gl,use:st.use,adj:adjust,wipe,wipeLog,sMode:streakMode};
+  const data={d:st.d,sk:st.sk,gl:st.gl,use:st.use,adj:adjust,wipe,wipeLog,noticeLog,sMode:streakMode};
   const encoded=btoa(unescape(encodeURIComponent(JSON.stringify(data))));
   const syncUrl=location.origin+location.pathname+"?sync="+encoded;
   navigator.clipboard.writeText(syncUrl).then(()=>toast("📋 동기화 링크 복사! 아이 폰에서 열면 데이터 동기화됩니다")).catch(()=>{prompt("이 링크를 아이 폰에서 열어주세요:",syncUrl)})}
@@ -395,6 +426,7 @@ function checkSync(){
       if(typeof json.adj==="number"){adjust=json.adj;sv("adj",adjust)}
       if(typeof json.wipe==="number"){wipe=json.wipe;sv("wipe",wipe)}
       if(Array.isArray(json.wipeLog)){wipeLog=json.wipeLog;sv("wipeLog",wipeLog)}
+      if(Array.isArray(json.noticeLog)){noticeLog=json.noticeLog;sv("noticeLog",noticeLog)}
       if(json.sMode){streakMode=json.sMode;sv("sMode",streakMode)}
       history.replaceState(null,"",location.pathname);
       toast("✅ 데이터 동기화 완료!");
@@ -415,6 +447,10 @@ function doExport(){
   if(wipeLog.length>0){
     csv+="\n거짓말몰수기록\n날짜,몰수액(분),시간\n";
     wipeLog.forEach(w=>csv+=w.date.replace("-","월")+"일,"+w.amount+"분,"+w.ts+"\n");
+  }
+  if(noticeLog.length>0){
+    csv+="\n공지로그\n시간,종류,증감(분),설명\n";
+    noticeLog.forEach(n=>csv+=n.ts+","+n.type+","+(n.amount||0)+",\""+(n.description||"")+"\"\n");
   }
   const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);
@@ -486,7 +522,7 @@ function calendarLeadingBlanks(year, month){
 
 function R(){
 const a=document.getElementById("app"),s=st,tk=_tk(),tm=_tm(),td=_td(),dw=_dw(),ty=_ty();
-if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v2.1</div></div>`;return}
+if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v2.3</div></div>`;return}
 const X=cs();let c="";
 const tabs=[{id:"dash",ic:"📊",lb:"대시보드"},{id:"today",ic:"📅",lb:"오늘할일"},{id:"chk",ic:"✅",lb:"체크"},{id:"rules",ic:"📖",lb:"규칙"}];
 
@@ -510,12 +546,22 @@ if(s.tab==="dash"){
       <div class="kpi"><span class="kl">3일 보너스</span><span class="kv" style="color:#A77BBF">${X.effectiveStreakCount}회</span><span class="ks">+${X.effectiveStreakCount*60}분</span></div>
     </div>`;
 
-  /* ───────── 알림/경고 ───────── */
-  const alerts = `
-    ${specialBonus>0?`<div style="background:#E8F5E9;color:#6FA88F;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">🎁 특별이벤트 +${specialBonus}분 반영됨 (이월${BAL}분 포함)</div>`:""}
-    ${X.wipe>0?`<div style="background:#FFF0ED;color:#E8836B;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">🚫 거짓말 누적 몰수: -${X.wipe}분 ${VIEW?"":`<button onclick="clearWipe()" style="background:none;border:none;color:#E8836B;font-size:11px;text-decoration:underline;cursor:pointer;font-family:Nunito;margin-left:4px">해제</button>`}</div>`:""}
-    ${adjust!==0?`<div style="background:#FFF8E1;color:#D4A843;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">🔧 잔고 보정 ${adjust>0?"+":""}${adjust}분 적용 중 ${VIEW?"":`<button onclick="clearAdjust()" style="background:none;border:none;color:#D4A843;font-size:11px;text-decoration:underline;cursor:pointer;font-family:Nunito;margin-left:4px">해제</button>`}</div>`:""}
-    ${X.net<60?'<div class="warn">⚠️ 보상이 부족해요!</div>':""}`;
+  /* ───────── 알림/경고 (v2.3: noticeLog 통합) ───────── */
+  // 최근 2개만 노출. 페이지 배경과 동일한 transparent. 색 절제.
+  const recentNotices = noticeLog.slice(-2).reverse();
+  const noticeRows = recentNotices.length === 0 ? '' :
+    recentNotices.map(n => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:11px;color:#888">
+        <span style="font-weight:600;color:#aaa;letter-spacing:.02em">${formatNoticeDate(n.ts)}</span>
+        <span style="font-weight:600">${n.description}</span>
+      </div>`).join('');
+  const noticeBlock = recentNotices.length === 0 ? '' : `
+    <div style="background:transparent;padding:6px 4px 10px;margin-bottom:4px">${noticeRows}</div>`;
+
+  // 실시간 상태 경고는 별개로 유지 (보상 부족)
+  const liveAlerts = `${X.net<60?'<div class="warn">⚠️ 보상이 부족해요!</div>':""}`;
+
+  const alerts = noticeBlock + liveAlerts;
 
   /* ───────── 필수 이행현황 (일별/월별 sub-tab) ───────── */
   const compBlock = `
@@ -589,11 +635,14 @@ if(s.tab==="dash"){
     </div>`;
 
   /* ───────── 관리 버튼 (운영자) ───────── */
+  const hasAdjust = adjust!==0;
+  const hasWipe = wipe>0;
   const adminBlock = VIEW?"":`
     <div style="display:flex;gap:6px;margin-top:8px">
-      <button class="adj-btn" style="background:#FFF8E1;color:#D4A843" onclick="showAdjustModal()">🔧 잔고 조정</button>
+      <button class="adj-btn" style="background:#FFF8E1;color:#D4A843" onclick="showAdjustModal()">🔧 잔고 조정${hasAdjust?` (${adjust>0?'+':''}${adjust}분)`:""}</button>
       <button class="adj-btn" style="background:#E8F5E9;color:#6FA88F" onclick="setBalance(0)">잔고 0으로</button>
     </div>
+    ${hasWipe?`<button class="adj-btn" style="background:#FFF0ED;color:#E8836B;margin-top:6px;width:100%" onclick="clearWipe()">🚫 거짓말 몰수 해제 (-${wipe}분 → 복원)</button>`:""}
     <button class="sync-btn" onclick="doSync()">📲 아이 기기에 데이터 동기화</button>
     <button class="exp-btn" onclick="doExport()">📊 데이터 내려받기 (CSV)</button>`;
 

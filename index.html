@@ -156,7 +156,7 @@ const ONTOLOGY_URLS={
   "05_rule_conditions":  `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=296336425&single=true&output=csv`,
   "06_message_templates":`https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=918528399&single=true&output=csv`,
   "11_coupon_ledger":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=889727543&single=true&output=csv`,
-  "15_child_notices":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=1438153726&single=true&output=csv`
+  "15_child_notices":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=1620964460&single=true&output=csv`
 };
 const ONTOLOGY={}; // { "01_node_types": [...], "03_nodes": [...], ... } — 헤더 기반 object 배열
 let ontologyLoaded=false;
@@ -375,7 +375,7 @@ function todayYMD(){const d=new Date();return d.getFullYear()+"-"+String(d.getMo
    ═══════════════════════════════════════════════════════════════ */
 
 // 배포 후 한 줄만 교체. https://script.google.com/macros/s/.../exec 형태.
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzQIWW5HxKQbVvg_XqI5wKyNsodDYboCPdvbB4kkn09LNS3SZ-b8j2FtgdUsBzi91WQ/exec";
+const WEB_APP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
 const CHILD_ID = "CHILD_MINHOO";
 
 /* 프론트 UI 키 (RW의 f) → 시트 task_id suffix 매핑 (rule_engine의 RULE_TASK_MAP과 정합)
@@ -518,38 +518,61 @@ async function retryPending(){
   else { setSyncStatus("error", fail+"건 실패"); toast("재시도: 성공 "+ok+" / 실패 "+fail); }
 }
 
+/* v3.2+ 22시 cutoff 정책
+   logical_date: 현재 시각이 22:00 이후면 내일 날짜로 간주.
+   - 사용가능시간(net): 전체 ledger 누적 (effective_date <= today). 변경 없음.
+   - 리워드/패널티 카드 숫자: logical_date 기준 transaction_date 행만.
+     → 22시 이후 박힌 건 다음날 카드에 들어감.
+     → 매일 22시 카드 0으로 리셋되는 효과.
+   - 누적 리스트 (rewardItems / penaltyItems): 전체 보존. */
+function logicalTodayYMD(){
+  const now=new Date();
+  const h=now.getHours();
+  const base=new Date(now);
+  if(h>=22) base.setDate(base.getDate()+1);
+  return base.getFullYear()+"-"+String(base.getMonth()+1).padStart(2,"0")+"-"+String(base.getDate()).padStart(2,"0");
+}
+
 function cs(){
   const today=todayYMD();
-  const ledgerRows=(ONTOLOGY["11_coupon_ledger"]||[]).filter(r=>
-    r.child_id==="CHILD_MINHOO" &&
-    r.status==="applied" &&
-    String(r.effective_date).slice(0,10)<=today
+  const logicalToday=logicalTodayYMD();
+
+  const allLedger=(ONTOLOGY["11_coupon_ledger"]||[]).filter(r=>
+    r.child_id==="CHILD_MINHOO" && r.status==="applied"
   );
 
-  // ledger 누적
-  let net=0, cash=0, tr=0, tm=0, tp=0, used=0;
-  const rewardItems=[], penaltyItems=[], usageItems=[];
-
-  ledgerRows.forEach(r=>{
+  // 1) 사용가능시간(net): effective_date 도래한 모든 행 누적
+  let net=0, cash=0, used=0;
+  const usageItems=[];
+  const rewardItems=[], penaltyItems=[];
+  allLedger.forEach(r=>{
     const min=Number(r.amount_minutes)||0;
     const cashAmt=Number(r.cash_amount)||0;
-    net+=min; cash+=cashAmt;
-
+    const eff=String(r.effective_date).slice(0,10);
     const tx=r.transaction_type;
-    if(tx==="reward"){
-      tr+=min; tm+=cashAmt;
-      rewardItems.push(r);
-    } else if(tx==="penalty"||tx==="forfeit_all"){
-      tp+=Math.abs(min);
-      penaltyItems.push(r);
-    } else if(tx==="usage"){
-      used+=Math.abs(min);
-      usageItems.push(r);
+    // net 누적은 effective_date 도래분만
+    if(eff<=today){
+      net+=min; cash+=cashAmt;
     }
-    // adjustment / special_bonus / opening_balance / carryover / reversal → net에만 반영
+    // 리스트는 전체 보존 (전체 누적 sub-view에서 사용)
+    if(tx==="reward")          rewardItems.push(r);
+    else if(tx==="penalty"||tx==="forfeit_all") penaltyItems.push(r);
+    else if(tx==="usage"){ usageItems.push(r); if(eff<=today) used+=Math.abs(min); }
   });
 
-  // 이행률 (v3.0: 월별 누적일이 분모. 그 달 1일~오늘)
+  // 2) 상단 카드 숫자: logical_date 기준 transaction_date만
+  let tr_today=0, tm_today=0, tp_today=0;
+  allLedger.forEach(r=>{
+    const txDate=String(r.transaction_date).slice(0,10);
+    if(txDate!==logicalToday) return;
+    const min=Number(r.amount_minutes)||0;
+    const cashAmt=Number(r.cash_amount)||0;
+    const tx=r.transaction_type;
+    if(tx==="reward"){ tr_today+=min; tm_today+=cashAmt; }
+    else if(tx==="penalty"||tx==="forfeit_all"){ tp_today+=Math.abs(min); }
+  });
+
+  // 3) 이행률 (v3.0: 월별 누적일이 분모)
   const cp={}; RW.filter(r=>r.r).forEach(r=>cp[r.f]={d:0,t:0});
   const now=new Date();
   const curM=now.getMonth()+1, curD=now.getDate();
@@ -564,12 +587,21 @@ function cs(){
     });
   }
 
-  // 3일 보너스 (자동/수동)
+  // 4) 3일 보너스
   const auto=computeAutoStreak();
   const effectiveStreakCount=(streakMode==="manual")?st.sk.t:auto.autoBonusCount;
 
-  return{net,cash,tr,tm,tp,used,cp,auto,effectiveStreakCount,
-         rewardItems,penaltyItems,usageItems,ledgerReady:ledgerRows.length>0}
+  return{
+    net, cash,
+    tr: tr_today,   // 카드 숫자 — 오늘 발생 분 (22시 리셋)
+    tm: tm_today,
+    tp: tp_today,
+    used,
+    cp, auto, effectiveStreakCount,
+    rewardItems, penaltyItems, usageItems,  // 누적 리스트 (sub-view용, 전체)
+    ledgerReady: allLedger.length>0,
+    logicalToday  // 디버그용
+  };
 }
 
 function tg(k,f){

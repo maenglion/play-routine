@@ -375,7 +375,7 @@ function todayYMD(){const d=new Date();return d.getFullYear()+"-"+String(d.getMo
    ═══════════════════════════════════════════════════════════════ */
 
 // 배포 후 한 줄만 교체. https://script.google.com/macros/s/.../exec 형태.
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbz6iCWDdy1GgGb-rHytF2dtF2YUoeyo86MRJVth-odB7dKIV97t_R2CeY_91VB0E23r/exec";
+const WEB_APP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
 const CHILD_ID = "CHILD_MINHOO";
 
 /* 프론트 UI 키 (RW의 f) → 시트 task_id suffix 매핑 (rule_engine의 RULE_TASK_MAP과 정합)
@@ -390,6 +390,31 @@ const FIELD_TO_TASK_SUFFIX = {
   wc:    "TOILET_CLEAN",       // R08 화장실 청소
   cat:   "CAT_LITTER",         // R09 고양이 화장실
   bed:   "SLEEP_01"            // R11 9시반 취침
+};
+
+/* v3.4 — 패널티 카테고리 분리
+   AUTO_PENALTIES: 룰엔진이 activity/state/time outcome 기반으로 자동 발동.
+     부모는 클릭 불가. UI는 read-only.
+   MANUAL_PENALTIES: 활동/상태로 자동 추론 불가능. 부모가 직접 클릭.
+     클릭 시 11번 ledger에 manual penalty 행 직접 추가.
+*/
+const AUTO_PENALTIES = ["stF", "med", "late", "rdF", "dinM"];
+// stF=P02 공부량 미달 / med=P05 아침약 / late=P07 밤10시 미취침
+// rdF=P09 토론 준비 미흡 / dinM=P12 저녁약
+
+const MANUAL_PENALTIES = ["hwL", "lie", "ltS"];
+// hwL=P01 유인물 이틀 지나 발견 / lie=P10 거짓말 / ltS=P11 학교시간 미준수
+
+/* 패널티 field → rule_id 매핑 (penalty_manual POST에서 사용) */
+const FIELD_TO_RULE_MAP = {
+  hwL:  "RULE_P01",
+  stF:  "RULE_P02",
+  med:  "RULE_P05",
+  late: "RULE_P07",
+  rdF:  "RULE_P09",
+  lie:  "RULE_P10",
+  ltS:  "RULE_P11",
+  dinM: "RULE_P12"
 };
 
 /* 프론트 키 'M-D' (예: '5-11') + 활동 field → task_id 변환 */
@@ -606,12 +631,13 @@ function cs(){
 
 function tg(k,f){
   if(VIEW)return;
-  // 거짓말은 시트에서 처리 (Apps Script). 프론트는 입력 불가.
-  const pn=PN.find(p=>p.f===f);
-  if(pn&&pn.t===LIE_SENTINEL){
-    toast("거짓말 항목은 시트에서 처리됩니다");
+
+  // v3.4 — 자동 패널티는 클릭 불가 (안전망. UI에서도 disabled 처리)
+  if(AUTO_PENALTIES.includes(f)){
+    toast("자동 계산 패널티는 룰엔진이 처리해요");
     return;
   }
+
   // 1. localStorage 즉시 반영 (UI 빠른 반응)
   const dd=st.d[k]||{};
   const prev=dd[f];
@@ -621,17 +647,51 @@ function tg(k,f){
   sv("d",st.d);
   R();
 
-  // 2. 매핑층 — UI key → task_id (Web App POST 전용)
-  //    O/X 둘 다 8번 시트에 기록 (event_type='completed'/'skipped')
-  //    undefined (=토글 해제)는 POST하지 않음 (취소 의미. 시트는 append-only)
   const newVal = dd[f];
+
+  // v3.4 — MANUAL_PENALTIES 분기 (P01/P10/P11)
+  // O = 패널티 발생. 11번 ledger에 penalty 행 직접 추가.
+  // X 또는 undefined = 발생 안 함 (시트엔 영향 없음, append-only 원칙).
+  if(MANUAL_PENALTIES.includes(f)){
+    if(newVal !== "O"){
+      toast("기록 해제됨 (이미 박힌 ledger는 시트에서 직접 정리)");
+      return;
+    }
+    const ruleId = FIELD_TO_RULE_MAP[f];
+    if(!ruleId){
+      toast("매핑 없음 (개발자에게 문의)");
+      return;
+    }
+    // P10 거짓말 = forfeit_all (잔액 전액 몰수)
+    const isLie = (ruleId === "RULE_P10");
+    const pn = PN.find(p => p.f === f);
+    const amountMin = isLie ? 0 : (pn ? Number(pn.t) || 0 : 0);
+
+    const ymd = dateKeyToYMD(k);
+    const payload = {
+      client_event_id: makeClientEventId("PENALTY", ymd, ruleId),
+      child_id: CHILD_ID,
+      date: ymd,
+      log_type: "penalty_manual",
+      rule_id: ruleId,
+      condition_id: "COND_" + ruleId.replace("RULE_", ""),
+      effect_type: isLie ? "penalty_all" : "penalty_time",
+      amount_minutes: amountMin,
+      actor: "parent",
+      memo: (pn ? pn.n : ruleId) + " (수동 입력)",
+      created_at: new Date().toISOString()
+    };
+    syncPayload(payload);
+    return;
+  }
+
+  // 2. 활동(RW) — task_log 동기화
   if(newVal !== "O" && newVal !== "X"){
     toast("기록 해제됨 (시트엔 영향 없음)");
     return;
   }
   const task_id = buildTaskId(k, f);
   if(!task_id){
-    // RW에 있는 f지만 매핑 없으면 시트 동기화 안 함 (예: 향후 추가될 활동)
     toast("💾 저장됨 (로컬)");
     return;
   }
@@ -834,14 +894,14 @@ function addUse(amt){
   if(VIEW)return;
   const d=new Date();
   const k=(d.getMonth()+1)+"-"+d.getDate();
-  // 1. localStorage 즉시 반영 (UI 빠른 반응)
+  // 1. localStorage 즉시 반영 (UI)
   st.use.push({k,a:amt,ts:d.toISOString().slice(0,16)});
   sv("use",st.use);
   st.usePage=0;
   R();
   toast("🎫 "+amt+"분 사용 완료!");
 
-  // 2. v3.3 - Web App POST → 11번 ledger에 usage 행 자동 추가
+  // 2. Web App POST → 11번 ledger에 usage 행 추가 (v3.3)
   const ymd = dateKeyToYMD(k);
   const payload = {
     client_event_id: makeClientEventId("USAGE", ymd, "USAGE_" + amt),
@@ -855,11 +915,9 @@ function addUse(amt){
   };
   syncPayload(payload);
 }
-
 function delUse(i){
   if(VIEW)return;
-  // localStorage에서만 제거. 시트의 ledger 행은 그대로 남음.
-  // 정말 회수하려면 시트에서 status를 'voided'로 변경하거나 새 reversal 행 추가.
+  // localStorage에서만 제거 (시트 ledger 행은 그대로 남음, 회수 원하면 시트에서 voided 처리)
   st.use.splice(i,1);
   sv("use",st.use);
   R();
@@ -928,7 +986,7 @@ function changeMonth(delta){
 
 function R(){
 const a=document.getElementById("app"),s=st,tk=_tk(),tm=_tm(),td=_td(),dw=_dw(),ty=_ty();
-if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.3</div></div>`;return}
+if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.4</div></div>`;return}
 const X=cs();let c="";
 const tabs=[{id:"dash",ic:"📊",lb:"대시보드"},{id:"today",ic:"📅",lb:"오늘할일"},{id:"chk",ic:"✅",lb:"체크"},{id:"rules",ic:"📖",lb:"규칙"}];
 
@@ -1136,19 +1194,49 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
   // v3.0: 거짓말 체크박스 - ledger의 P10 트랜잭션을 기준으로 발생일만 빨강 표시
   // 그 날 transaction_date == s.vd (변환 형식 YYYY-MM-DD) 매칭
   const _yvd=ty+"-"+String(p[0]).padStart(2,"0")+"-"+String(p[1]).padStart(2,"0");
-  const lieRow=(ONTOLOGY["11_coupon_ledger"]||[]).find(r=>
-    r.child_id==="CHILD_MINHOO" && String(r.transaction_date).slice(0,10)===_yvd &&
-    (r.source_id==="RULE_P10"||r.transaction_type==="forfeit_all"));
+  // v3.4 — 패널티 카테고리별 렌더
+  //   AUTO: read-only. 룰엔진 자동 발동. 시트(ledger)에서 발동 여부 확인.
+  //   MANUAL: 클릭 가능. tg() → handleManualPenalty_
+  //   LIE (P10): MANUAL 중 forfeit_all 특수 케이스
+  const todayLedgerRows = (ONTOLOGY["11_coupon_ledger"]||[]).filter(r =>
+    r.child_id==="CHILD_MINHOO" && String(r.transaction_date).slice(0,10)===_yvd
+  );
+  // rule_id → ledger row 매핑 (이미 시트에 박혔는지 확인용)
+  const ledgerByRule = {};
+  todayLedgerRows.forEach(r => { ledgerByRule[r.source_id] = r; });
+  const lieRow = ledgerByRule["RULE_P10"];
+
   let ph=PN.map(q=>{
+    const ruleId = FIELD_TO_RULE_MAP[q.f];
+
+    // LIE (P10) — manual but special UI (전액몰수)
     if(q.t===LIE_SENTINEL){
-      const occurred=!!lieRow;
-      const bg=occurred?"#E8836B":"#F0F0F0";
-      const fg=occurred?"#fff":"#ddd";
-      const mark=occurred?"!":"";
-      const wipeAmt=occurred?Math.abs(Number(lieRow.amount_minutes)||0):0;
-      const note=occurred?`발생 (${wipeAmt}분 몰수)`:"전액몰수 · 시트에서 처리";
-      return `<button class="ci disabled" disabled><span class="cb" style="background:${bg};color:${fg}">${mark}</span><span style="flex:1;font-size:13px;font-weight:500">${q.n}</span><span style="font-size:11px;font-weight:700;color:#E8836B">${note}</span></button>`;
+      const occurred = !!lieRow;
+      const wipeAmt = occurred ? Math.abs(Number(lieRow.amount_minutes)||0) : 0;
+      const bg = occurred ? "#E8836B" : "#fff";
+      const fg = occurred ? "#fff" : "#ccc";
+      const mark = occurred ? "!" : "";
+      const note = occurred ? `발생 (${wipeAmt}분 몰수)` : "전액몰수 · 누르면 발생";
+      return `<button class="ci${VIEW?" disabled":""}" onclick="${VIEW?"":"tg('"+s.vd+"','"+q.f+"')"}"><span class="cb" style="background:${bg};color:${fg};border:1.5px solid ${occurred?"#E8836B":"#FFCDD2"}">${mark}</span><span style="flex:1;font-size:13px;font-weight:500">${q.n}</span><span style="font-size:11px;font-weight:700;color:#E8836B">${note}</span></button>`;
     }
+
+    // AUTO 패널티 — read-only. ledger 발동 여부 표시
+    if(AUTO_PENALTIES.includes(q.f)){
+      const row = ledgerByRule[ruleId];
+      const occurred = !!row;
+      const amt = occurred ? Math.abs(Number(row.amount_minutes)||0) : 0;
+      const bg = occurred ? "#FFEBEE" : "#FAFAFA";
+      const labelColor = occurred ? "#E8836B" : "#bbb";
+      const indicator = occurred ? `-${amt}분 발동` : "미발동";
+      return `<div style="display:flex;align-items:center;width:100%;padding:9px 0;border-bottom:1px solid #f8f8f8;gap:8px;opacity:${occurred?1:0.55}">
+        <span style="width:26px;height:26px;border-radius:8px;background:${bg};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:${occurred?'#E8836B':'#ccc'};flex-shrink:0">${occurred?"⚠":"·"}</span>
+        <span style="flex:1;font-size:13px;font-weight:500">${q.n}</span>
+        <span style="font-size:9px;background:#F0F4F8;color:#888;padding:2px 6px;border-radius:4px;font-weight:700">자동</span>
+        <span style="font-size:11px;font-weight:700;color:${labelColor};min-width:64px;text-align:right">${indicator}</span>
+      </div>`;
+    }
+
+    // MANUAL 패널티 (P01, P11) — 클릭 가능
     return ci(q.n,dd[q.f],0,`${q.t}분`,1,s.vd,q.f);
   }).join("");
   // v3.3 - 아이 상태 입력 카드
@@ -1168,7 +1256,7 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
         <textarea id="stateMemo_${s.vd}" style="width:100%;padding:8px;border:1px solid #E4ECF5;border-radius:8px;font-family:Nunito;font-size:12px;resize:vertical;min-height:50px" placeholder="특이사항 메모" onblur="saveStateMemo('${s.vd}',this.value)">${curState.notes||""}</textarea>
       </div>
     </div>`;
-  c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}${stateCard}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">✅ 리워드</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3>${ph}</div>`}else{
+  c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}${stateCard}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">📝 오늘 활동</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3><p style="font-size:11px;color:#999;margin:0 0 8px">자동: 룰엔진이 활동/상태/시각 보고 자동 적용 · 수동: 부모가 직접 입력</p>${ph}</div>`}else{
     /* ═══ 캘린더 — 월별 일반화 + 좌우 화살표 (v3.0) ═══ */
     const cy=s.calYear, cmm=s.calMonth;
     const daysInMonth=monthDays(cy,cmm);

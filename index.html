@@ -830,8 +830,41 @@ function doExport(){
   a.download="PlayRoutine_데이터_"+new Date().toISOString().slice(0,10)+".csv";a.click();
   toast("📊 데이터가 다운로드되었어요!")}
 
-function addUse(amt){if(VIEW)return;const d=new Date();const k=(d.getMonth()+1)+"-"+d.getDate();st.use.push({k,a:amt,ts:d.toISOString().slice(0,16)});sv("use",st.use);st.usePage=0;R();toast("🎫 "+amt+"분 사용 완료!")}
-function delUse(i){if(VIEW)return;st.use.splice(i,1);sv("use",st.use);R()}
+function addUse(amt){
+  if(VIEW)return;
+  const d=new Date();
+  const k=(d.getMonth()+1)+"-"+d.getDate();
+  // 1. localStorage 즉시 반영 (UI 빠른 반응)
+  st.use.push({k,a:amt,ts:d.toISOString().slice(0,16)});
+  sv("use",st.use);
+  st.usePage=0;
+  R();
+  toast("🎫 "+amt+"분 사용 완료!");
+
+  // 2. v3.3 - Web App POST → 11번 ledger에 usage 행 자동 추가
+  const ymd = dateKeyToYMD(k);
+  const payload = {
+    client_event_id: makeClientEventId("USAGE", ymd, "USAGE_" + amt),
+    child_id: CHILD_ID,
+    date: ymd,
+    log_type: "coupon_usage",
+    usage_minutes: amt,
+    actor: "parent",
+    memo: amt + "분 사용 (프론트 클릭)",
+    created_at: d.toISOString()
+  };
+  syncPayload(payload);
+}
+
+function delUse(i){
+  if(VIEW)return;
+  // localStorage에서만 제거. 시트의 ledger 행은 그대로 남음.
+  // 정말 회수하려면 시트에서 status를 'voided'로 변경하거나 새 reversal 행 추가.
+  st.use.splice(i,1);
+  sv("use",st.use);
+  R();
+  toast("⚠️ 로컬에서만 제거됨. 시트는 그대로.");
+}
 function showUseModal(){
   const m=document.getElementById("useModal");if(m)m.remove();
   const div=document.createElement("div");div.id="useModal";

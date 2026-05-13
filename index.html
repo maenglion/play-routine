@@ -375,7 +375,7 @@ function todayYMD(){const d=new Date();return d.getFullYear()+"-"+String(d.getMo
    ═══════════════════════════════════════════════════════════════ */
 
 // 배포 후 한 줄만 교체. https://script.google.com/macros/s/.../exec 형태.
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbykkvBkMi3DknpVlMzCglFbog5_omYLpYxYlPUwl2sy-AkhZ3aE8eEw0oDcQIh_w4su/exec";
+const WEB_APP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
 const CHILD_ID = "CHILD_MINHOO";
 
 /* 프론트 UI 키 (RW의 f) → 시트 task_id suffix 매핑 (rule_engine의 RULE_TASK_MAP과 정합)
@@ -392,18 +392,25 @@ const FIELD_TO_TASK_SUFFIX = {
   bed:   "SLEEP_01"            // R11 9시반 취침
 };
 
-/* v3.4 — 패널티 카테고리 분리
-   AUTO_PENALTIES: 룰엔진이 activity/state/time outcome 기반으로 자동 발동.
-     부모는 클릭 불가. UI는 read-only.
-   MANUAL_PENALTIES: 활동/상태로 자동 추론 불가능. 부모가 직접 클릭.
-     클릭 시 11번 ledger에 manual penalty 행 직접 추가.
+/* v3.5 — 모든 패널티 수동 클릭으로 통일
+   사용자 정책 변경 (v3.4 → v3.5):
+   - 룰엔진의 자동 패널티 발동을 사용 안 함 (룰 모두 수동 입력 기반)
+   - 이유: 자동 발동 시 시각 입력/알림/네이티브 UI 등 복잡한 인프라 필요.
+     단순 운영 위해 부모 명시적 클릭만 인정.
+   - 룰엔진은 시트 05_rule_conditions에서 P02/P02_MITIGATED/P05/P07/P09/P12를
+     status='inactive'로 비활성화 (시트 토글로 정책 전환 가능)
 */
-const AUTO_PENALTIES = ["stF", "med", "late", "rdF", "dinM"];
-// stF=P02 공부량 미달 / med=P05 아침약 / late=P07 밤10시 미취침
-// rdF=P09 토론 준비 미흡 / dinM=P12 저녁약
+const AUTO_PENALTIES = [];   // 자동 패널티 없음 (전부 수동)
 
-const MANUAL_PENALTIES = ["hwL", "lie", "ltS"];
-// hwL=P01 유인물 이틀 지나 발견 / lie=P10 거짓말 / ltS=P11 학교시간 미준수
+const MANUAL_PENALTIES = ["hwL", "stF", "med", "late", "rdF", "lie", "ltS", "dinM"];
+// hwL=P01 유인물 이틀 지나 발견
+// stF=P02 공부량 미달
+// med=P05 아침약 미복용
+// late=P07 밤10시 미취침 (부모가 클릭하면 시각 무관 패널티 적용)
+// rdF=P09 토론 준비 미흡
+// lie=P10 거짓말/약속위반 (forfeit_all, 잔액 전액 몰수)
+// ltS=P11 학교/학원 시간 미준수
+// dinM=P12 저녁약 8시 이전 미복용
 
 /* 패널티 field → rule_id 매핑 (penalty_manual POST에서 사용) */
 const FIELD_TO_RULE_MAP = {
@@ -986,7 +993,7 @@ function changeMonth(delta){
 
 function R(){
 const a=document.getElementById("app"),s=st,tk=_tk(),tm=_tm(),td=_td(),dw=_dw(),ty=_ty();
-if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.4</div></div>`;return}
+if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.5</div></div>`;return}
 const X=cs();let c="";
 const tabs=[{id:"dash",ic:"📊",lb:"대시보드"},{id:"today",ic:"📅",lb:"오늘할일"},{id:"chk",ic:"✅",lb:"체크"},{id:"rules",ic:"📖",lb:"규칙"}];
 
@@ -1256,7 +1263,7 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
         <textarea id="stateMemo_${s.vd}" style="width:100%;padding:8px;border:1px solid #E4ECF5;border-radius:8px;font-family:Nunito;font-size:12px;resize:vertical;min-height:50px" placeholder="특이사항 메모" onblur="saveStateMemo('${s.vd}',this.value)">${curState.notes||""}</textarea>
       </div>
     </div>`;
-  c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}${stateCard}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">📝 오늘 활동</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3><p style="font-size:11px;color:#999;margin:0 0 8px">자동: 룰엔진이 활동/상태/시각 보고 자동 적용 · 수동: 부모가 직접 입력</p>${ph}</div>`}else{
+  c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}${stateCard}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">📝 오늘 활동</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3><p style="font-size:11px;color:#999;margin:0 0 8px">발생한 항목만 클릭하세요 · 잔액에서 즉시 차감</p>${ph}</div>`}else{
     /* ═══ 캘린더 — 월별 일반화 + 좌우 화살표 (v3.0) ═══ */
     const cy=s.calYear, cmm=s.calMonth;
     const daysInMonth=monthDays(cy,cmm);

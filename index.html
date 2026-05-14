@@ -262,7 +262,7 @@ setInterval(loadSheet,300000);
 const TN={T1:"영재원 과제",T2:"영재원 개념잡기",T3:"디딤돌 라이트",T4:"응용심화수학",T5:"1031 수/연산",T6:"1031 여러가지문제",T7:"1031 규칙/논리",T8:"1031 도형/측정",T9:"기탄수학",T10:"바이올린",T11:"기타 활동",T12:"독서 토론"};
 const TI={T1:"🧩",T2:"🧩",T3:"📐",T4:"📐",T5:"🔢",T6:"🔢",T7:"🔢",T8:"🔢",T9:"✏️",T10:"🎻",T11:"📌",T12:"📖"};
 const RW=[{n:"매일 공부 완료",t:60,r:1,f:"study"},{n:"숙제/유인물 챙기기",t:40,r:1,f:"hw"},{n:"독서 토론",t:60,r:0,f:"read"},{n:"학교 수학 100점",t:60,r:0,f:"math"},{n:"응용심화 80점↑",t:90,r:0,f:"adv"},{n:"방정리",t:0,m:5000,r:0,f:"room"},{n:"화장실 청소",t:30,r:0,f:"wc"},{n:"고양이 화장실",t:20,r:0,f:"cat"},{n:"9시반 취침",t:30,r:1,f:"bed"}];
-const PN=[{n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},{n:"공부량 미달",t:-80,f:"stF"},{n:"아침약 미복용",t:-180,f:"med"},{n:"밤10시 미취침",t:-90,f:"late"},{n:"토론 준비 미흡",t:-90,f:"rdF"},{n:"거짓말/약속위반",t:-9999,f:"lie"},{n:"학교시간 미준수",t:-30,f:"ltS"},{n:"저녁약 미복용(8시전)",t:-60,f:"dinM"}];
+const PN=[{n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},{n:"공부량 미달",t:-80,f:"stF"},{n:"아침약 미복용",t:-180,f:"med"},{n:"밤10시 미취침",t:-90,f:"late"},{n:"토론 준비 미흡",t:-90,f:"rdF"},{n:"거짓말/약속위반",t:-9999,f:"lie"},{n:"학교시간 미준수",t:-30,f:"ltS"},{n:"저녁약 미복용(8시전)",t:-60,f:"dinM"},{n:"옷·속옷 바닥 쌓기",t:-30,f:"clothes"},{n:"바닥 쓰레기·이물질 발견",t:-30,f:"floorJunk"}];
 const BAL=40;
 const LIE_SENTINEL=-9999;
 const LG=s=>`<img src="icon-512.png" width="${s}" height="${s}" style="border-radius:${Math.round(s*0.22)}px">`;
@@ -360,6 +360,8 @@ const RULE_LABEL_MAP={
   RULE_P11:"학교/학원 시간 미준수",
   RULE_P12:"저녁약 미복용"
 };
+// RULE_P13/P14는 별도 rule_id 아님. RULE_P01에 COND_P13/COND_P14로 흡수.
+// 같은 effect(-30 1회성)라 룰엔진 정의층에서 통일. memo로 사유 구분.
 function ruleLabel(source_id){
   if(!source_id)return "기타";
   if(RULE_LABEL_MAP[source_id])return RULE_LABEL_MAP[source_id];
@@ -375,7 +377,7 @@ function todayYMD(){const d=new Date();return d.getFullYear()+"-"+String(d.getMo
    ═══════════════════════════════════════════════════════════════ */
 
 // 배포 후 한 줄만 교체. https://script.google.com/macros/s/.../exec 형태.
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwv8bDRaTPvcx6fzBF1EdQEfuFFn61ZH3GJWiB-8V9oELgn9RS7vOWMDTCBO_rd494R/exec";
+const WEB_APP_URL = "PASTE_YOUR_WEB_APP_URL_HERE";
 const CHILD_ID = "CHILD_MINHOO";
 
 /* 프론트 UI 키 (RW의 f) → 시트 task_id suffix 매핑 (rule_engine의 RULE_TASK_MAP과 정합)
@@ -402,8 +404,8 @@ const FIELD_TO_TASK_SUFFIX = {
 */
 const AUTO_PENALTIES = [];   // 자동 패널티 없음 (전부 수동)
 
-const MANUAL_PENALTIES = ["hwL", "stF", "med", "late", "rdF", "lie", "ltS", "dinM"];
-// hwL=P01 유인물 이틀 지나 발견
+const MANUAL_PENALTIES = ["hwL", "stF", "med", "late", "rdF", "lie", "ltS", "dinM", "clothes", "floorJunk"];
+// hwL=P01 유인물 이틀 지나 발견 (RULE_P01 + COND_P01)
 // stF=P02 공부량 미달
 // med=P05 아침약 미복용
 // late=P07 밤10시 미취침 (부모가 클릭하면 시각 무관 패널티 적용)
@@ -411,17 +413,24 @@ const MANUAL_PENALTIES = ["hwL", "stF", "med", "late", "rdF", "lie", "ltS", "din
 // lie=P10 거짓말/약속위반 (forfeit_all, 잔액 전액 몰수)
 // ltS=P11 학교/학원 시간 미준수
 // dinM=P12 저녁약 8시 이전 미복용
+// clothes=RULE_P01 + COND_P13 옷·속옷 바닥 쌓기 (-30, 같은 effect라 RULE_P01 공유)
+// floorJunk=RULE_P01 + COND_P14 바닥 쓰레기·이물질 발견 (-30, 같은 effect)
 
-/* 패널티 field → rule_id 매핑 (penalty_manual POST에서 사용) */
+/* 패널티 field → {rule_id, condition_id} 매핑 (penalty_manual POST에서 사용)
+   v3.5: 같은 effect(-30 1회성)인 옷·속옷/바닥이물 패널티는 RULE_P01로 묶고
+         condition_id로 발동 사유 구분. ledger의 idempotency_key가 condition_id를 포함하므로
+         같은 날 옷+이물 둘 다 발동 가능. */
 const FIELD_TO_RULE_MAP = {
-  hwL:  "RULE_P01",
-  stF:  "RULE_P02",
-  med:  "RULE_P05",
-  late: "RULE_P07",
-  rdF:  "RULE_P09",
-  lie:  "RULE_P10",
-  ltS:  "RULE_P11",
-  dinM: "RULE_P12"
+  hwL:       {rule_id:"RULE_P01", condition_id:"COND_P01"},
+  stF:       {rule_id:"RULE_P02", condition_id:"COND_P02"},
+  med:       {rule_id:"RULE_P05", condition_id:"COND_P05"},
+  late:      {rule_id:"RULE_P07", condition_id:"COND_P07"},
+  rdF:       {rule_id:"RULE_P09", condition_id:"COND_P09"},
+  lie:       {rule_id:"RULE_P10", condition_id:"COND_P10"},
+  ltS:       {rule_id:"RULE_P11", condition_id:"COND_P11"},
+  dinM:      {rule_id:"RULE_P12", condition_id:"COND_P12"},
+  clothes:   {rule_id:"RULE_P01", condition_id:"COND_P13"},
+  floorJunk: {rule_id:"RULE_P01", condition_id:"COND_P14"}
 };
 
 /* 프론트 키 'M-D' (예: '5-11') + 활동 field → task_id 변환 */
@@ -570,10 +579,12 @@ function cs(){
   const logicalToday=logicalTodayYMD();
 
   const allLedger=(ONTOLOGY["11_coupon_ledger"]||[]).filter(r=>
-    r.child_id==="CHILD_MINHOO" && r.status==="applied"
+    r.child_id==="CHILD_MINHOO" && 
+    (r.status==="applied" || r.status==="pending")
   );
 
-  // 1) 사용가능시간(net): effective_date 도래한 모든 행 누적
+  // 1) 사용가능시간(net): effective_date <= logicalToday 인 행 누적
+  // logicalTodayYMD()는 22시 이후 +1일 (다음날). 22시 cron 이후 R01 등 pending 행 자동 산입.
   let net=0, cash=0, used=0;
   const usageItems=[];
   const rewardItems=[], penaltyItems=[];
@@ -582,14 +593,14 @@ function cs(){
     const cashAmt=Number(r.cash_amount)||0;
     const eff=String(r.effective_date).slice(0,10);
     const tx=r.transaction_type;
-    // net 누적은 effective_date 도래분만
-    if(eff<=today){
+    // net 누적은 effective_date 도래분만 (22시 cutoff 반영)
+    if(eff<=logicalToday){
       net+=min; cash+=cashAmt;
     }
     // 리스트는 전체 보존 (전체 누적 sub-view에서 사용)
     if(tx==="reward")          rewardItems.push(r);
     else if(tx==="penalty"||tx==="forfeit_all") penaltyItems.push(r);
-    else if(tx==="usage"){ usageItems.push(r); if(eff<=today) used+=Math.abs(min); }
+    else if(tx==="usage"){ usageItems.push(r); if(eff<=logicalToday) used+=Math.abs(min); }
   });
 
   // 2) 상단 카드 숫자: logical_date 기준 transaction_date만
@@ -656,19 +667,23 @@ function tg(k,f){
 
   const newVal = dd[f];
 
-  // v3.4 — MANUAL_PENALTIES 분기 (P01/P10/P11)
+  // v3.5 — MANUAL_PENALTIES 분기
   // O = 패널티 발생. 11번 ledger에 penalty 행 직접 추가.
   // X 또는 undefined = 발생 안 함 (시트엔 영향 없음, append-only 원칙).
+  // v3.5 변경: FIELD_TO_RULE_MAP이 객체 {rule_id, condition_id} 형태로 변경.
+  //   같은 effect 룰(예: 옷·이물질 둘 다 RULE_P01)을 condition_id로 구분.
   if(MANUAL_PENALTIES.includes(f)){
     if(newVal !== "O"){
       toast("기록 해제됨 (이미 박힌 ledger는 시트에서 직접 정리)");
       return;
     }
-    const ruleId = FIELD_TO_RULE_MAP[f];
-    if(!ruleId){
+    const mapping = FIELD_TO_RULE_MAP[f];
+    if(!mapping){
       toast("매핑 없음 (개발자에게 문의)");
       return;
     }
+    const ruleId = mapping.rule_id;
+    const conditionId = mapping.condition_id;
     // P10 거짓말 = forfeit_all (잔액 전액 몰수)
     const isLie = (ruleId === "RULE_P10");
     const pn = PN.find(p => p.f === f);
@@ -676,12 +691,12 @@ function tg(k,f){
 
     const ymd = dateKeyToYMD(k);
     const payload = {
-      client_event_id: makeClientEventId("PENALTY", ymd, ruleId),
+      client_event_id: makeClientEventId("PENALTY", ymd, conditionId),  // condition_id 기반 (같은 rule도 다른 condition은 다른 event)
       child_id: CHILD_ID,
       date: ymd,
       log_type: "penalty_manual",
       rule_id: ruleId,
-      condition_id: "COND_" + ruleId.replace("RULE_", ""),
+      condition_id: conditionId,
       effect_type: isLie ? "penalty_all" : "penalty_time",
       amount_minutes: amountMin,
       actor: "parent",
@@ -1214,7 +1229,9 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
   const lieRow = ledgerByRule["RULE_P10"];
 
   let ph=PN.map(q=>{
-    const ruleId = FIELD_TO_RULE_MAP[q.f];
+    const mapping = FIELD_TO_RULE_MAP[q.f];
+    const ruleId = mapping ? mapping.rule_id : null;
+    const conditionId = mapping ? mapping.condition_id : null;
 
     // LIE (P10) — manual but special UI (전액몰수)
     if(q.t===LIE_SENTINEL){
@@ -1243,7 +1260,7 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
       </div>`;
     }
 
-    // MANUAL 패널티 (P01, P11) — 클릭 가능
+    // MANUAL 패널티 — 클릭 가능
     return ci(q.n,dd[q.f],0,`${q.t}분`,1,s.vd,q.f);
   }).join("");
   // v3.3 - 아이 상태 입력 카드

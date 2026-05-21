@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -143,8 +143,6 @@ const DASH_URLS=[
 ];
 
 /* ═══ 정의층 시트 fetch (온톨로지 자동 도출, v2.2) ═══ */
-/* 6개 정의층 시트의 publish URL (gid는 시트별로 다름).
-   fetch 결과는 ONTOLOGY 전역에 캐싱. fetch 실패해도 하드코딩 RW/PN으로 자동 fallback. */
 let sheetLoaded=false;
 let specialBonus=0;
 const ONTOLOGY_PUB="2PACX-1vT4Q0Ypn6oL3AqsKtMGPeabDPzOupDsb8YxayMnKng5zwcgT6Yz23U5WrUO24EZjb86PkStf7tc4hLT";
@@ -158,7 +156,7 @@ const ONTOLOGY_URLS={
   "11_coupon_ledger":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=889727543&single=true&output=csv`,
   "15_child_notices":    `https://docs.google.com/spreadsheets/d/e/${ONTOLOGY_PUB}/pub?gid=1620964460&single=true&output=csv`
 };
-const ONTOLOGY={}; // { "01_node_types": [...], "03_nodes": [...], ... } — 헤더 기반 object 배열
+const ONTOLOGY={};
 let ontologyLoaded=false;
 
 /* CSV → 객체 배열 (헤더 첫 줄 기반) */
@@ -175,7 +173,7 @@ function csvToObjects(csv){
   const headers=rows[0].map(h=>String(h).trim());
   const out=[];
   for(let i=1;i<rows.length;i++){
-    const r=rows[i];if(r.length===1&&!r[0])continue; // 빈 줄 스킵
+    const r=rows[i];if(r.length===1&&!r[0])continue;
     const obj={};let allEmpty=true;
     for(let j=0;j<headers.length;j++){
       const v=(r[j]||"").trim();obj[headers[j]]=v;
@@ -201,9 +199,10 @@ async function loadOntology(){
     if(r.ok)console.log(`  ✓ ${r.key}: ${r.count}행`);
     else console.warn(`  ✗ ${r.key}: ${r.err}`);
   });
-  if(okCount>=6){  // 정의층 6개만 있어도 정상 동작
+  if(okCount>=6){
     ontologyLoaded=true;
     window.ONTOLOGY=ONTOLOGY;
+    applyDerivedRules();   // v2.2: ontology → RW/PN 동기화
     R();
   }
 }
@@ -249,7 +248,6 @@ function parseDashboard(csv){
     });
     if(bonus>0){
       if(bonus!==specialBonus){
-        // 변경분만 noticeLog에 기록 (직전 값 대비 증감)
         const diff=bonus-specialBonus;
         if(diff!==0)pushNotice("special_bonus",diff,`특별이벤트 ${diff>=0?"+":""}${diff}분 반영`);
       }
@@ -261,18 +259,62 @@ setInterval(loadSheet,300000);
 
 const TN={T1:"영재원 과제",T2:"영재원 개념잡기",T3:"디딤돌 라이트",T4:"응용심화수학",T5:"1031 수/연산",T6:"1031 여러가지문제",T7:"1031 규칙/논리",T8:"1031 도형/측정",T9:"기탄수학",T10:"바이올린",T11:"기타 활동",T12:"독서 토론"};
 const TI={T1:"🧩",T2:"🧩",T3:"📐",T4:"📐",T5:"🔢",T6:"🔢",T7:"🔢",T8:"🔢",T9:"✏️",T10:"🎻",T11:"📌",T12:"📖"};
-const RW=[{n:"매일 공부 완료",t:60,r:1,f:"study"},{n:"숙제/유인물 챙기기",t:40,r:1,f:"hw"},{n:"독서 토론",t:60,r:0,f:"read"},{n:"학교 수학 100점",t:60,r:0,f:"math"},{n:"응용심화 80점↑",t:90,r:0,f:"adv"},{n:"방정리",t:0,m:5000,r:0,f:"room"},{n:"화장실 청소",t:30,r:0,f:"wc"},{n:"고양이 화장실",t:20,r:0,f:"cat"},{n:"9시반 취침",t:30,r:1,f:"bed"}];
-const PN=[{n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},{n:"공부량 미달",t:-80,f:"stF"},{n:"아침약 미복용",t:-180,f:"med"},{n:"밤10시 미취침",t:-90,f:"late"},{n:"토론 준비 미흡",t:-90,f:"rdF"},{n:"거짓말/약속위반",t:-9999,f:"lie"},{n:"학교시간 미준수",t:-30,f:"ltS"},{n:"저녁약 미복용(8시전)",t:-60,f:"dinM"},{n:"옷·속옷 바닥 쌓기",t:-30,f:"clothes"},{n:"바닥 쓰레기·이물질 발견",t:-30,f:"floorJunk"}];
+
+/* ═══════════════════════════════════════════════════════════════
+   v2.2 — RW/PN을 node 03 (시트)에서 동적 생성
+   ═══════════════════════════════════════════════════════════════
+   fallback은 시트 fetch 실패 시에만 사용. 값은 node 03 현재 active 기준으로 정렬.
+   - R01: +80분 (이전 +60에서 수정)
+   - R06: +600분 +30000원 (구구단 일회성, 신규)
+   - R07: +60분 (시간 보상으로 수정. 이전 +5000원과 혼동)
+   - R08: +5000원 (현금 보상으로 수정. 이전 +30분과 혼동)
+   - R10: 자동 적립 (fallback 배열에는 미포함. streak 카드에서 처리)
+   - P03: -600분 (월 목표 미달성, 신규)
+   - P06: -60분 (응용심화 50점 미만, 신규)
+   - P07: -60분 (이전 -90에서 수정)
+   - P08: -90분 (방정리 미이행, 신규)
+   - P09: -60분 (이전 -90에서 수정)
+   - P04는 display=FALSE → fallback에도 미포함
+*/
+const RW_FALLBACK=[
+  {n:"매일 공부 완료",t:80,r:1,f:"study"},
+  {n:"숙제/유인물 챙기기",t:40,r:1,f:"hw"},
+  {n:"독서 토론",t:60,r:0,f:"read"},
+  {n:"학교 수학 100점",t:60,r:0,f:"math"},
+  {n:"응용심화 80점↑",t:90,r:0,f:"adv"},
+  {n:"구구단 시험 통과",t:600,m:30000,r:0,f:"gugu"},
+  {n:"방정리",t:60,r:0,f:"room"},
+  {n:"화장실 청소",t:0,m:5000,r:0,f:"wc"},
+  {n:"고양이 화장실",t:20,r:0,f:"cat"},
+  {n:"9시반 취침",t:30,r:1,f:"bed"}
+];
+const PN_FALLBACK=[
+  {n:"유인물 이틀 지나 발견",t:-30,f:"hwL"},
+  {n:"공부량 미달",t:-80,f:"stF"},
+  {n:"월 목표 미달성",t:-600,f:"month_fail"},
+  {n:"아침약 미복용",t:-180,f:"med"},
+  {n:"응용심화 50점 미만",t:-60,f:"adv_low"},
+  {n:"밤10시 미취침",t:-60,f:"late"},
+  {n:"방정리 미이행",t:-90,f:"room_miss"},
+  {n:"토론 준비 미흡",t:-60,f:"rdF"},
+  {n:"거짓말/약속위반",t:-9999,f:"lie"},
+  {n:"학교시간 미준수",t:-30,f:"ltS"},
+  {n:"저녁약 미복용(8시전)",t:-60,f:"dinM"},
+  {n:"옷·속옷 바닥 쌓기",t:-30,f:"clothes"},
+  {n:"바닥 쓰레기·이물질 발견",t:-30,f:"floorJunk"}
+];
+
+/* RW, PN은 let — derive 후 교체됨 */
+let RW = RW_FALLBACK.slice();
+let PN = PN_FALLBACK.slice();
+
 const BAL=40;
 const LIE_SENTINEL=-9999;
 const LG=s=>`<img src="icon-512.png" width="${s}" height="${s}" style="border-radius:${Math.round(s*0.22)}px">`;
 
-/* ═══ 연속보너스 자동 계산 (v2.1 신규) ═══ */
-/* study/hw/bed 3개가 모두 'O'인 날이 3일 연속이면 자동 +1.
-   날짜 키 정렬 후 sliding window 방식. 수동 sk.t override 가능. */
+/* ═══ 연속보너스 자동 계산 (v2.1) ═══ */
 function computeAutoStreak(){
   const requiredFields=RW.filter(r=>r.r).map(r=>r.f);
-  // "M-D" 키를 ISO 날짜로 변환해서 정렬 (월 경계 고려)
   const keys=Object.keys(st.d)
     .map(k=>{const[m,d]=k.split("-").map(Number);return{k,m,d,sortKey:m*100+d}})
     .sort((a,b)=>a.sortKey-b.sortKey);
@@ -286,6 +328,147 @@ function computeAutoStreak(){
   return{autoBonusCount:total,currentRun:cur,maxRun:maxStreak};
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   v2.2 — Ontology → RW/PN 동적 생성
+   ═══════════════════════════════════════════════════════════════
+   시트 03_nodes의 active Rule을 파싱해서 프론트 RW/PN 배열로 변환.
+   - category 'reward.*' → RW
+   - category 'penalty.*' → PN
+   - default_value에서 분/원 파싱
+   - html_field 컬럼이 f 키
+   - display_in_rules='TRUE'만 표시 대상
+   - html_field 비어있는 row는 skip (R10 자동 적립 등 — 별도 처리)
+*/
+function deriveRulesFromOntology(){
+  const nodes = ONTOLOGY["03_nodes"] || [];
+  if(nodes.length === 0){
+    console.warn("[derive] 03_nodes 비어있음, fallback 유지");
+    return {ok:false};
+  }
+
+  const RW_new = [];
+  const PN_new = [];
+  const MANUAL_PENALTIES_new = [];
+  const FIELD_TO_RULE_MAP_new = {};
+  const missingFields = [];
+
+  // node_id → condition_id 매핑 (05_rule_conditions에서 첫 번째 condition만)
+  const condMap = {};
+  (ONTOLOGY["05_rule_conditions"]||[]).forEach(c=>{
+    const rid = c.rule_id || c.source_rule || "";
+    const cid = c.condition_id || c.cond_id || "";
+    if(rid && cid && !condMap[rid]) condMap[rid] = cid;
+  });
+
+  nodes.filter(n =>
+    n.node_type === "Rule" &&
+    n.status === "active"
+  ).forEach(r => {
+    const cat = (r.category || "").toLowerCase();
+    const dv = r.default_value || "";
+    const labelKo = r.label_ko || r.node_id;
+    const htmlField = (r.html_field || "").trim();
+    const displayFlag = String(r.display_in_rules || "").toUpperCase();
+    const display = (displayFlag === "TRUE" || displayFlag === "1");
+
+    if(!display) return;
+    if(!htmlField){
+      // html_field 비어있으면 RW/PN에 안 넣음 (R10 자동 적립 같은 경우)
+      // 단 display=TRUE인데 비어있으면 디버깅용 경고
+      missingFields.push(r.node_id);
+      return;
+    }
+
+    // default_value 파싱
+    let t = 0, m = 0;
+    const minMatch = dv.match(/([+-]?\d+)\s*min/i);
+    const wonMatch = dv.match(/([+-]?\d+)\s*원/);
+    if(minMatch) t = parseInt(minMatch[1]);
+    if(wonMatch) m = parseInt(wonMatch[1]);
+
+    // forfeit_all 처리 (P10 거짓말)
+    if(dv.includes("forfeit_all")) t = LIE_SENTINEL;
+
+    // 라벨 정리 — "보상"/"패널티" 접미사 제거 + 길이 짧게
+    const labelClean = labelKo
+      .replace(/\s*보상$/, "")
+      .replace(/\s*패널티$/, "")
+      .replace(/^학교 숙제 및 유인물.*$/, "숙제/유인물 챙기기")
+      .replace(/^남자화장실 청소.*$/, "화장실 청소")
+      .replace(/^4월 구구단.*$/, "구구단 시험 통과")
+      .replace(/^주 1회 방정리 미이행/, "방정리 미이행")
+      .replace(/^학교\/학원 .*시간.*$/, "학교시간 미준수")
+      .replace(/^저녁약 8시.*$/, "저녁약 미복용(8시전)")
+      .replace(/^9시 ?반 이전 취침/, "9시반 취침")
+      .replace(/^밤 ?10시.*미취침/, "밤10시 미취침")
+      .replace(/^샤워 후.*$/, "옷·속옷 바닥 쌓기")
+      .replace(/^저녁 취침 전.*$/, "바닥 쓰레기·이물질 발견")
+      .replace(/^수학응용시험 50점 미만/, "응용심화 50점 미만")
+      .replace(/^수학 응용심화 시험 80점.*$/, "응용심화 80점↑")
+      .replace(/^학교 수학시험 100점/, "학교 수학 100점")
+      .replace(/^월 목표 미달성/, "월 목표 미달성")
+      .replace(/^독서 토론 준비 미흡/, "토론 준비 미흡")
+      .replace(/^유인물 이틀 지나 발견/, "유인물 이틀 지나 발견")
+      .replace(/^아침약 미복용/, "아침약 미복용")
+      .replace(/^거짓말\/약속 위반/, "거짓말/약속위반")
+      .replace(/^일일 공부 미달/, "공부량 미달")
+      .replace(/^독서 토론$/, "독서 토론")
+      .replace(/^매일 공부 완료$/, "매일 공부 완료")
+      .replace(/^방정리$/, "방정리")
+      .replace(/^고양이 화장실 2개 청소/, "고양이 화장실");
+
+    const entry = {
+      n: labelClean,
+      t: t,
+      f: htmlField,
+      r: (r.memo||"").includes("필수") ? 1 : 0
+    };
+    if(m !== 0) entry.m = m;
+
+    if(cat.startsWith("reward.")){
+      RW_new.push(entry);
+    } else if(cat.startsWith("penalty.")){
+      PN_new.push(entry);
+      MANUAL_PENALTIES_new.push(htmlField);
+      FIELD_TO_RULE_MAP_new[htmlField] = {
+        rule_id: r.node_id,
+        condition_id: condMap[r.node_id] || ("COND_" + r.node_id.replace("RULE_",""))
+      };
+    }
+  });
+
+  if(missingFields.length > 0){
+    console.info("[derive] html_field 빈 active rule (의도된 skip):", missingFields);
+  }
+
+  console.log(`[derive] RW ${RW_new.length}개, PN ${PN_new.length}개, MANUAL ${MANUAL_PENALTIES_new.length}개`);
+
+  return {
+    ok: true,
+    RW: RW_new,
+    PN: PN_new,
+    MANUAL_PENALTIES: MANUAL_PENALTIES_new,
+    FIELD_TO_RULE_MAP: FIELD_TO_RULE_MAP_new
+  };
+}
+
+/* derive 결과를 전역 변수에 반영 */
+function applyDerivedRules(){
+  const d = deriveRulesFromOntology();
+  if(!d.ok){
+    console.warn("[derive] 실패, fallback 유지");
+    return;
+  }
+  RW = d.RW;
+  PN = d.PN;
+  // const 배열/객체는 직접 교체 불가 → in-place mutate
+  MANUAL_PENALTIES.length = 0;
+  d.MANUAL_PENALTIES.forEach(x => MANUAL_PENALTIES.push(x));
+  Object.keys(FIELD_TO_RULE_MAP).forEach(k => delete FIELD_TO_RULE_MAP[k]);
+  Object.assign(FIELD_TO_RULE_MAP, d.FIELD_TO_RULE_MAP);
+  console.log("[derive] RW/PN/MANUAL_PENALTIES/FIELD_TO_RULE_MAP 동기화 완료");
+}
+
 const _initToday=new Date();
 let st={ph:"splash",tab:"dash",d:{},sk:{c:0,t:0},gl:"pending",vd:null,or:"rw",compTab:"day",usePage:0,sMode:"auto",calYear:_initToday.getFullYear(),calMonth:_initToday.getMonth()+1,dashView:"main",histPage:0};
 function ld(k,df){try{const v=localStorage.getItem("pr_"+k);return v?JSON.parse(v):df}catch{return df}}
@@ -296,10 +479,9 @@ specialBonus=ld("spBonus",0);
 let adjust=ld("adj",0);
 let wipe=ld("wipe",0);
 let wipeLog=ld("wipeLog",[]);
-let noticeLog=ld("noticeLog",[]); // 통합 알림 로그 (v2.3): [{type, amount, ts, description}, ...]
-let streakMode=ld("sMode","auto"); // 'auto' | 'manual'
+let noticeLog=ld("noticeLog",[]);
+let streakMode=ld("sMode","auto");
 
-/* noticeLog 헬퍼 — 최근 20개만 유지, append-only */
 function pushNotice(type, amount, description){
   const ts=new Date().toISOString().slice(0,16);
   noticeLog.push({type,amount,ts,description});
@@ -307,7 +489,6 @@ function pushNotice(type, amount, description){
   sv("noticeLog",noticeLog);
 }
 function formatNoticeDate(ts){
-  // ISO 'YYYY-MM-DDTHH:MM' → 'YYYY.MM.DD'
   return String(ts).slice(0,10).replace(/-/g,".");
 }
 
@@ -330,11 +511,7 @@ function _ty(){return new Date().getFullYear()}
 function _dw(){return["일","월","화","수","목","금","토"][new Date().getDay()]}
 function pt(t){if(t.startsWith("기탄"))return{c:"T9",n:"기탄수학",t:"3장",i:"✏️"};const m=t.match(/^(T\d+)\((.+)\)$/);return m?{c:m[1],n:TN[m[1]]||m[1],t:m[2],i:TI[m[1]]||"📌"}:{c:"",n:t,t:"",i:"📌"}}
 
-/* ═══ 잔고 계산 — streak 자동/수동 모드 반영 ═══ */
-/* ═══ 잔고/리워드/패널티 계산 (v3.0: ledger 기반 진실) ═══
-   진실은 시트 11_coupon_ledger. 프론트는 read-only viewer.
-   ledger fetch 실패하면 net=0으로 graceful degradation. */
-/* v3.0: ledger source_id → 사람이 읽는 라벨 */
+/* ═══ 잔고/리워드/패널티 계산 (v3.0: ledger 기반 진실) ═══ */
 const RULE_LABEL_MAP={
   RULE_R01:"매일 공부 완료",
   RULE_R02:"숙제/유인물 챙기기",
@@ -360,8 +537,6 @@ const RULE_LABEL_MAP={
   RULE_P11:"학교/학원 시간 미준수",
   RULE_P12:"저녁약 미복용"
 };
-// RULE_P13/P14는 별도 rule_id 아님. RULE_P01에 COND_P13/COND_P14로 흡수.
-// 같은 effect(-30 1회성)라 룰엔진 정의층에서 통일. memo로 사유 구분.
 function ruleLabel(source_id){
   if(!source_id)return "기타";
   if(RULE_LABEL_MAP[source_id])return RULE_LABEL_MAP[source_id];
@@ -375,65 +550,44 @@ function todayYMD(){const d=new Date();return d.getFullYear()+"-"+String(d.getMo
 /* ═══════════════════════════════════════════════════════════════
    v3.2 — Web App 동기화 인프라
    ═══════════════════════════════════════════════════════════════ */
-
-// 배포 후 한 줄만 교체. https://script.google.com/macros/s/.../exec 형태.
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxh1Y5pPl6UIlqngx8VNlgGERIYlFjXdpJf5hhhxia8RlzpGFfWv8KWq0pfMqx4MnY/exec";
 const CHILD_ID = "CHILD_MINHOO";
 
-/* 프론트 UI 키 (RW의 f) → 시트 task_id suffix 매핑 (rule_engine의 RULE_TASK_MAP과 정합)
-   클릭값을 바로 ACT_T09로 쓰지 않고 TASK_<date>_<SUFFIX> 형태로 변환 */
 const FIELD_TO_TASK_SUFFIX = {
-  study: "DAILY_STUDY",       // R01 매일 공부 (bundle)
-  hw:    "HOMEWORK_01",        // R02 숙제/유인물
-  read:  "DISCUSSION_01",      // R03 독서 토론
-  math:  "SCHOOL_MATH_TEST",   // R04 학교 수학 100점
-  adv:   "ADV_MATH_SCORE",     // R05 응용심화 80점↑
-  room:  "ROOM_CLEAN",         // R07 방정리
-  wc:    "TOILET_CLEAN",       // R08 화장실 청소
-  cat:   "CAT_LITTER",         // R09 고양이 화장실
-  bed:   "SLEEP_01"            // R11 9시반 취침
+  study: "DAILY_STUDY",
+  hw:    "HOMEWORK_01",
+  read:  "DISCUSSION_01",
+  math:  "SCHOOL_MATH_TEST",
+  adv:   "ADV_MATH_SCORE",
+  gugu:  "GUGUDAN_TEST",      // v2.2 신규 (R06)
+  room:  "ROOM_CLEAN",
+  wc:    "TOILET_CLEAN",
+  cat:   "CAT_LITTER",
+  bed:   "SLEEP_01"
 };
 
-/* v3.5 — 모든 패널티 수동 클릭으로 통일
-   사용자 정책 변경 (v3.4 → v3.5):
-   - 룰엔진의 자동 패널티 발동을 사용 안 함 (룰 모두 수동 입력 기반)
-   - 이유: 자동 발동 시 시각 입력/알림/네이티브 UI 등 복잡한 인프라 필요.
-     단순 운영 위해 부모 명시적 클릭만 인정.
-   - 룰엔진은 시트 05_rule_conditions에서 P02/P02_MITIGATED/P05/P07/P09/P12를
-     status='inactive'로 비활성화 (시트 토글로 정책 전환 가능)
-*/
-const AUTO_PENALTIES = [];   // 자동 패널티 없음 (전부 수동)
+/* v3.5 — 모든 패널티 수동 클릭으로 통일 */
+const AUTO_PENALTIES = [];
 
-const MANUAL_PENALTIES = ["hwL", "stF", "med", "late", "rdF", "lie", "ltS", "dinM", "clothes", "floorJunk"];
-// hwL=P01 유인물 이틀 지나 발견 (RULE_P01 + COND_P01)
-// stF=P02 공부량 미달
-// med=P05 아침약 미복용
-// late=P07 밤10시 미취침 (부모가 클릭하면 시각 무관 패널티 적용)
-// rdF=P09 토론 준비 미흡
-// lie=P10 거짓말/약속위반 (forfeit_all, 잔액 전액 몰수)
-// ltS=P11 학교/학원 시간 미준수
-// dinM=P12 저녁약 8시 이전 미복용
-// clothes=RULE_P01 + COND_P13 옷·속옷 바닥 쌓기 (-30, 같은 effect라 RULE_P01 공유)
-// floorJunk=RULE_P01 + COND_P14 바닥 쓰레기·이물질 발견 (-30, 같은 effect)
+/* v2.2 — 초기 fallback 값. applyDerivedRules() 후에는 derive 결과로 교체됨. */
+const MANUAL_PENALTIES = ["hwL", "stF", "month_fail", "med", "adv_low", "late", "room_miss", "rdF", "lie", "ltS", "dinM", "clothes", "floorJunk"];
 
-/* 패널티 field → {rule_id, condition_id} 매핑 (penalty_manual POST에서 사용)
-   v3.5: 같은 effect(-30 1회성)인 옷·속옷/바닥이물 패널티는 RULE_P01로 묶고
-         condition_id로 발동 사유 구분. ledger의 idempotency_key가 condition_id를 포함하므로
-         같은 날 옷+이물 둘 다 발동 가능. */
 const FIELD_TO_RULE_MAP = {
-  hwL:       {rule_id:"RULE_P01", condition_id:"COND_P01"},
-  stF:       {rule_id:"RULE_P02", condition_id:"COND_P02"},
-  med:       {rule_id:"RULE_P05", condition_id:"COND_P05"},
-  late:      {rule_id:"RULE_P07", condition_id:"COND_P07"},
-  rdF:       {rule_id:"RULE_P09", condition_id:"COND_P09"},
-  lie:       {rule_id:"RULE_P10", condition_id:"COND_P10"},
-  ltS:       {rule_id:"RULE_P11", condition_id:"COND_P11"},
-  dinM:      {rule_id:"RULE_P12", condition_id:"COND_P12"},
-  clothes:   {rule_id:"RULE_P01", condition_id:"COND_P13"},
-  floorJunk: {rule_id:"RULE_P01", condition_id:"COND_P14"}
+  hwL:        {rule_id:"RULE_P01", condition_id:"COND_P01"},
+  stF:        {rule_id:"RULE_P02", condition_id:"COND_P02"},
+  month_fail: {rule_id:"RULE_P03", condition_id:"COND_P03"},  // v2.2 신규
+  med:        {rule_id:"RULE_P05", condition_id:"COND_P05"},
+  adv_low:    {rule_id:"RULE_P06", condition_id:"COND_P06"},  // v2.2 신규
+  late:       {rule_id:"RULE_P07", condition_id:"COND_P07"},
+  room_miss:  {rule_id:"RULE_P08", condition_id:"COND_P08"},  // v2.2 신규
+  rdF:        {rule_id:"RULE_P09", condition_id:"COND_P09"},
+  lie:        {rule_id:"RULE_P10", condition_id:"COND_P10"},
+  ltS:        {rule_id:"RULE_P11", condition_id:"COND_P11"},
+  dinM:       {rule_id:"RULE_P12", condition_id:"COND_P12"},
+  clothes:    {rule_id:"RULE_P01", condition_id:"COND_P13"},
+  floorJunk:  {rule_id:"RULE_P01", condition_id:"COND_P14"}
 };
 
-/* 프론트 키 'M-D' (예: '5-11') + 활동 field → task_id 변환 */
 function buildTaskId(dateKey, field){
   const suffix = FIELD_TO_TASK_SUFFIX[field];
   if(!suffix)return null;
@@ -442,20 +596,16 @@ function buildTaskId(dateKey, field){
   return "TASK_" + ymd + "_" + suffix;
 }
 
-/* dateKey 'M-D' → 'YYYY-MM-DD' */
 function dateKeyToYMD(dateKey){
   const [m,d] = dateKey.split("-");
   return (new Date().getFullYear()) + "-" + String(m).padStart(2,"0") + "-" + String(d).padStart(2,"0");
 }
 
-/* client_event_id 생성 — 중복 방지 핵심 */
 function makeClientEventId(kind, dateYMD, key){
-  // kind: 'TASK' | 'STATE', key: task_id 또는 'STATE'
   return CHILD_ID + "_" + dateYMD + "_" + (key||kind) + "_" + Date.now();
 }
 
-/* 동기화 상태 (전역) */
-let syncStatus = "idle"; // 'idle' | 'saving' | 'saved' | 'error'
+let syncStatus = "idle";
 let syncMessage = "";
 
 function setSyncStatus(s, msg){
@@ -463,7 +613,6 @@ function setSyncStatus(s, msg){
   syncMessage = msg || "";
   renderSyncBadge();
   if(s === "saved"){
-    // 2초 후 idle
     setTimeout(()=>{ if(syncStatus==="saved"){ syncStatus="idle"; renderSyncBadge(); } }, 2000);
   }
 }
@@ -482,7 +631,6 @@ function renderSyncBadge(){
   el.textContent = conf.txt;
 }
 
-/* Pending queue — 실패 시 localStorage 보관 후 재시도 */
 function getPendingQueue(){
   try{ return JSON.parse(localStorage.getItem("pr_pending")||"[]"); }
   catch(e){ return []; }
@@ -493,12 +641,10 @@ function setPendingQueue(arr){
 function enqueuePending(payload){
   const q = getPendingQueue();
   q.push({...payload, _enqueuedAt: new Date().toISOString()});
-  // 너무 많이 쌓이지 않도록 cap 100
   if(q.length>100) q.shift();
   setPendingQueue(q);
 }
 
-/* Web App POST — 단일 payload */
 async function postToWebApp(payload){
   if(!WEB_APP_URL || WEB_APP_URL.indexOf("PASTE_YOUR")===0){
     console.warn("[sync] WEB_APP_URL not configured, queueing", payload);
@@ -509,9 +655,6 @@ async function postToWebApp(payload){
   try{
     const res = await fetch(WEB_APP_URL, {
       method: "POST",
-      // CORS — Apps Script Web App은 GET/POST 둘 다 응답 가능
-      // 'no-cors'로 두면 응답을 읽지 못함. Apps Script는 simple request 받음.
-      // Content-Type을 text/plain으로 보내 preflight 회피.
       headers: {"Content-Type":"text/plain;charset=utf-8"},
       body: JSON.stringify(payload),
       redirect: "follow"
@@ -529,7 +672,6 @@ async function postToWebApp(payload){
   }
 }
 
-/* Fire-and-forget — UI 안 막고 백그라운드 전송 */
 function syncPayload(payload){
   setSyncStatus("saving");
   postToWebApp(payload)
@@ -537,7 +679,6 @@ function syncPayload(payload){
     .catch(()=> setSyncStatus("error", "pending에 보관"));
 }
 
-/* 재시도 — pending queue 전부 다시 전송 */
 async function retryPending(){
   const q = getPendingQueue();
   if(q.length===0){ toast("재시도할 항목 없음"); return; }
@@ -559,13 +700,6 @@ async function retryPending(){
   else { setSyncStatus("error", fail+"건 실패"); toast("재시도: 성공 "+ok+" / 실패 "+fail); }
 }
 
-/* v3.2+ 22시 cutoff 정책
-   logical_date: 현재 시각이 22:00 이후면 내일 날짜로 간주.
-   - 사용가능시간(net): 전체 ledger 누적 (effective_date <= today). 변경 없음.
-   - 리워드/패널티 카드 숫자: logical_date 기준 transaction_date 행만.
-     → 22시 이후 박힌 건 다음날 카드에 들어감.
-     → 매일 22시 카드 0으로 리셋되는 효과.
-   - 누적 리스트 (rewardItems / penaltyItems): 전체 보존. */
 function logicalTodayYMD(){
   const now=new Date();
   const h=now.getHours();
@@ -579,12 +713,10 @@ function cs(){
   const logicalToday=logicalTodayYMD();
 
   const allLedger=(ONTOLOGY["11_coupon_ledger"]||[]).filter(r=>
-    r.child_id==="CHILD_MINHOO" && 
+    r.child_id==="CHILD_MINHOO" &&
     (r.status==="applied" || r.status==="pending")
   );
 
-  // 1) 사용가능시간(net): effective_date <= logicalToday 인 행 누적
-  // logicalTodayYMD()는 22시 이후 +1일 (다음날). 22시 cron 이후 R01 등 pending 행 자동 산입.
   let net=0, cash=0, used=0;
   const usageItems=[];
   const rewardItems=[], penaltyItems=[];
@@ -593,17 +725,14 @@ function cs(){
     const cashAmt=Number(r.cash_amount)||0;
     const eff=String(r.effective_date).slice(0,10);
     const tx=r.transaction_type;
-    // net 누적은 effective_date 도래분만 (22시 cutoff 반영)
     if(eff<=logicalToday){
       net+=min; cash+=cashAmt;
     }
-    // 리스트는 전체 보존 (전체 누적 sub-view에서 사용)
     if(tx==="reward")          rewardItems.push(r);
     else if(tx==="penalty"||tx==="forfeit_all") penaltyItems.push(r);
     else if(tx==="usage"){ usageItems.push(r); if(eff<=logicalToday) used+=Math.abs(min); }
   });
 
-  // 2) 상단 카드 숫자: logical_date 기준 transaction_date만
   let tr_today=0, tm_today=0, tp_today=0;
   allLedger.forEach(r=>{
     const txDate=String(r.transaction_date).slice(0,10);
@@ -615,7 +744,6 @@ function cs(){
     else if(tx==="penalty"||tx==="forfeit_all"){ tp_today+=Math.abs(min); }
   });
 
-  // 3) 이행률 (v3.0: 월별 누적일이 분모)
   const cp={}; RW.filter(r=>r.r).forEach(r=>cp[r.f]={d:0,t:0});
   const now=new Date();
   const curM=now.getMonth()+1, curD=now.getDate();
@@ -630,33 +758,30 @@ function cs(){
     });
   }
 
-  // 4) 3일 보너스
   const auto=computeAutoStreak();
   const effectiveStreakCount=(streakMode==="manual")?st.sk.t:auto.autoBonusCount;
 
   return{
     net, cash,
-    tr: tr_today,   // 카드 숫자 — 오늘 발생 분 (22시 리셋)
+    tr: tr_today,
     tm: tm_today,
     tp: tp_today,
     used,
     cp, auto, effectiveStreakCount,
-    rewardItems, penaltyItems, usageItems,  // 누적 리스트 (sub-view용, 전체)
+    rewardItems, penaltyItems, usageItems,
     ledgerReady: allLedger.length>0,
-    logicalToday  // 디버그용
+    logicalToday
   };
 }
 
 function tg(k,f){
   if(VIEW)return;
 
-  // v3.4 — 자동 패널티는 클릭 불가 (안전망. UI에서도 disabled 처리)
   if(AUTO_PENALTIES.includes(f)){
     toast("자동 계산 패널티는 룰엔진이 처리해요");
     return;
   }
 
-  // 1. localStorage 즉시 반영 (UI 빠른 반응)
   const dd=st.d[k]||{};
   const prev=dd[f];
   dd[f]=prev==="O"?"X":prev==="X"?undefined:"O";
@@ -667,11 +792,6 @@ function tg(k,f){
 
   const newVal = dd[f];
 
-  // v3.5 — MANUAL_PENALTIES 분기
-  // O = 패널티 발생. 11번 ledger에 penalty 행 직접 추가.
-  // X 또는 undefined = 발생 안 함 (시트엔 영향 없음, append-only 원칙).
-  // v3.5 변경: FIELD_TO_RULE_MAP이 객체 {rule_id, condition_id} 형태로 변경.
-  //   같은 effect 룰(예: 옷·이물질 둘 다 RULE_P01)을 condition_id로 구분.
   if(MANUAL_PENALTIES.includes(f)){
     if(newVal !== "O"){
       toast("기록 해제됨 (이미 박힌 ledger는 시트에서 직접 정리)");
@@ -684,14 +804,13 @@ function tg(k,f){
     }
     const ruleId = mapping.rule_id;
     const conditionId = mapping.condition_id;
-    // P10 거짓말 = forfeit_all (잔액 전액 몰수)
     const isLie = (ruleId === "RULE_P10");
     const pn = PN.find(p => p.f === f);
     const amountMin = isLie ? 0 : (pn ? Number(pn.t) || 0 : 0);
 
     const ymd = dateKeyToYMD(k);
     const payload = {
-      client_event_id: makeClientEventId("PENALTY", ymd, conditionId),  // condition_id 기반 (같은 rule도 다른 condition은 다른 event)
+      client_event_id: makeClientEventId("PENALTY", ymd, conditionId),
       child_id: CHILD_ID,
       date: ymd,
       log_type: "penalty_manual",
@@ -707,7 +826,6 @@ function tg(k,f){
     return;
   }
 
-  // 2. 활동(RW) — task_log 동기화
   if(newVal !== "O" && newVal !== "X"){
     toast("기록 해제됨 (시트엔 영향 없음)");
     return;
@@ -729,26 +847,18 @@ function tg(k,f){
     created_at: new Date().toISOString()
   };
 
-  // 3. Fire-and-forget 백그라운드 POST
   syncPayload(payload);
 }
 function ss(k,v){if(VIEW)return;const dd=st.d[k]||{};dd.as=v;st.d[k]=dd;sv("d",st.d);R();toast("💾 저장됨")}
 
-/* v3.3 — 아이 상태 저장 (9번 + 10번 시트 분산)
-   payload 필드:
-   - am_med_taken, pm_med_taken (TRUE/FALSE) → 9번 focus_windows
-   - fatigue_level, irritability_level, anxiety_level (0~10), notes → 10번 child_state_snapshots
-   서버는 부분 업데이트(upsert) 지원하므로 일부 필드만 보내도 OK */
 function saveDailyState(dateKey, state){
   if(VIEW)return;
-  // 1. localStorage 즉시 반영
   const dd = st.d[dateKey] || {};
   dd._state = state;
   st.d[dateKey] = dd;
   sv("d", st.d);
   R();
 
-  // 2. Web App POST
   const ymd = dateKeyToYMD(dateKey);
   const payload = {
     client_event_id: makeClientEventId("STATE", ymd, "STATE"),
@@ -758,7 +868,6 @@ function saveDailyState(dateKey, state){
     actor: "parent",
     created_at: new Date().toISOString()
   };
-  // 정의된 값만 포함 (부분 업데이트)
   if(state.am_med_taken !== undefined)      payload.am_med_taken = state.am_med_taken;
   if(state.pm_med_taken !== undefined)      payload.pm_med_taken = state.pm_med_taken;
   if(state.fatigue_level !== undefined)     payload.fatigue_level = state.fatigue_level;
@@ -769,19 +878,16 @@ function saveDailyState(dateKey, state){
   syncPayload(payload);
 }
 
-/* v3.3 — 약 복용 토글 (TRUE/FALSE/undefined 순환) */
 function toggleMed(dateKey, field){
   if(VIEW)return;
   const dd = st.d[dateKey] || {};
   const cur = {...(dd._state || {})};
-  // TRUE → FALSE → undefined → TRUE 순환
   const v = cur[field];
   cur[field] = v === "TRUE" ? "FALSE" : v === "FALSE" ? undefined : "TRUE";
   if(cur[field] === undefined) delete cur[field];
   saveDailyState(dateKey, cur);
 }
 
-/* v3.3 — 레벨 슬라이더 변경 (0~10) */
 function setStateLevel(dateKey, field, value){
   if(VIEW)return;
   const dd = st.d[dateKey] || {};
@@ -790,7 +896,6 @@ function setStateLevel(dateKey, field, value){
   saveDailyState(dateKey, cur);
 }
 
-/* v3.3 — 메모 */
 function saveStateMemo(dateKey, notes){
   if(VIEW)return;
   const dd = st.d[dateKey] || {};
@@ -799,7 +904,6 @@ function saveStateMemo(dateKey, notes){
   saveDailyState(dateKey, cur);
 }
 
-/* v3.3 — 약 복용 라디오 (O/X 두 옵션) */
 function renderMedRow_(dateKey, field, label, curValue){
   const opts = [["TRUE","O"],["FALSE","X"]];
   const btns = opts.map(([val,lbl])=>{
@@ -815,11 +919,9 @@ function renderMedRow_(dateKey, field, label, curValue){
   </div>`;
 }
 
-/* v3.3 — 0~10 슬라이더 (피로도/예민도/불안도) */
 function renderLevelRow_(dateKey, field, label, curValue){
   const v = (curValue===undefined||curValue===null||curValue==="") ? "" : Number(curValue);
   const display = v===""?"–":v;
-  // 색상: 0~3 초록, 4~6 노랑, 7~10 빨강
   let color = "#aaa";
   if(v!==""){
     if(v<=3) color = "#6FA88F";
@@ -831,7 +933,7 @@ function renderLevelRow_(dateKey, field, label, curValue){
       <span style="font-size:12px;font-weight:600;color:#666">${label}</span>
       <span style="font-size:18px;font-weight:900;color:${color}">${display}<span style="font-size:11px;color:#aaa;font-weight:600">/10</span></span>
     </div>
-    <input type="range" min="0" max="10" step="1" value="${v===""?5:v}" 
+    <input type="range" min="0" max="10" step="1" value="${v===""?5:v}"
       oninput="this.nextElementSibling.textContent=this.value"
       onchange="setStateLevel('${dateKey}','${field}',this.value)"
       style="width:100%;accent-color:${color}">
@@ -839,8 +941,6 @@ function renderLevelRow_(dateKey, field, label, curValue){
   </div>`;
 }
 
-/* v3.0: 잔고 조정 / 거짓말 몰수는 시트(11_coupon_ledger)에서 처리.
-   프론트 함수는 stub으로 유지 (외부 호출 안전성). */
 function applyLieWipe(k){toast("거짓말 몰수는 시트에서 처리됩니다")}
 function clearWipe(){toast("거짓말 몰수 해제는 시트에서 처리됩니다")}
 function setBalance(target){toast("잔고 조정은 시트에서 처리됩니다")}
@@ -916,14 +1016,12 @@ function addUse(amt){
   if(VIEW)return;
   const d=new Date();
   const k=(d.getMonth()+1)+"-"+d.getDate();
-  // 1. localStorage 즉시 반영 (UI)
   st.use.push({k,a:amt,ts:d.toISOString().slice(0,16)});
   sv("use",st.use);
   st.usePage=0;
   R();
   toast("🎫 "+amt+"분 사용 완료!");
 
-  // 2. Web App POST → 11번 ledger에 usage 행 추가 (v3.3)
   const ymd = dateKeyToYMD(k);
   const payload = {
     client_event_id: makeClientEventId("USAGE", ymd, "USAGE_" + amt),
@@ -939,7 +1037,6 @@ function addUse(amt){
 }
 function delUse(i){
   if(VIEW)return;
-  // localStorage에서만 제거 (시트 ledger 행은 그대로 남음, 회수 원하면 시트에서 voided 처리)
   st.use.splice(i,1);
   sv("use",st.use);
   R();
@@ -959,7 +1056,6 @@ function toast(msg){const d=document.createElement("div");d.className="toast";d.
 function ci(l,v,rq,rw,pe,k,f){const bg=v==="O"?"#8FBF9F":v==="X"?"#E8836B":"#F0F0F0";return`<button class="ci${VIEW?" disabled":""}" onclick="tg('${k}','${f}')"><span class="cb" style="background:${bg};color:${v?"#fff":"#ddd"}">${v==="O"?"✓":v==="X"?"✗":""}</span><span style="flex:1;font-size:13px;font-weight:500">${l}</span>${rq?'<span class="rb">필수</span>':""}<span style="font-size:11px;font-weight:700;color:${pe?"#E8836B":"#6FA88F"}">${rw}</span></button>`}
 function gw(){const days=[];const now=new Date();for(let i=0;i<7;i++){const d=new Date(now);d.setDate(now.getDate()+i);const k=(d.getMonth()+1)+"-"+d.getDate();days.push({k,dt:d.getDate(),dw:["일","월","화","수","목","금","토"][d.getDay()],s:SC[k],f:i===0})}return days}
 
-/* ═══ 일별/월별 이행현황 (v2.1 신규) ═══ */
 function compItemsDef(){return [{n:"매일 공부",f:"study"},{n:"숙제 챙기기",f:"hw"},{n:"9시반 취침",f:"bed"}]}
 
 function renderDailyCompliance(){
@@ -990,13 +1086,10 @@ function renderMonthlyCompliance(){
   }).join("");
 }
 
-/* ═══ 캘린더 — 첫 주 빈 셀 / 그 달의 마지막 일 (v2.3 수정) ═══ */
 function calendarLeadingBlanks(year, month){
-  // 그 달 1일이 무슨 요일인지 (일=0 ... 토=6) → 그만큼 첫 줄 빈 셀
   return new Date(year, month-1, 1).getDay();
 }
 function monthDays(year, month){
-  // month 1-indexed (5월 = 5). 그 달의 마지막 일 (28/29/30/31)
   return new Date(year, month, 0).getDate();
 }
 function changeMonth(delta){
@@ -1008,22 +1101,19 @@ function changeMonth(delta){
 
 function R(){
 const a=document.getElementById("app"),s=st,tk=_tk(),tm=_tm(),td=_td(),dw=_dw(),ty=_ty();
-if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.5</div></div>`;return}
+if(s.ph==="splash"){a.innerHTML=`<div class="splash"><div class="sp-logo">${LG(64)}</div><div class="sp-title">Play Routine</div><div class="sp-sub">민후를 위한 엄마표 습관형성</div><button class="sp-enter" onclick="st.ph='app';R()">시작하기 🌱</button><div class="sp-ver">v3.6</div></div>`;return}
 const X=cs();let c="";
 const tabs=[{id:"dash",ic:"📊",lb:"대시보드"},{id:"today",ic:"📅",lb:"오늘할일"},{id:"chk",ic:"✅",lb:"체크"},{id:"rules",ic:"📖",lb:"규칙"}];
 
 if(s.tab==="dash"){
-  /* ═══ ledger 진실 미로딩 시 안내 ═══ */
   const ledgerNotice = !X.ledgerReady ? `
     <div style="background:#FFF8E1;color:#D4A843;padding:8px 14px;border-radius:10px;font-weight:700;font-size:11px;text-align:center;margin-bottom:8px">📡 잔고 동기화 중… (시트 ledger 로딩)</div>` : "";
 
-  /* ═══ dashView 분기 (v3.0) ═══ */
   if(s.dashView==="rewards" || s.dashView==="penalties"){
     const isReward = s.dashView==="rewards";
     const items = isReward ? X.rewardItems : X.penaltyItems;
     const titleColor = isReward ? "#6FA88F" : "#E8836B";
     const titleText = isReward ? "✅ 리워드 누적" : "❌ 패널티 누적";
-    // 최신순 정렬 (transaction_date desc)
     const sorted = items.slice().sort((a,b)=>String(b.transaction_date).localeCompare(String(a.transaction_date)));
     const PAGE_SIZE=10;
     const totalPages=Math.max(1,Math.ceil(sorted.length/PAGE_SIZE));
@@ -1064,7 +1154,6 @@ if(s.tab==="dash"){
       </div>`;
   } else {
 
-  /* ───────── 상단 KPI (v3.0: 카드 클릭으로 리스트 진입) ───────── */
   const heroBlock = `
     <div class="kpi-hero">
       <div class="kpi-hero-label">사용가능시간</div>
@@ -1081,8 +1170,6 @@ if(s.tab==="dash"){
       <div class="kpi"><span class="kl">3일 보너스</span><span class="kv" style="color:#A77BBF">${X.effectiveStreakCount}회</span><span class="ks">+${X.effectiveStreakCount*60}분</span></div>
     </div>`;
 
-  /* ───────── 알림/경고 (v2.3: noticeLog 통합) ───────── */
-  // 최근 2개만 노출. 페이지 배경과 동일한 transparent. 색 절제.
   const recentNotices = noticeLog.slice(-2).reverse();
   const noticeRows = recentNotices.length === 0 ? '' :
     recentNotices.map(n => `
@@ -1093,17 +1180,13 @@ if(s.tab==="dash"){
   const noticeBlock = recentNotices.length === 0 ? '' : `
     <div style="background:transparent;padding:6px 4px 10px;margin-bottom:4px">${noticeRows}</div>`;
 
-  // 실시간 상태 경고는 별개로 유지 (보상 부족)
   const liveAlerts = `${X.net<60?'<div class="warn">⚠️ 보상이 부족해요!</div>':""}`;
 
   const alerts = noticeBlock + liveAlerts;
 
-  /* ───────── 공지사항 카드 (v3.1: 15_child_notices) ───────── */
-  // 컬럼명 후보를 다 시도 - title/body/publish_date 등 다양한 표기 허용
   const notices = (ONTOLOGY["15_child_notices"]||[])
     .filter(n => {
       const status = (n.status || n.state || "").toString().toLowerCase();
-      // active / published / 빈값(default OK) 만 표시. archived/draft 제외.
       return status === "" || status === "active" || status === "published";
     })
     .map(n => ({
@@ -1112,9 +1195,7 @@ if(s.tab==="dash"){
       body: n.body || n.content || n.message || n.text || ""
     }))
     .filter(n => n.title || n.body);
-  // 최신순 (날짜 desc)
   notices.sort((a,b) => String(b.date).localeCompare(String(a.date)));
-  // 최근 2개만
   const recentNotices2 = notices.slice(0,2);
   const noticesBlock = recentNotices2.length === 0 ? "" : `
     <div class="card" style="border-left:4px solid #7EB6D9">
@@ -1130,7 +1211,6 @@ if(s.tab==="dash"){
       `).join("")}
     </div>`;
 
-  /* ───────── 필수 이행현황 (일별/월별 sub-tab) ───────── */
   const compBlock = `
     <div class="card">
       <h3 class="ct">📊 필수 이행현황</h3>
@@ -1141,7 +1221,6 @@ if(s.tab==="dash"){
       ${s.compTab==="day"?renderDailyCompliance():renderMonthlyCompliance()}
     </div>`;
 
-  /* ───────── 연속 보너스 (자동/수동 토글) ───────── */
   const streakCircles=[1,2,3].map(v=>{
     const filled = (streakMode==="auto") ? X.auto.currentRun>=v : s.sk.c>=v;
     return `<button style="width:34px;height:34px;border-radius:50%;border:none;cursor:${VIEW?'default':'pointer'};font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;background:${filled?'#F5D76E':'#F0F0F0'};color:${filled?'#fff':'#ccc'}" onclick="${VIEW||streakMode==='auto'?'':`st.sk.c=${v===st.sk.c?0:v};sv('sk',st.sk);R()`}">${filled?"🔥":v}</button>`;
@@ -1160,13 +1239,11 @@ if(s.tab==="dash"){
       ${VIEW?"":`<button onclick="toggleStreakMode()" style="margin-top:8px;background:none;border:none;color:#7EB6D9;font-size:11px;text-decoration:underline;cursor:pointer;font-family:Nunito">${streakMode==='auto'?'수동 입력으로 전환':'자동 계산으로 전환'}</button>`}
     </div>`;
 
-  /* ───────── 월 목표 ───────── */
   const goalBlock = `<div class="card"><h3 class="ct">🎯 월 목표</h3><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px"><div><p style="font-weight:700;font-size:13px">1차: 24문제 5분 (5/15)</p><p style="font-size:11px;color:#6FA88F;margin-top:2px">+300분 +15,000원 / 미달 -200분</p><p style="font-weight:700;font-size:13px;margin-top:6px">2차: 48문제 8분 (5/30)</p><p style="font-size:11px;color:#6FA88F;margin-top:2px">+600분 +30,000원 / 미달 -400분</p></div>${VIEW?`<span class="badge">${s.gl==="pass1"?"1차통과":s.gl==="pass2"?"2차통과":s.gl==="fail"?"미통과":"대기"}</span>`:`<select onchange="st.gl=this.value;sv('gl',st.gl)"><option value="pending"${s.gl==="pending"?" selected":""}>대기</option><option value="pass1"${s.gl==="pass1"?" selected":""}>1차통과</option><option value="pass2"${s.gl==="pass2"?" selected":""}>2차통과</option><option value="fail"${s.gl==="fail"?" selected":""}>미통과</option></select>`}</div></div>`;
 
-  /* ───────── 쿠폰 사용내역 — 5개 페이징 ───────── */
   const PAGE_SIZE=5;
   const totalUses=st.use.length;
-  const sortedUses=st.use.slice().reverse(); // 최신순
+  const sortedUses=st.use.slice().reverse();
   const totalPages=Math.max(1,Math.ceil(totalUses/PAGE_SIZE));
   if(s.usePage>=totalPages)s.usePage=totalPages-1;
   if(s.usePage<0)s.usePage=0;
@@ -1175,8 +1252,8 @@ if(s.tab==="dash"){
   const useList = totalUses===0
     ? '<p style="font-size:12px;color:#ccc;text-align:center;padding:8px 0">아직 사용 내역이 없어요</p>'
     : pageUses.map((u,localIdx)=>{
-        const globalReversedIdx = startIdx + localIdx; // sortedUses 내 인덱스
-        const originalIdx = st.use.length - 1 - globalReversedIdx; // st.use 내 인덱스
+        const globalReversedIdx = startIdx + localIdx;
+        const originalIdx = st.use.length - 1 - globalReversedIdx;
         return `<div class="use-row">
           <div><span style="font-size:12px;color:#5A9BBF;font-weight:600">${u.k.replace("-","/")}</span>
           <span style="font-size:12px;color:#E8836B;font-weight:700;margin-left:6px">-${u.a}분</span></div>
@@ -1201,29 +1278,21 @@ if(s.tab==="dash"){
       ${pagerHTML}
     </div>`;
 
-  /* ───────── 관리 버튼 (v3.0: 잔고 조정/wipe 제거, sync/export만) ───────── */
   const adminBlock = VIEW?"":`
     <button class="sync-btn" onclick="doSync()">📲 아이 기기에 데이터 동기화</button>
     <button class="exp-btn" onclick="doExport()">📊 데이터 내려받기 (CSV)</button>`;
 
   c = ledgerNotice + heroBlock + smallBlock + alerts + noticesBlock + compBlock + streakBlock + goalBlock + useBlock + adminBlock;
-  } // end dashView==="main"
+  }
 }
 
 else if(s.tab==="today"){const sd=SC[tk];if(!sd)c=`<div style="text-align:center;margin-top:40px"><span style="font-size:48px">😴</span><p style="color:#999;margin-top:12px">${tm}월 ${td}일 (${dw})<br>오늘은 등록된 일정이 없어요</p></div>`;else{let tc=sd.tasks.map(t=>{const p=pt(t);return`<div class="tc"><span style="font-size:24px">${p.i}</span><div style="flex:1"><p style="font-weight:700;font-size:14px">${p.n}</p><p style="font-size:11px;color:#999;margin-top:2px">${p.c} · ${p.t}</p></div></div>`}).join("");const wk=gw();let wh=wk.map(w=>`<button class="wd${w.f?" ac":""}" onclick="st.vd='${w.k}';st.tab='chk';R()"><span style="font-size:10px">${w.dw}</span><span style="font-weight:900;font-size:16px">${w.dt}</span><span style="font-size:10px">${w.s?w.s.tasks.length+"개":"—"}</span></button>`).join("");c=`<div style="text-align:center;margin-bottom:16px"><span style="font-size:48px">📅</span><h2 style="font-weight:900;color:#5A9BBF;margin:4px 0">${tm}월 ${td}일 (${dw})</h2>${sd.note?`<span class="badge">${sd.note}</span>`:""}</div>${tc}<div class="card" style="margin-top:16px"><h3 class="ct">📅 이번 주</h3><div class="wr">${wh}</div></div>`}}
 
 else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p=s.vd.split("-");let tl="";if(sc)tl=sc.tasks.map(t=>{const x=pt(t);return`<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #f5f5f5"><span>${x.i}</span><span style="font-size:13px">${x.n}</span><span style="font-size:11px;color:#aaa;margin-left:auto">${x.t}</span></div>`}).join("");let rh=RW.map(r=>ci(r.n,dd[r.f],r.r,r.m?`+${r.m.toLocaleString()}원`:`+${r.t}분`,0,s.vd,r.f)).join("");
-  // v3.0: 거짓말 체크박스 - ledger의 P10 트랜잭션을 기준으로 발생일만 빨강 표시
-  // 그 날 transaction_date == s.vd (변환 형식 YYYY-MM-DD) 매칭
   const _yvd=ty+"-"+String(p[0]).padStart(2,"0")+"-"+String(p[1]).padStart(2,"0");
-  // v3.4 — 패널티 카테고리별 렌더
-  //   AUTO: read-only. 룰엔진 자동 발동. 시트(ledger)에서 발동 여부 확인.
-  //   MANUAL: 클릭 가능. tg() → handleManualPenalty_
-  //   LIE (P10): MANUAL 중 forfeit_all 특수 케이스
   const todayLedgerRows = (ONTOLOGY["11_coupon_ledger"]||[]).filter(r =>
     r.child_id==="CHILD_MINHOO" && String(r.transaction_date).slice(0,10)===_yvd
   );
-  // rule_id → ledger row 매핑 (이미 시트에 박혔는지 확인용)
   const ledgerByRule = {};
   todayLedgerRows.forEach(r => { ledgerByRule[r.source_id] = r; });
   const lieRow = ledgerByRule["RULE_P10"];
@@ -1233,7 +1302,6 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
     const ruleId = mapping ? mapping.rule_id : null;
     const conditionId = mapping ? mapping.condition_id : null;
 
-    // LIE (P10) — manual but special UI (전액몰수)
     if(q.t===LIE_SENTINEL){
       const occurred = !!lieRow;
       const wipeAmt = occurred ? Math.abs(Number(lieRow.amount_minutes)||0) : 0;
@@ -1244,7 +1312,6 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
       return `<button class="ci${VIEW?" disabled":""}" onclick="${VIEW?"":"tg('"+s.vd+"','"+q.f+"')"}"><span class="cb" style="background:${bg};color:${fg};border:1.5px solid ${occurred?"#E8836B":"#FFCDD2"}">${mark}</span><span style="flex:1;font-size:13px;font-weight:500">${q.n}</span><span style="font-size:11px;font-weight:700;color:#E8836B">${note}</span></button>`;
     }
 
-    // AUTO 패널티 — read-only. ledger 발동 여부 표시
     if(AUTO_PENALTIES.includes(q.f)){
       const row = ledgerByRule[ruleId];
       const occurred = !!row;
@@ -1260,10 +1327,8 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
       </div>`;
     }
 
-    // MANUAL 패널티 — 클릭 가능
     return ci(q.n,dd[q.f],0,`${q.t}분`,1,s.vd,q.f);
   }).join("");
-  // v3.3 - 아이 상태 입력 카드
   const curState = (dd._state||{});
   const stateCard = VIEW ? "" : `
     <div class="card" style="border-left:4px solid #A77BBF">
@@ -1281,7 +1346,6 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
       </div>
     </div>`;
   c=`<button class="bb" onclick="st.vd=null;R()">← 목록</button><h2 style="font-weight:900;color:#5A9BBF;margin:0 0 4px">${p[0]}월 ${p[1]}일 (${sc?.dow||""})</h2>${sc?.note?`<span class="badge">${sc.note}</span>`:""}${tl?`<div class="card" style="margin-top:12px"><h3 class="ct" style="color:#5A9BBF;border-bottom:2px solid #7EB6D9;padding-bottom:6px">📘 학습</h3>${tl}</div>`:""}${stateCard}<div class="card"><h3 class="ct" style="color:#6FA88F;border-bottom:2px solid #8FBF9F;padding-bottom:6px">📝 오늘 활동</h3>${rh}${VIEW?"":`<div style="display:flex;align-items:center;gap:8px;padding:8px 0"><span style="font-size:13px;font-weight:600">응용심화 점수</span><input type="number" class="si" value="${dd.as??""}" onchange="ss('${s.vd}',this.value?+this.value:undefined)" placeholder="점수"></div>`}</div><div class="card"><h3 class="ct" style="color:#E8836B;border-bottom:2px solid #E8836B;padding-bottom:6px">❌ 패널티</h3><p style="font-size:11px;color:#999;margin:0 0 8px">발생한 항목만 클릭하세요 · 잔액에서 즉시 차감</p>${ph}</div>`}else{
-    /* ═══ 캘린더 — 월별 일반화 + 좌우 화살표 (v3.0) ═══ */
     const cy=s.calYear, cmm=s.calMonth;
     const daysInMonth=monthDays(cy,cmm);
     const leading=calendarLeadingBlanks(cy,cmm);
@@ -1300,7 +1364,7 @@ else if(s.tab==="chk"){if(s.vd){const dd=s.d[s.vd]||{};const sc=SC[s.vd];const p
     const todayHint=isCurMonth?` <span style="font-size:13px;color:#aaa;font-weight:600">(${tm}월 ${td}일)</span>`:"";
     c=`<div style="display:flex;align-items:center;justify-content:space-between;margin:0 0 14px"><button onclick="changeMonth(-1)" style="background:none;border:none;font-size:22px;color:#7EB6D9;cursor:pointer;padding:4px 18px;font-family:Nunito;font-weight:900">‹</button><h2 style="font-weight:900;color:#5A9BBF;margin:0;font-size:18px">${cmm}월${todayHint}</h2><button onclick="changeMonth(1)" style="background:none;border:none;font-size:22px;color:#7EB6D9;cursor:pointer;padding:4px 18px;font-family:Nunito;font-weight:900">›</button></div><div class="cg">${["일","월","화","수","목","금","토"].map(d=>`<div class="ch">${d}</div>`).join("")}${blanksHTML}${cl}</div>`}}
 
-else if(s.tab==="rules"){const sec=[{id:"rw",ti:"✅ 리워드",cl:"#8FBF9F",it:RW.map(r=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${r.n}</span><span style="font-size:12px;font-weight:700;color:#8FBF9F">+${r.t||""}${r.m?r.m.toLocaleString()+"원":r.t?"분":""}</span>${r.r?'<span class="rb">필수</span>':""}</div>`).join("")},{id:"pn",ti:"❌ 패널티",cl:"#E8836B",it:PN.map(p=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${p.n}</span><span style="font-size:12px;font-weight:700;color:#E8836B">${p.t===LIE_SENTINEL?"전액몰수":p.t+"분"}</span></div>`).join("")},{id:"df",ti:"📖 기준 정의",cl:"#5A9BBF",it:[{t:"🏠 방정리",i:["빨래/옷 바닥·책상에 없을 것","책상은 연필통 외 없는 상태","양말/옷 뒤집어 벗기 금지"]},{t:"📝 채점",i:["풀이과정 미작성 50%","단위 미작성 오답","화풀이 0점+패널티"]},{t:"🎫 쿠폰",i:["당일 사용 불가","패널티 많으면 선차감","3일보너스 후 다시 3일"]},{t:"📖 독서 토론",i:["토/일 1시간씩","미인지 토론 불인정","일요일 농구 후"]}].map(d=>`<div><p style="font-weight:700;font-size:13px;margin:0 0 4px">${d.t}</p>${d.i.map(x=>`<p style="font-size:12px;color:#888;margin:2px 0 2px 12px">• ${x}</p>`).join("")}</div>`).join("")}];c=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="font-weight:900;color:#5A9BBF;margin:0">📖 규칙표</h2><span class="badge">VER 2.1</span></div>${sec.map(x=>`<button class="acc" style="border-left:4px solid ${x.cl}" onclick="st.or=st.or==='${x.id}'?null:'${x.id}';R()"><span>${x.ti}</span><span style="display:inline-block;transform:${s.or===x.id?"rotate(180deg)":""}">▾</span></button>${s.or===x.id?`<div class="ab">${x.it}</div>`:""}`).join("")}`}
+else if(s.tab==="rules"){const sec=[{id:"rw",ti:"✅ 리워드",cl:"#8FBF9F",it:RW.map(r=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${r.n}</span><span style="font-size:12px;font-weight:700;color:#8FBF9F">${r.t?`+${r.t}분`:""}${r.m?(r.t?" · ":"")+`+${r.m.toLocaleString()}원`:""}</span>${r.r?'<span class="rb">필수</span>':""}</div>`).join("")},{id:"pn",ti:"❌ 패널티",cl:"#E8836B",it:PN.map(p=>`<div class="rr"><span style="flex:1;font-size:13px;font-weight:500">${p.n}</span><span style="font-size:12px;font-weight:700;color:#E8836B">${p.t===LIE_SENTINEL?"전액몰수":p.t+"분"}</span></div>`).join("")},{id:"df",ti:"📖 기준 정의",cl:"#5A9BBF",it:[{t:"🏠 방정리",i:["빨래/옷 바닥·책상에 없을 것","책상은 연필통 외 없는 상태","양말/옷 뒤집어 벗기 금지"]},{t:"📝 채점",i:["풀이과정 미작성 50%","단위 미작성 오답","화풀이 0점+패널티"]},{t:"🎫 쿠폰",i:["당일 사용 불가","패널티 많으면 선차감","3일보너스 후 다시 3일"]},{t:"📖 독서 토론",i:["토/일 1시간씩","미인지 토론 불인정","일요일 농구 후"]},{t:"🤖 자동/일회성",i:["3일 연속 보너스: study/숙제/취침 3개 모두 ✓ 받은 날 3일 연속 시 자동 +60분","월 목표 미달: 5월 말 일괄 적용","쿠폰 초과 사용: 초과분 ×3 자동 차감"]}].map(d=>`<div><p style="font-weight:700;font-size:13px;margin:0 0 4px">${d.t}</p>${d.i.map(x=>`<p style="font-size:12px;color:#888;margin:2px 0 2px 12px">• ${x}</p>`).join("")}</div>`).join("")}];c=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><h2 style="font-weight:900;color:#5A9BBF;margin:0">📖 규칙표</h2><span class="badge">VER 2.2</span></div>${sec.map(x=>`<button class="acc" style="border-left:4px solid ${x.cl}" onclick="st.or=st.or==='${x.id}'?null:'${x.id}';R()"><span>${x.ti}</span><span style="display:inline-block;transform:${s.or===x.id?"rotate(180deg)":""}">▾</span></button>${s.or===x.id?`<div class="ab">${x.it}</div>`:""}`).join("")}`}
 
 a.innerHTML=`
   ${VIEW?'<div class="view-banner">👀 보기 모드</div>':""}

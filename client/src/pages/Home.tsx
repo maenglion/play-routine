@@ -5,14 +5,16 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChildDashboard, { type ChildProfile } from "@/components/play-routine/ChildDashboard";
 import ParentDashboard, { type ParentChildProfile } from "@/components/play-routine/ParentDashboard";
+import { getRememberMePreference, setRememberMePreference } from "@/lib/auth-storage";
 import { supabase } from "@/lib/supabase";
 import { trpc } from "@/lib/trpc";
 import type { Session } from "@supabase/supabase-js";
-import { ArrowRight, Clock3, Loader2, LogOut, Mail, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Clock3, Loader2, LockKeyhole, LogIn, LogOut, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type AccountMode = "parent" | "child";
+type AuthMode = "login" | "signup";
 
 type FamilyMembership = {
   family_id: string;
@@ -33,11 +35,16 @@ type ChildInvitation = {
 
 export default function Home() {
   const [mode, setMode] = useState<AccountMode>("parent");
+  const [authMode, setAuthMode] = useState<AuthMode>("login");
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [otpRequested, setOtpRequested] = useState(false);
+  const [rememberMe, setRememberMe] = useState(() =>
+    typeof window === "undefined" ? true : getRememberMePreference(window.localStorage),
+  );
   const [displayName, setDisplayName] = useState("");
   const [familyName, setFamilyName] = useState("");
   const [memberships, setMemberships] = useState<FamilyMembership[]>([]);
@@ -118,9 +125,14 @@ export default function Home() {
     };
   }, [refreshAccount]);
 
-  const requestOtp = async () => {
+  const applyRememberMe = () => {
+    setRememberMePreference(rememberMe, window.localStorage, window.sessionStorage);
+  };
+
+  const requestSignupOtp = async () => {
     setBusy(true);
     try {
+      applyRememberMe();
       if (mode === "child") {
         const result = await requestChildOtp.mutateAsync({ email });
         toast.success(result.message);
@@ -140,18 +152,43 @@ export default function Home() {
     }
   };
 
+  const signInWithPassword = async () => {
+    setBusy(true);
+    try {
+      applyRememberMe();
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (error) throw error;
+      setSession(data.session);
+      await refreshAccount(data.session);
+      toast.success("로그인되었습니다.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "이메일과 비밀번호를 확인해 주세요.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const verifyOtp = async () => {
     setBusy(true);
     try {
+      applyRememberMe();
       const { data, error } = await supabase.auth.verifyOtp({
         email: email.trim().toLowerCase(),
         token: otp.trim(),
         type: "email",
       });
       if (error) throw error;
+      const { error: passwordError } = await supabase.auth.updateUser({ password });
+      if (passwordError) {
+        await supabase.auth.signOut();
+        throw passwordError;
+      }
       setSession(data.session);
       await refreshAccount(data.session);
-      toast.success("이메일 인증이 완료되었습니다.");
+      toast.success("이메일 인증과 비밀번호 설정이 완료되었습니다.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "인증번호를 확인해 주세요.");
     } finally {
@@ -239,6 +276,7 @@ export default function Home() {
     await supabase.auth.signOut();
     setSession(null);
     setOtp("");
+    setPassword("");
     setOtpRequested(false);
   };
 
@@ -320,37 +358,46 @@ export default function Home() {
             <h1 className="max-w-xl text-6xl font-bold leading-[1.05] tracking-[-0.06em]">잔소리 덜하고<br />좋은 습관 만들기</h1>
             <p className="mt-7 max-w-lg text-lg leading-8 text-white/65">신경다양성 부모가 만든 신경다양성을 위한 긍정강화 프로젝트</p>
           </div>
-          <div className="relative grid grid-cols-3 gap-5 border-t border-white/12 pt-8 text-sm text-white/60">
-            <div><strong className="mb-2 block text-2xl text-white">01</strong>부모가 초대</div>
-            <div><strong className="mb-2 block text-2xl text-white">02</strong>이메일 OTP</div>
-            <div><strong className="mb-2 block text-2xl text-white">03</strong>즉시 연결</div>
-          </div>
+            <div className="relative grid grid-cols-3 gap-5 border-t border-white/12 pt-8 text-sm text-white/60">
+              <div><strong className="mb-2 block text-2xl text-white">01</strong>부모가 초대</div>
+              <div><strong className="mb-2 block text-2xl text-white">02</strong>자녀 이메일 등록</div>
+              <div><strong className="mb-2 block text-2xl text-white">03</strong>자녀 로그인</div>
+            </div>
         </section>
 
         <main className="flex items-center justify-center p-5 sm:p-10 lg:p-14">
           <div className="w-full max-w-xl">
             <div className="mb-8 flex items-center justify-between">
-              <div><p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#777a74]">Account connection</p><h2 className="mt-2 text-3xl font-bold tracking-[-0.05em]">부모·자녀 계정 연결</h2></div>
+              <div><p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#777a74]">Play Routine</p><h2 className="mt-2 text-3xl font-bold tracking-[-0.05em]">부모·자녀 계정 연결</h2></div>
               {session && <Button variant="ghost" size="icon" onClick={logout} aria-label="로그아웃"><LogOut className="h-5 w-5" /></Button>}
             </div>
 
             {!session ? (
               <Card className="rounded-[28px] border-black/8 bg-white/85 shadow-[0_24px_80px_rgba(51,58,68,.10)] backdrop-blur">
                 <CardContent className="pt-6">
-                  <Tabs value={mode} onValueChange={value => { setMode(value as AccountMode); setOtpRequested(false); setOtp(""); }}>
+                  <Tabs value={mode} onValueChange={value => { setMode(value as AccountMode); setEmail(""); setPassword(""); setDisplayName(""); setOtpRequested(false); setOtp(""); }}>
                     <TabsList className="grid w-full grid-cols-2 rounded-full bg-[#ebe7de] p-1">
                       <TabsTrigger value="parent" className="rounded-full data-[state=active]:bg-[#4d2ddc] data-[state=active]:text-white">부모</TabsTrigger>
                       <TabsTrigger value="child" className="rounded-full data-[state=active]:bg-[#4d2ddc] data-[state=active]:text-white">자녀</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="parent" className="mt-6 space-y-5">
-                      <div className="rounded-2xl bg-[#cde5de] p-4 text-sm leading-6 text-[#315045]">부모는 가족 공간을 만들고 자녀 이메일을 초대합니다.</div>
-                      {!otpRequested && <div className="space-y-2"><Label htmlFor="display-name">부모 이름</Label><Input id="display-name" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="이름" /></div>}
+                    <div className="mt-5 grid grid-cols-2 rounded-xl bg-[#f2efe8] p-1 text-sm font-semibold">
+                      <button type="button" aria-pressed={authMode === "login"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "login" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("login"); setOtpRequested(false); setOtp(""); }}>로그인</button>
+                      <button type="button" aria-pressed={authMode === "signup"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "signup" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("signup"); setOtpRequested(false); setOtp(""); }}>가입</button>
+                    </div>
+                    <div className="mt-5 rounded-2xl bg-[#cde5de] p-4 text-sm leading-6 text-[#315045]"><strong>(1)</strong> 부모 먼저 가입 <span className="mx-1.5">→</span> <strong>(2)</strong> 기입한 자녀 이메일로 자녀 로그인</div>
+                    <TabsContent value="parent" className="mt-5 space-y-5">
+                      {authMode === "signup" && !otpRequested && <div className="space-y-2"><Label htmlFor="display-name">부모 이름</Label><Input id="display-name" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="이름" /></div>}
                     </TabsContent>
-                    <TabsContent value="child" className="mt-6"><div className="rounded-2xl bg-[#d4cfe7] p-4 text-sm leading-6 text-[#51447f]">부모가 먼저 등록한 이메일과 같아야 인증번호를 받을 수 있습니다.</div></TabsContent>
+                    <TabsContent value="child" className="mt-5"><div className="rounded-2xl bg-[#d4cfe7] p-4 text-sm leading-6 text-[#51447f]">자녀 가입은 부모가 먼저 등록한 이메일과 같아야 합니다.</div></TabsContent>
                     <div className="mt-5 space-y-2"><Label htmlFor="email">이메일</Label><Input id="email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com" disabled={otpRequested} /></div>
-                    {otpRequested && <div className="mt-5 space-y-2"><Label htmlFor="otp">인증번호 6자리</Label><Input id="otp" inputMode="numeric" maxLength={6} value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, ""))} placeholder="000000" /></div>}
-                    <Button className="mt-6 w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || !email || (mode === "parent" && !otpRequested && !displayName)} onClick={otpRequested ? verifyOtp : requestOtp}>
-                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : otpRequested ? <><ShieldCheck className="h-4 w-4" /> 인증하고 계속</> : <><Mail className="h-4 w-4" /> 인증번호 받기</>}
+                    <div className="mt-5 space-y-2"><Label htmlFor="password">비밀번호</Label><div className="relative"><LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8d87]" /><Input id="password" type="password" minLength={8} autoComplete={authMode === "login" ? "current-password" : "new-password"} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상" className="pl-10" disabled={otpRequested} /></div></div>
+                    {authMode === "signup" && otpRequested && <div className="mt-5 space-y-2"><Label htmlFor="otp">이메일 인증번호 6자리</Label><Input id="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, ""))} placeholder="000000" /></div>}
+                    <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border border-black/8 bg-white/70 px-4 py-3 text-sm text-[#555852]">
+                      <input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} className="h-4 w-4 accent-[#4d2ddc]" />
+                      <span><strong className="text-[#262722]">자동 로그인</strong><span className="ml-2 text-xs text-[#858881]">이 기기에서 로그인 상태 유지</span></span>
+                    </label>
+                    <Button className="mt-6 w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || !email || password.length < 8 || (authMode === "signup" && mode === "parent" && !otpRequested && !displayName) || (authMode === "signup" && otpRequested && otp.length !== 6)} onClick={authMode === "login" ? signInWithPassword : otpRequested ? verifyOtp : requestSignupOtp}>
+                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : authMode === "login" ? <><LogIn className="h-4 w-4" /> 로그인</> : otpRequested ? <><ShieldCheck className="h-4 w-4" /> 가입 완료</> : <><UserPlus className="h-4 w-4" /> 이메일 인증 후 가입</>}
                     </Button>
                   </Tabs>
                 </CardContent>

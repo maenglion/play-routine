@@ -1,0 +1,1 @@
+ALTER TABLE `ledger_events` ADD CONSTRAINT `ledger_events_reversal_of_event_id_ledger_events_id_fk` FOREIGN KEY (`reversal_of_event_id`) REFERENCES `ledger_events`(`id`) ON DELETE no action ON UPDATE no action;

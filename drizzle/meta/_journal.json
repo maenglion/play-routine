@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1788398498704,
+      "tag": "0000_pink_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1788399726280,
+      "tag": "0001_small_vulcan",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1788399764470,
+      "tag": "0002_quick_the_stranger",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1788400081797,
+      "tag": "0003_small_silhouette",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1788400259813,
+      "tag": "0004_lethal_wonder_man",
+      "breakpoints": true
+    }
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "node_count": 65,
+  "edge_count": 83,
+  "orphan_tables": [],
+  "duplicate_table_names": [],
+  "unknown_edge_nodes": [],
+  "missing_required_relationships": [],
+  "risk_assertions": {
+    "activity_entitlement_separate_from_activity_task": true,
+    "medication_has_no_direct_ledger_edge": true,
+    "residual_does_not_directly_write_ref": true,
+    "snapshot_does_not_feed_ledger": true,
+    "reward_entitlement_has_append_only_events": true,
+    "csv_export_has_parent_and_family_owner": true
+  },
+  "all_checks_passed": true
+}

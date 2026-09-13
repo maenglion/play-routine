@@ -1,0 +1,151 @@
+digraph PlayRoutineFullERD {
+  graph [rankdir=LR, bgcolor="#F8F5EE", pad="0.35", nodesep="0.28", ranksep="0.9", splines=ortho, fontname="Noto Sans CJK KR", fontsize=20, label="Play Routine 전체 DB ERD v0.2 — Supabase PostgreSQL", labelloc=t];
+  node [shape=box, style="rounded,filled", color="#D8D4CB", fillcolor="#FFFFFF", fontname="Noto Sans CJK KR", fontsize=9, margin="0.12,0.08"];
+  edge [color="#8C8E89", fontcolor="#686B66", fontname="Noto Sans CJK KR", fontsize=7, arrowsize=0.6];
+
+  subgraph cluster_auth {
+    label="1. Auth · 가족 — 현재 적용"; color="#A9C9BD"; fillcolor="#E8F0EC"; style="rounded,filled";
+    principal [label="principals\nPK id · auth_user_id\nstatus · email fingerprint"];
+    family [label="families\nPK id · timezone\ncreated_by_principal_id"];
+    member [label="family_memberships\nfamily_id · principal_id\nrole · validity"];
+    child [label="child_profiles\nfamily_id · principal_id\nstatus · avatar_url"];
+    invite [label="child_invitations\nfamily_id · child_profile_id\nemail fingerprint · status"];
+    delivery [label="invitation_delivery_events\nOTP request · sent · failed"];
+    authlink [label="auth_link_events\nLINKED · UNLINKED · RELINKED"];
+    notify [label="notifications\nrecipient · type · read_at"];
+  }
+
+  subgraph cluster_config {
+    label="2. 설정 · 활동 · 정책"; color="#D4C5A9"; fillcolor="#F3EDE1"; style="rounded,filled";
+    cfg [label="family_config_versions\nDRAFT → PUBLISHED → RETIRED"];
+    at [label="activity_templates\nstable_key · category"];
+    av [label="activity_versions\nimmutable definition"];
+    sp [label="schedule_policies\nrecurrence · due · grace"];
+    assign [label="assignments\nchild · activity version\nbusiness_date"];
+    pset [label="policy_sets\nfamily rule bundle version"];
+    prule [label="policy_rules\nsubject ref · priority\nverification mode"];
+    bind [label="activity_policy_bindings\nactivity version ↔ rule"];
+    pdim [label="policy_dimensions\nmeasurement kind · unit"];
+    pband [label="policy_bands\nrange · outcome"];
+    peffect [label="policy_effects\nLEDGER_DELTA | ISSUE_ENTITLEMENT"];
+    cap [label="cap_policies\ndaily · weekly · monthly"];
+  }
+
+  subgraph cluster_event {
+    label="3. 오늘 사건 · 평가 · 설명"; color="#BEB3D7"; fillcolor="#EDE8F5"; style="rounded,filled";
+    aevent [label="activity_events\noccurred_at · recorded_at\nbusiness_date · idempotency"];
+    estat [label="activity_event_status\nclassification · verification\nevaluation · settlement"];
+    eref [label="activity_event_refs\nref concept · link role"];
+    measure [label="measurements\nscore · quantity · time · choice"];
+    evidence [label="evidence_records\nS3 metadata · parent note"];
+    verify [label="verifications\napprove · reject · revise"];
+    eval [label="evaluations\npolicy version · evaluated_at"];
+    eresult [label="evaluation_results\ndimension · matched band"];
+    explain [label="child_explanations\nreason · skill · next action"];
+    ecandidate [label="effect_candidates\nprovisional effect · status"];
+  }
+
+  subgraph cluster_settlement {
+    label="4. 정산 · 불변 원장"; color="#AEC7DD"; fillcolor="#E7EFF6"; style="rounded,filled";
+    period [label="settlement_periods\nOPEN · PROVISIONAL\nLOCKED · CORRECTED"];
+    run [label="settlement_runs\nidempotent batch"];
+    rune [label="settlement_run_effects\nrun ↔ effect candidate"];
+    account [label="asset_accounts\nTIME_MINUTES · MONEY_KRW"];
+    levent [label="ledger_events\nEARN · SPEND · REVERSAL\nRETROACTIVE"];
+    lentry [label="ledger_entries\ndebit · credit · append-only"];
+    snap [label="daily_snapshots\nbalance · pending · hold"];
+  }
+
+  subgraph cluster_reward {
+    label="5. 보상 권리 · 쿠폰 · ACTIVITIES"; color="#E1B9B0"; fillcolor="#F7E9E6"; style="rounded,filled";
+    catalog [label="reward_catalog_items\nITEM · COUPON · ACTIVITY"];
+    activityopt [label="reward_activity_options\nbooking · guardian · location"];
+    entitlement [label="reward_entitlements\nACTIVITY_ENTITLEMENT\nISSUED · RESERVED · COMPLETED\nCANCELED · EXPIRED", fillcolor="#FFF4D8", color="#B8973F", penwidth=2];
+    entevent [label="reward_entitlement_events\nappend-only state audit"];
+    booking [label="reward_activity_bookings\nscheduled_for · parent confirm"];
+    coupon [label="coupon_instances\nphysical code · print · assignment"];
+    coupone [label="coupon_state_events\nissue · assign · use · cancel"];
+    redeem [label="coupon_redemptions\nuse · reversal · ledger link"];
+  }
+
+  subgraph cluster_medication {
+    label="6. 약 복용 지원 — 점수와 분리"; color="#D6CFC1"; fillcolor="#F1EEE7"; style="rounded,filled";
+    medplan [label="medication_plans\nfamily · child · status"];
+    medsched [label="medication_schedules\ndue time · timezone · reminders"];
+    medevent [label="medication_events\nTOOK · NOT_TAKEN · UNSURE\nclaimed_at · recorded_at"];
+    medconfirm [label="medication_confirmations\nparent observation · certainty"];
+    reminder [label="reminder_deliveries\nrequested · delivered · failed"];
+  }
+
+  subgraph cluster_ref {
+    label="7. 승인 ref 지식"; color="#A8CFCC"; fillcolor="#E7F2F1"; style="rounded,filled";
+    rtype [label="ref_concept_types\nACTIVITY · CATEGORY · GOAL\nCAPABILITY · CONTEXT"];
+    rconcept [label="ref_concepts\nSYSTEM · SHARED · FAMILY\nDRAFT · PUBLISHED · DORMANT"];
+    rrtype [label="ref_relation_types\nallowed from/to · cardinality"];
+    rrelation [label="ref_relations\nIS_A · TRAINS · CONTRIBUTES_TO"];
+    alias [label="ref_aliases\nnormalized naming"];
+  }
+
+  subgraph cluster_residual {
+    label="8. 잔차 · AI 후보 · 사람 승인"; color="#D6C777"; fillcolor="#F5F0D9"; style="rounded,filled";
+    rcase [label="residual_cases\nUNKNOWN_CONCEPT · RELATION\nMEASUREMENT · OUTCOME"];
+    revidence [label="residual_evidence\nobservation · note · metadata"];
+    rcandidate [label="residual_candidates\nattach · create · context · reject"];
+    rdecision [label="residual_decisions\nhuman final decision"];
+    rapp [label="residual_applications\nevent · ref · ledger adjustment"];
+    airun [label="ai_suggestion_runs\nmodel · prompt · input scope"];
+    kcandidate [label="knowledge_candidates\nde-identified shared proposal"];
+    kreview [label="knowledge_reviews\napprove · reject · revise"];
+  }
+
+  subgraph cluster_ops {
+    label="9. 운영 감사"; color="#C8C8C8"; fillcolor="#ECECEC"; style="rounded,filled";
+    outbox [label="outbox_events\ntransactional delivery queue"];
+    csv [label="csv_export_events\nparent · family · filters · file hash"];
+  }
+
+  principal -> family [label="creates"];
+  principal -> member; family -> member;
+  family -> child; principal -> child [label="0..1 login"];
+  child -> invite; invite -> delivery; invite -> authlink;
+  principal -> notify;
+
+  family -> cfg; family -> at; family -> pset;
+  cfg -> av; at -> av; av -> sp; av -> assign; child -> assign;
+  pset -> prule; av -> bind; prule -> bind; prule -> pdim;
+  pdim -> pband; pband -> peffect; cap -> peffect [style=dashed];
+
+  assign -> aevent; child -> aevent;
+  aevent -> estat; aevent -> eref; aevent -> measure; aevent -> evidence; aevent -> verify;
+  assign -> eval; eval -> eresult; pband -> eresult;
+  eval -> explain; eval -> ecandidate; peffect -> ecandidate;
+
+  child -> account; child -> period; period -> run; run -> rune; ecandidate -> rune;
+  ecandidate -> levent [label="0..1"];
+  levent -> lentry; account -> lentry; child -> snap;
+
+  family -> catalog; catalog -> activityopt [label="0..1 ACTIVITY"];
+  ecandidate -> entitlement [label="ISSUE_ENTITLEMENT"];
+  child -> entitlement; catalog -> entitlement;
+  entitlement -> entevent; entitlement -> booking [label="ACTIVITY"];
+  entitlement -> coupon [label="0..1 COUPON"];
+  coupon -> coupone; coupon -> redeem; levent -> redeem [style=dashed];
+
+  child -> medplan; medplan -> medsched; medsched -> medevent;
+  medevent -> medconfirm; medsched -> reminder;
+
+  rtype -> rconcept; rtype -> rrtype [label="contract"];
+  rconcept -> rrelation [label="source/target"];
+  rconcept -> alias; rconcept -> prule [style=dashed]; rconcept -> eref;
+
+  aevent -> rcase [label="unknown"];
+  rcase -> revidence; rcase -> rcandidate; airun -> rcandidate [style=dashed];
+  rcase -> rdecision; rdecision -> rapp; rconcept -> rcandidate [style=dashed];
+  rdecision -> rconcept [label="attach/create", style=dashed];
+  rcandidate -> kcandidate; kcandidate -> kreview; levent -> rapp [style=dashed];
+
+  ecandidate -> outbox [style=dashed]; notify -> outbox [style=dashed];
+  family -> csv; principal -> csv;
+
+  { rank=same; family; cfg; aevent; period; catalog; medplan; rtype; rcase; outbox; }
+}

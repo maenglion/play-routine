@@ -317,8 +317,8 @@ export default function Home() {
           <div className="absolute -right-10 top-16 h-52 w-52 rounded-full border border-[#8d78ef]/35" />
           <div className="relative">
             <div className="mb-12 inline-flex items-center gap-2 rounded-full bg-[#4d2ddc] px-4 py-2 text-sm font-semibold"><Sparkles className="h-4 w-4" /> Play Routine</div>
-            <h1 className="max-w-xl text-6xl font-bold leading-[1.05] tracking-[-0.06em]">가족의 약속을<br />오늘의 한걸음으로.</h1>
-            <p className="mt-7 max-w-lg text-lg leading-8 text-white/65">부모가 초대하고 자녀가 자신의 이메일로 인증하면, 두 계정이 안전하게 연결됩니다.</p>
+            <h1 className="max-w-xl text-6xl font-bold leading-[1.05] tracking-[-0.06em]">잔소리 덜하고<br />좋은 습관 만들기</h1>
+            <p className="mt-7 max-w-lg text-lg leading-8 text-white/65">신경다양성 부모가 만든 신경다양성을 위한 긍정강화 프로젝트</p>
           </div>
           <div className="relative grid grid-cols-3 gap-5 border-t border-white/12 pt-8 text-sm text-white/60">
             <div><strong className="mb-2 block text-2xl text-white">01</strong>부모가 초대</div>

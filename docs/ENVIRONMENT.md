@@ -29,3 +29,13 @@ RUN_LIVE_SUPABASE_TESTS=1 pnpm exec vitest run server/supabase.connection.test.t
 실제 서비스 연결시험에는 현재 Auth URL·publishable key·DB 연결정보가 필요합니다. DB 검사는 Node `pg`를 사용하므로 별도 `psql` 설치를 요구하지 않습니다. DNS 실패나 pooler의 tenant/user 오류가 발생하면 대상 프로젝트 상태와 최신 연결정보를 확인합니다. 다른 프로젝트로 임의 전환하지 않습니다.
 
 실제 메일 수신·부모/자녀 연결의 진행 상태는 저장소 루트 `WORKLOG.md`를 읽습니다. 단위시험과 빌드 성공은 실제 메일 수신·연결 완료를 의미하지 않습니다.
+
+## DB 비밀번호 분리 입력과 복구 검증
+
+`SUPABASE_DATABASE_PASSWORD`를 별도 서버 환경변수로 입력하면 `SUPABASE_DATABASE_URL` 안의 비밀번호를 대체합니다. 특수문자 인코딩은 `server/supabaseConnection.ts`가 처리하므로 비밀번호만 안전한 설정에 입력하면 됩니다. 이 값을 브라우저 환경이나 공개 저장소에 넣지 않습니다.
+
+Migration은 `pnpm exec tsx scripts/apply-supabase-migrations.ts <현재-project-ref>`로 적용합니다. 앱 Auth URL과 DB 사용자 또는 직접 host의 프로젝트 식별자가 일치하지 않으면 중단하며, 파일 SHA-256과 성공 기록을 `private.schema_migrations`에 남깁니다. 적용 파일은 수정하지 않고 후속 migration을 추가합니다.
+
+`pnpm exec tsx scripts/verify-family-link.ts`는 실제 PostgreSQL 역할·RPC·RLS·컬럼 권한을 검사한 후 전체 fixture를 롤백합니다. `pnpm exec tsx scripts/verify-resend-live.ts`는 자기가 생성한 UUID fixture만 사용해 소유권 SQL·3개 동시 요청·60초/24시간 제한을 시험하고 해당 fixture만 정리합니다. 두 시험 모두 실제 이메일을 보내지 않으며, 실제 메일 수신 시험을 대신하지 않습니다.
+
+0005 migration은 새 프로젝트의 기본 전체 table grants를 제거하고 `anon`과 `authenticated`에 필요한 최소 권한만 부여합니다. RLS와 별개로 `TRUNCATE`·민감 컬럼 UPDATE·초대 fingerprint 읽기를 차단합니다. 테이블별 권한과 policy를 모두 확인해야 합니다.

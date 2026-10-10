@@ -1,9 +1,10 @@
 import { Client } from "pg";
 import { describe, expect, it } from "vitest";
+import { getSupabaseConnectionString } from "./supabaseConnection";
 
 describe.runIf(process.env.RUN_LIVE_SUPABASE_TESTS === "1")("Supabase PostgreSQL connection", () => {
   it("authenticates with the configured transaction pooler URL", async () => {
-    const databaseUrl = process.env.SUPABASE_DATABASE_URL;
+    const databaseUrl = getSupabaseConnectionString();
     expect(databaseUrl, "SUPABASE_DATABASE_URL must be configured").toBeTruthy();
     const client = new Client({
       connectionString: databaseUrl,

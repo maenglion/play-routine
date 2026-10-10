@@ -1,4 +1,5 @@
 import { Pool } from "pg";
+import { getSupabaseConnectionString } from "./supabaseConnection";
 
 export type ChildInvitationLookup = {
   id: string;
@@ -10,10 +11,7 @@ let pool: Pool | null = null;
 
 function getPool() {
   if (!pool) {
-    const connectionString = process.env.SUPABASE_DATABASE_URL;
-    if (!connectionString) {
-      throw new Error("SUPABASE_DATABASE_URL is not configured");
-    }
+    const connectionString = getSupabaseConnectionString();
     pool = new Pool({
       connectionString,
       max: 4,
@@ -103,6 +101,7 @@ export async function findActiveParentOwnedInvitation(input: {
       where ci.id = $2 and ci.family_id = $3
         and ci.email_fingerprint = private.email_fingerprint($4)
         and ci.status = 'ACTIVE' and ci.expires_at > now()
+        and p.status = 'ACTIVE'
         and fm.status = 'ACTIVE' and fm.role in ('OWNER_PARENT', 'PARENT')
       limit 1`,
     [input.authUserId, input.invitationId, input.familyId, normalizeEmail(input.email)],

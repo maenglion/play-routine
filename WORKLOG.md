@@ -315,3 +315,17 @@ Windows `C:\play_routine`을 최신 소스로 교체할 수 있다는 사용자�
 기존에 제공받은 비밀번호와 확인된 host/user로 설정하고 접속시험을 실행했다. 네트워크 경로는 DB 서버에 도달했으며 `password authentication failed`로 실패했다. 이전 IPv6 연결 불가나 문자열 형식 실패와 다른 단계다. screenshot의 ‘새 비밀번호 표시’ 문구가 있었으므로 현재 DB 비밀번호를 안전한 입력창으로 다시 확인한다. 비밀번호를 추측·자동 변형해 반복 시도하지 않는다.
 
 연결 문자열 전체를 계속 요청하는 대신 `SUPABASE_DATABASE_PASSWORD` 분리 입력을 지원하는 서버 helper를 추가했다. URI 특수문자 인코딩 단위시험 2개와 타입 검사를 통과했다. 운영 코드와 실연결시험이 같은 helper를 사용하도록 연결했다. 새 비밀번호 실제 연결시험과 DB migration은 아직 미완료다. 비밀값은 워크로그·소스에 기록하지 않는다.
+
+### 2026-10-10 15:19 KST — 새 DB 인증·가족 재구축 및 실DB 검증 완료
+
+안전한 입력창의 현재 DB 비밀번호를 분리 환경변수로 적용해 Session pooler 접속에 성공했다. 실제 Auth health와 PostgreSQL SELECT 1 시험 2개를 모두 통과했다. 새 프로젝트 `dsnvohyinazotouqbzrv`에 migration 0001~0004를 적용해 Auth·가족·초대·감사·알림·아바타 메타 구조 8개 테이블을 생성했고 모두 RLS가 켜져 있다. migration 기록은 private schema의 파일명·SHA-256·적용시각으로 남기며 재실행 시 동일 파일을 건너뛰는 것도 확인했다.
+
+**추가 보강:** 새 Supabase의 기본 table grants가 authenticated에 INSERT/UPDATE/DELETE/TRUNCATE 등을 부여함을 발견했다. 기존 policy만으로는 RLS가 적용되지 않는 TRUNCATE나 허용된 행의 민감 컬럼 UPDATE를 막지 못하므로 0005 migration으로 이 앱의 8개 테이블 권한을 회수한 뒤 필요한 SELECT와 display_name/name/timezone/read_at 컬럼 수정만 재부여했다. 부모 재전송 SQL도 SUSPENDED principal을 차단하도록 보강했다.
+
+**실제 PostgreSQL 검증:** 임시 .invalid 이메일 fixture로 Auth trigger, 부모 가족 생성, 동일 ACTIVE 초대 거절, 다른 부모·가족 접근 차단, 다른 이메일 초대 조회·수락 차단, 정확한 이메일 즉시 ACTIVE, 수락 멱등성, 부모 알림·감사 1회, anon 조회 금지, TRUNCATE 권한 없음, 민감 상태 수정 금지, fingerprint 읽기 금지, 허용 display 수정 등 21개를 통과했다. 이 시험은 전체 롤백했다. 별도 재전송 시험은 실제 helper로 소유권·다른 부모/가족/이메일·중지 부모 거절, 동시 3개 요청 중 1개만 허용, 24시간 5개 제한 등 8개를 통과했다. 자기 생성 UUID fixture만 정리했고 실제 이메일은 발송하지 않았다.
+
+**코드 검증:** TypeScript, 31개 단위시험, 프로덕션 빌드 통과. 실제 연결시험 2개는 별도 실행해 통과했다. 오래된 기본-test skip을 실패나 실연결 통과로 오인하지 않는다.
+
+**로컬 준비:** Windows C:\play_routine 교체용 소스와 설치·시작 스크립트를 준비했다. 기존 폴더는 날짜 백업으로 이동하고 삭제하지 않는다. 공개 URL·publishable 설정만 포함하며 실제 DB 비밀번호·SMTP 자격정보·서버 저장소 키는 넣지 않는다. 접근 가능한 Windows 장치가 없어 실제 설치/실행은 미검증이다. 클라우드 .env는 패키지로 복사하지 않는다.
+
+**남은 차단점:** 새 Supabase Auth URL Configuration을 열었으나 관리 브라우저가 로그인 화면으로 이동했다. Site URL/Redirect URL·SMTP는 아직 변경하지 않았다. 따라서 실제 자녀 메일 수신·공개 복귀·비밀번호 설정·부모 재로그인 종단시험은 미완료다. 사용자의 관리 브라우저 로그인 후 공개 앱 callback을 설정하고, 별도 SMTP 계정·발신 도메인 조건을 확인해야 한다. 인증 복구 외 활동·ref·잔차·원장 물리 도메인은 확정 설계대로 후속 구현하며 이번에 생성된 것으로 보고하지 않는다.

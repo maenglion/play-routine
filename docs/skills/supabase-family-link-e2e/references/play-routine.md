@@ -16,6 +16,9 @@
 | 확인 링크 발송·부모 세션 검사 | server/routers/supabaseAuth.ts |
 | fingerprint·소유권·요청 제한·감사 SQL | server/supabaseDb.ts |
 | 실제 테이블·RLS | supabase/migrations/ |
+| implicit callback 수신·오류·URL 정리 | client/src/lib/auth-callback.ts |
+| 실제 callback 설정 정책시험 | server/auth-callback.live.test.ts |
+| rollback 가족 권한·재전송 실DB 시험 | scripts/verify-family-link.ts, scripts/verify-resend-live.ts |
 
 ## 조회 패턴 — 먼저 schema 확인
 
@@ -44,9 +47,10 @@ pnpm check
 pnpm test
 pnpm build
 RUN_LIVE_SUPABASE_TESTS=1 pnpm exec vitest run server/supabase.connection.test.ts server/supabase.database.connection.test.ts
+RUN_LIVE_AUTH_CALLBACK_TESTS=1 pnpm exec vitest run server/auth-callback.live.test.ts
 ```
 
-2026-10-10 추출 시 코드 검증은 통과했으나 실제 연결시험은 Auth DNS ENOTFOUND와 DB tenant/user not found로 실패했다. 이 결과를 E2E 성공 사례로 사용하지 않는다. 최신 WORKLOG에서 차단 해소 여부를 다시 확인한다.
+2026-10-10 초기 추출 당시 실제 연결시험은 실패했다. 이후 새 프로젝트를 구성하고 Auth·DB 연결을 검증했으며 가족 권한 실DB 21개와 재전송 소유권·동시 제한 8개 시험을 통과했다. 16:48 공개 callback 정책 4개도 통과했다. 16:51 사용자가 로그인·초대 수락 성공을 보고했고 16:52 실제 DB에서 인증·비밀번호 설정된 계정 2개, 가족 1개, ACCEPTED 초대 1개, ACTIVE 자녀 1개, 동일 principal·이메일 fingerprint, CHILD membership·연결 감사·부모 알림 각 1개를 확인했다. 실제 발송 감사 REQUESTED/SENT 각 1개도 확인했다. 이는 실계정 연결 성공 증거지만 부모 재로그인 후 화면 확인은 별도 미완료다. 최신 WORKLOG에서 현재 상태를 다시 읽는다.
 
 ## 운영상 유의
 

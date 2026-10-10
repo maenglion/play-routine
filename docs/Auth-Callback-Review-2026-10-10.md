@@ -1,6 +1,6 @@
-# Play Routine 인증 콜백 점검 — 2026-10-10 16:48 KST 갱신
+# Play Routine 인증 콜백 점검 — 2026-10-10 16:54 KST 갱신
 
-**판정: localhost 콜백 설정 오류는 해결됐고, 현재 SPA 콜백 코드와 실제 공개 복귀 정책은 검증을 통과했다.** 실제 이메일 수신·유효한 확인 링크의 세션 생성·부모–자녀 연결은 별도 종단시험 전이다.
+**판정: localhost 콜백 설정 오류는 해결됐고, 실제 로그인·자녀 초대 수락·즉시 ACTIVE 연결까지 확인했다.** 부모의 재로그인 후 자녀 화면 확인은 마지막 사용자 확인으로 남는다.
 
 ## 실제 설정 변경 후 확인
 
@@ -31,7 +31,7 @@
 
 코드 TypeScript·42개 단위시험·프로덕션 빌드를 통과했다. 별도 실제 콜백 설정시험에 전용 경로를 추가해 4개 정책을 검증한다. 기본 코드 시험에서 실제 서버 시험은 명시적 실행 전까지 skip된다.
 
-격리된 **공개 배포 브라우저**에서 가짜 만료 콜백을 열어 한국어 만료 안내·로그인 화면·홈 URL 정리를 확인했다. 이는 실제 계정을 쓰지 않는 오류 화면 시험이다. 정상 유효 링크의 로그인 세션 생성·비밀번호 설정·실제 자녀 초대 수락까지 끝난 것으로 보고하지 않는다.
+격리된 **공개 배포 브라우저**에서 가짜 만료 콜백을 열어 한국어 만료 안내·로그인 화면·홈 URL 정리를 확인했다. 이 오류 화면 시험과 별개로, 16:52 실제 사용자 로그인·수락 보고 및 운영 DB 인증·비밀번호·연결 정합성을 확인했다. 상세 결과는 아래 실제 확인 절을 따른다.
 
 기존 메일은 만료·1회 사용·생성 당시 주소가 적용될 수 있으므로 종단시험에는 새 확인 메일을 사용한다. 실제 메일 수신은 SMTP 발송 설정과 별개로 확인해야 한다. 설정 수정과 함께 메일 전달이 자동 해결됐다고 판단하지 않는다.
 
@@ -55,10 +55,20 @@ https://playroutine-nkwde3yc.manus.space/auth/callback
 RUN_LIVE_AUTH_CALLBACK_TESTS=1 pnpm exec vitest run server/auth-callback.live.test.ts
 ```
 
-다음 실제 단계는 공개 앱에서 부모 가입용 **새 확인 메일**을 요청하고 수신 여부를 확인하는 것이다. 메일 링크·토큰·비밀번호는 채팅에 보내지 않는다.
+16:48 당시 다음 단계였던 실제 로그인·자녀 수락은 16:52 성공을 확인했다. 이제 부모의 재로그인 후 자녀 표시를 확인한다. 메일 링크·토큰·비밀번호는 채팅에 보내지 않는다.
 
 ## References
 
 [1]: https://supabase.com/docs/guides/auth/sessions/implicit-flow "Supabase implicit browser authentication flow"
 [2]: https://supabase.com/docs/guides/auth/redirect-urls "Supabase Site URL and redirect allow list"
 [3]: https://raw.githubusercontent.com/supabase/auth/master/internal/api/verify.go "Supabase Auth verification and error redirect implementation"
+
+## 16:52 KST 실제 로그인·수락 확인
+
+사용자가 실제 앱에서 로그인·초대 수락이 됐다고 보고했다. 이에 새 DB를 조회해 이메일 인증과 비밀번호 설정이 완료된 계정 2개, 가족 1개, ACCEPTED 초대 1개, ACTIVE 자녀 프로필 1개를 확인했다. 수락 시각은 **2026-10-10 16:51:20 KST**다.
+
+초대의 accepted principal과 자녀 profile principal, 인증 이메일 fingerprint가 모두 일치한다. 활성 CHILD membership은 1개이고 링크 감사·부모 알림도 각 1개다. 실제 메일 발송 감사는 OTP_REQUESTED와 OTP_SENT 각 1개이며, 사용자의 로그인·수락 보고와 실제 인증·연결 상태를 함께 확인했다. 메일 발송 제공자의 SENT만으로 수신 성공을 추정한 것은 아니다.
+
+실제 부모·자녀 Auth 사용자 역할을 읽기 전용 트랜잭션으로 적용해 자녀 프로필을 조회했다. 양쪽 모두 자기 가족의 ACTIVE 자녀 1개만 조회했고 데이터는 변경하지 않았다. 이 운영 DB에는 가족이 1개이므로 두 실제 가족 간 차단을 시험한 것은 아니며, 교차 가족 거절 증거는 앞서 별도 fixture로 수행한 21개 실DB 검증을 따른다.
+
+**인증된 실제 자녀의 초대 수락·즉시 ACTIVE 연결은 성공으로 판정한다.** 다만 사용자의 ‘로그인’ 보고가 부모의 재로그인까지 의미하는지는 구분되지 않으므로 부모 로그아웃 → 비밀번호 재로그인 → 연결 자녀 표시 확인은 마지막 사용자 확인으로 남긴다. 실제 연결된 계정·가족·초대·감사 데이터는 보존했고 삭제·초기화하지 않았다. 별도 SMTP 설정 전체를 조회하거나 일반 사용자 대상 메일 전달 가능성을 검증한 것은 아니다.

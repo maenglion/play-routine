@@ -30,6 +30,8 @@ description: Supabase Auth 부모·자녀 서비스의 실제 이메일 확인 �
 4. 링크를 계정 소유자의 브라우저에서 열게 한다. 부모 브라우저에서 자녀 링크를 열면 세션이 바뀔 수 있다.
 5. 앱 복귀 후 세션 복원과 비밀번호 설정 조건을 확인한다.
 
+브라우저 implicit 방식은 루트 `/`도 유효한 수신 지점이다. Next.js PKCE·서버 cookie callback과 혼합하지 않는다. 관리 화면에 접근하지 못하면 무효 토큰의 `/auth/v1/verify` GET을 redirect 자동 추적 없이 요청해 실효 Site URL·공개 루트·전용 callback·외부 fallback 정책을 확인할 수 있다. 실제 사용자 토큰·메일 발송은 사용하지 않는다. 이 정책시험은 정상 이메일 성공시험을 대신하지 않는다. 오류 fragment·인증정보를 안전하게 정리하고 만료 안내·비밀번호 설정 화면 우선순위도 확인한다.
+
 ## 3. 구현 검증
 
 다음을 단위시험과 코드에서 확인한다.
@@ -59,6 +61,8 @@ Play Routine 적용정보가 필요하면 `references/play-routine.md`를 읽는
 8. DB에서 초대 ACCEPTED, profile ACTIVE, CHILD membership·principal 연결을 확인한다.
 9. 부모가 비밀번호로 재로그인해 연결된 자녀를 확인한다.
 10. 다른 가족 접근과 CSV 차단을 실제 RLS 또는 권한 시험으로 확인한다. mock 경로 시험을 실RLS 검증이라고 하지 않는다.
+
+수락 완료 보고 후 실제 DB를 읽기 전용으로 대조한다. ACCEPTED 초대의 accepted principal과 ACTIVE profile principal, 인증 이메일 fingerprint가 같고 ACTIVE CHILD membership이 정확히 1건인지 확인한다. 링크 감사와 부모 알림은 최초 수락 1회인지 확인한다. 이메일 확인·비밀번호 설정·로그인시각의 유무는 boolean으로 출력하고 이메일·토큰·계정 ID는 불필요하게 노출하지 않는다. 가족별 RLS는 실제 역할로 읽기 트랜잭션에서 검증한 뒤 롤백한다. 재로그인·부모 화면 확인은 사용자 보고나 브라우저 증거가 없으면 별도 대기로 남긴다.
 
 ## 5. 미수신 진단
 

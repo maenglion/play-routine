@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-describe("Supabase project connection", () => {
+describe.runIf(process.env.RUN_LIVE_SUPABASE_TESTS === "1")("Supabase project connection", () => {
   it("reaches the Auth health endpoint with the configured publishable key", async () => {
     const url = process.env.SUPABASE_URL;
     const publishableKey = process.env.SUPABASE_PUBLISHABLE_KEY;

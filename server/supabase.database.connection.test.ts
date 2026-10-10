@@ -1,25 +1,21 @@
-import { execFileSync } from "node:child_process";
+import { Client } from "pg";
 import { describe, expect, it } from "vitest";
 
-describe("Supabase PostgreSQL connection", () => {
-  it("authenticates with the configured transaction pooler URL", () => {
+describe.runIf(process.env.RUN_LIVE_SUPABASE_TESTS === "1")("Supabase PostgreSQL connection", () => {
+  it("authenticates with the configured transaction pooler URL", async () => {
     const databaseUrl = process.env.SUPABASE_DATABASE_URL;
     expect(databaseUrl, "SUPABASE_DATABASE_URL must be configured").toBeTruthy();
-
-    const output = execFileSync(
-      "psql",
-      [databaseUrl!, "-X", "-tA", "-c", "select 1"],
-      {
-        encoding: "utf8",
-        timeout: 15_000,
-        env: {
-          ...process.env,
-          PGCONNECT_TIMEOUT: "10",
-          PGSSLMODE: "require",
-        },
-      },
-    );
-
-    expect(output.trim()).toBe("1");
+    const client = new Client({
+      connectionString: databaseUrl,
+      connectionTimeoutMillis: 10_000,
+      ssl: { rejectUnauthorized: false },
+    });
+    try {
+      await client.connect();
+      const result = await client.query("select 1 as ok");
+      expect(result.rows[0]?.ok).toBe(1);
+    } finally {
+      await client.end();
+    }
   }, 20_000);
 });

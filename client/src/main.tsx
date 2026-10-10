@@ -38,28 +38,28 @@ const trpcClient = trpc.createClient({
 });
 
 function hideHostedPlatformBadge() {
-  let shadowObserver: MutationObserver | null = null;
+  const observedRoots = new WeakSet<Node>();
 
-  const hideBadge = () => {
-    const host = document.querySelector("manus-content-root");
-    const shadowRoot = host?.shadowRoot;
-    if (!shadowRoot) return;
-
-    const badge = shadowRoot.querySelector("footer-watermark") as HTMLElement | null;
-    if (badge) {
+  const scanRoot = (root: Document | ShadowRoot) => {
+    root.querySelectorAll("footer-watermark").forEach(element => {
+      const badge = element as HTMLElement;
       badge.hidden = true;
       badge.style.setProperty("display", "none", "important");
-    }
+      badge.setAttribute("aria-hidden", "true");
+    });
 
-    if (!shadowObserver) {
-      shadowObserver = new MutationObserver(hideBadge);
-      shadowObserver.observe(shadowRoot, { childList: true, subtree: true });
+    root.querySelectorAll("*").forEach(element => {
+      if (element.shadowRoot) scanRoot(element.shadowRoot);
+    });
+
+    if (!observedRoots.has(root)) {
+      observedRoots.add(root);
+      const observer = new MutationObserver(() => scanRoot(root));
+      observer.observe(root, { childList: true, subtree: true });
     }
   };
 
-  const documentObserver = new MutationObserver(hideBadge);
-  documentObserver.observe(document.documentElement, { childList: true, subtree: true });
-  hideBadge();
+  scanRoot(document);
 }
 
 hideHostedPlatformBadge();

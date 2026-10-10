@@ -3,77 +3,98 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import { publicProcedure, router } from "../_core/trpc";
 import {
+  type ChildInvitationLookup,
   findActiveChildInvitation,
-  getOtpRequestAllowance,
+  findActiveParentOwnedInvitation,
   normalizeEmail,
   recordInvitationDeliveryEvent,
+  reserveOtpRequest,
 } from "../supabaseDb";
 
-const GENERIC_MESSAGE =
-  "초대가 유효하면 인증번호를 보냈습니다. 메일함과 스팸함을 확인해 주세요.";
+const CHILD_MESSAGE =
+  "초대가 유효하면 확인 메일 발송을 요청했습니다. 메일함과 스팸함을 확인해 주세요.";
+const PUBLIC_APP_ORIGIN = "https://playroutine-nkwde3yc.manus.space";
+
+export function normalizeAuthRedirectUrl(redirectTo: string, production = process.env.NODE_ENV === "production") {
+  const url = new URL(redirectTo);
+  const isPublicApp = url.origin === PUBLIC_APP_ORIGIN;
+  const isLocalDevelopment = ["localhost", "127.0.0.1"].includes(url.hostname);
+  const isManusPreview = url.hostname.endsWith(".manus.computer");
+  if (!isPublicApp && (production || (!isLocalDevelopment && !isManusPreview))) {
+    throw new Error("Unsupported authentication redirect origin");
+  }
+  return `${url.origin}/`;
+}
 
 function getSupabaseServerClient() {
   const url = process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    throw new Error("Supabase server configuration is missing");
+  if (!url || !key) throw new Error("Supabase server configuration is missing");
+  return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
+}
+
+async function sendChildConfirmationEmail(invitation: ChildInvitationLookup, email: string, redirectTo: string) {
+  const requestId = randomUUID();
+  const allowance = await reserveOtpRequest(invitation.id, requestId);
+  if (!allowance.allowed) return;
+
+  let failure: { code: string; status: number | null } | null = null;
+  try {
+    const { error } = await getSupabaseServerClient().auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: true, emailRedirectTo: redirectTo, data: { account_type: "child" } },
+    });
+    if (error) failure = { code: error.code ?? "AUTH_ERROR", status: error.status ?? null };
+  } catch {
+    failure = { code: "AUTH_REQUEST_FAILED", status: null };
   }
-  return createClient(url, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
+  await recordInvitationDeliveryEvent({
+    invitationId: invitation.id,
+    eventType: failure ? "OTP_FAILED" : "OTP_SENT",
+    requestId: randomUUID(),
+    detail: { sourceRequestId: requestId, ...(failure ?? {}) },
   });
 }
 
+const emailInput = z.string().trim().email().max(320);
+const redirectInput = z.string().url().max(2048);
+const genericResponse = () => ({ accepted: true, message: CHILD_MESSAGE }) as const;
+
 export const supabaseAuthRouter = router({
   requestChildOtp: publicProcedure
-    .input(z.object({ email: z.string().email().max(320) }))
+    .input(z.object({ email: emailInput, redirectTo: redirectInput }))
     .mutation(async ({ input }) => {
       const email = normalizeEmail(input.email);
+      const redirectTo = normalizeAuthRedirectUrl(input.redirectTo);
       const invitation = await findActiveChildInvitation(email);
+      if (invitation) await sendChildConfirmationEmail(invitation, email, redirectTo);
+      return genericResponse();
+    }),
 
-      if (!invitation) {
-        return { accepted: true, message: GENERIC_MESSAGE } as const;
+  resendChildInvitationEmail: publicProcedure
+    .input(z.object({
+      accessToken: z.string().max(8192).optional(),
+      familyId: z.string().uuid(),
+      invitationId: z.string().uuid(),
+      email: emailInput,
+      redirectTo: redirectInput,
+    }))
+    .mutation(async ({ input }) => {
+      const redirectTo = normalizeAuthRedirectUrl(input.redirectTo);
+      if (!input.accessToken) return genericResponse();
+      let authUserId: string | undefined;
+      try {
+        const { data, error } = await getSupabaseServerClient().auth.getUser(input.accessToken);
+        if (!error) authUserId = data.user?.id;
+      } catch {
+        return genericResponse();
       }
-
-      const allowance = await getOtpRequestAllowance(invitation.id);
-      const requestId = randomUUID();
-
-      if (!allowance.allowed) {
-        await recordInvitationDeliveryEvent({
-          invitationId: invitation.id,
-          eventType: "OTP_RATE_LIMITED",
-          requestId,
-          detail: {
-            recentCount: allowance.recentCount,
-            dailyCount: allowance.dailyCount,
-          },
-        });
-        return { accepted: true, message: GENERIC_MESSAGE } as const;
-      }
-
-      await recordInvitationDeliveryEvent({
-        invitationId: invitation.id,
-        eventType: "OTP_REQUESTED",
-        requestId,
+      if (!authUserId) return genericResponse();
+      const email = normalizeEmail(input.email);
+      const invitation = await findActiveParentOwnedInvitation({
+        authUserId, familyId: input.familyId, invitationId: input.invitationId, email,
       });
-
-      const { error } = await getSupabaseServerClient().auth.signInWithOtp({
-        email,
-        options: {
-          shouldCreateUser: true,
-          data: { account_type: "child" },
-        },
-      });
-
-      await recordInvitationDeliveryEvent({
-        invitationId: invitation.id,
-        eventType: error ? "OTP_FAILED" : "OTP_SENT",
-        requestId: randomUUID(),
-        detail: error
-          ? { code: error.code ?? "AUTH_ERROR", status: error.status ?? null }
-          : { sourceRequestId: requestId },
-      });
-
-      return { accepted: true, message: GENERIC_MESSAGE } as const;
+      if (invitation) await sendChildConfirmationEmail(invitation, email, redirectTo);
+      return genericResponse();
     }),
 });
-

@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Download, FileText, LogOut, Plus, UsersRound } from "lucide-react";
+import { Download, FileText, LogOut, Mail, Plus, UsersRound } from "lucide-react";
 
 type Family = { id: string; name: string; timezone: string } | null;
 
@@ -12,9 +12,23 @@ export type ParentChildProfile = {
   avatar_url: string | null;
 };
 
+export type ParentChildInvitation = {
+  id: string;
+  child_profile_id: string;
+  email_masked: string;
+  status: string;
+  expires_at: string;
+};
+
 type ParentDashboardProps = {
   family: Family;
   children: ParentChildProfile[];
+  invitations: ParentChildInvitation[];
+  resendInvitationId: string | null;
+  resendEmail: string;
+  onResendInvitationChange: (value: string | null) => void;
+  onResendEmailChange: (value: string) => void;
+  onResendInvitation: () => void;
   childName: string;
   childEmail: string;
   busy: boolean;
@@ -28,6 +42,12 @@ type ParentDashboardProps = {
 export default function ParentDashboard({
   family,
   children,
+  invitations,
+  resendInvitationId,
+  resendEmail,
+  onResendInvitationChange,
+  onResendEmailChange,
+  onResendInvitation,
   childName,
   childEmail,
   busy,
@@ -62,7 +82,7 @@ export default function ParentDashboard({
               <div><p className="text-xs font-semibold text-[#4d2ddc]">FAMILY</p><h2 className="mt-1 text-2xl font-bold tracking-[-0.04em]">자녀 계정 연결</h2></div>
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#f0edfa] text-[#4d2ddc]"><Plus className="h-5 w-5" /></div>
             </div>
-            <p className="mt-3 text-sm leading-6 text-[#747670]">자녀가 실제로 사용할 이메일을 입력하면, 같은 이메일의 OTP 인증 후 즉시 연결됩니다.</p>
+            <p className="mt-3 text-sm leading-6 text-[#747670]">초대를 만든 뒤 아래 ‘메일 다시 보내기’로 확인 메일을 요청할 수 있습니다. 자녀가 같은 이메일의 확인 링크를 누르고 초대를 수락하면 연결됩니다.</p>
             <div className="mt-7 grid gap-4 sm:grid-cols-2">
               <div className="space-y-2"><Label htmlFor="child-name">자녀 이름</Label><Input id="child-name" value={childName} onChange={event => onChildNameChange(event.target.value)} placeholder="이름" /></div>
               <div className="space-y-2"><Label htmlFor="child-email">자녀 이메일</Label><Input id="child-email" type="email" value={childEmail} onChange={event => onChildEmailChange(event.target.value)} placeholder="child@example.com" /></div>
@@ -75,15 +95,29 @@ export default function ParentDashboard({
                 <div className="rounded-2xl bg-[#f5f3ed] px-4 py-6 text-center text-sm text-[#777a74]">아직 등록된 자녀가 없습니다.</div>
               ) : (
                 <div className="space-y-3">
-                  {children.map(child => (
-                    <div key={child.id} className="flex items-center gap-3 rounded-2xl border border-black/8 p-3">
+                  {children.map(child => {
+                    const invitation = invitations.find(row => row.child_profile_id === child.id);
+                    return (
+                    <div key={child.id} className="rounded-2xl border border-black/8 p-3">
+                    <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#d4cfe7] text-sm font-bold text-[#4d2ddc]">
                         {child.avatar_url ? <img src={child.avatar_url} alt="" className="h-full w-full object-cover" /> : child.display_name.slice(0, 1)}
                       </div>
                       <div className="min-w-0 flex-1"><strong className="block truncate text-sm">{child.display_name}</strong><span className="text-xs text-[#8a8b85]">{child.status === "ACTIVE" ? "계정 연결됨" : "초대 대기"}</span></div>
                       <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${child.status === "ACTIVE" ? "bg-[#e4f1eb] text-[#315f4d]" : "bg-[#f0edfa] text-[#5b46a3]"}`}>{child.status}</span>
                     </div>
-                  ))}
+                    {invitation && <div className="mt-3 border-t border-black/5 pt-3">
+                      <p className="mb-3 text-xs text-[#777a74]">{invitation.email_masked} · 연결 전 초대</p>
+                      {resendInvitationId === invitation.id ? <div className="space-y-3">
+                        <Label htmlFor={`resend-${invitation.id}`}>처음 초대한 자녀 이메일</Label>
+                        <Input id={`resend-${invitation.id}`} type="email" autoCapitalize="none" autoComplete="off" value={resendEmail} onChange={event => onResendEmailChange(event.target.value)} placeholder="같은 이메일을 다시 입력" disabled={busy} />
+                        <p className="text-xs leading-5 text-[#777a74]">최소 60초 간격, 최근 24시간 최대 5회 요청할 수 있습니다. 새 초대나 프로필은 만들지 않습니다.</p>
+                        <div className="flex gap-2"><Button disabled={busy || !resendEmail.trim()} onClick={onResendInvitation} className="rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]"><Mail className="h-4 w-4" /> 확인 메일 보내기</Button><Button variant="ghost" disabled={busy} onClick={() => onResendInvitationChange(null)}>취소</Button></div>
+                      </div> : <Button variant="outline" disabled={busy} className="rounded-xl" onClick={() => { onResendEmailChange(""); onResendInvitationChange(invitation.id); }}><Mail className="h-4 w-4" /> 메일 다시 보내기</Button>}
+                    </div>}
+                    </div>
+                    );
+                  })}
                 </div>
               )}
             </div>

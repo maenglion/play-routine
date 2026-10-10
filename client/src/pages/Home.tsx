@@ -4,12 +4,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChildDashboard, { type ChildProfile } from "@/components/play-routine/ChildDashboard";
-import ParentDashboard, { type ParentChildProfile } from "@/components/play-routine/ParentDashboard";
+import ParentDashboard, { type ParentChildProfile, type ParentChildInvitation } from "@/components/play-routine/ParentDashboard";
+import {
+  defaultAuthModeForAccount,
+  isActiveInvitationExistsError,
+  needsPasswordSetup,
+} from "@/lib/auth-flow";
 import { getRememberMePreference, setRememberMePreference } from "@/lib/auth-storage";
 import { supabase } from "@/lib/supabase";
 import { trpc } from "@/lib/trpc";
 import type { Session } from "@supabase/supabase-js";
-import { ArrowRight, Clock3, Loader2, LockKeyhole, LogIn, LogOut, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
+import { ArrowRight, Clock3, Loader2, LockKeyhole, LogIn, LogOut, Mail, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -40,8 +45,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
-  const [otpRequested, setOtpRequested] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(() =>
     typeof window === "undefined" ? true : getRememberMePreference(window.localStorage),
   );
@@ -50,16 +54,23 @@ export default function Home() {
   const [memberships, setMemberships] = useState<FamilyMembership[]>([]);
   const [childInvitations, setChildInvitations] = useState<ChildInvitation[]>([]);
   const [childProfiles, setChildProfiles] = useState<ParentChildProfile[]>([]);
+  const [parentInvitations, setParentInvitations] = useState<ParentChildInvitation[]>([]);
+  const [resendInvitationId, setResendInvitationId] = useState<string | null>(null);
+  const [resendEmail, setResendEmail] = useState("");
   const [childName, setChildName] = useState("");
   const [childEmail, setChildEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const requestChildOtp = trpc.supabaseAuth.requestChildOtp.useMutation();
+  const resendChildEmail = trpc.supabaseAuth.resendChildInvitationEmail.useMutation();
 
   const refreshAccount = useCallback(async (activeSession: Session | null) => {
     if (!activeSession) {
       setMemberships([]);
       setChildInvitations([]);
       setChildProfiles([]);
+      setParentInvitations([]);
+      setResendInvitationId(null);
+      setResendEmail("");
       return;
     }
 
@@ -76,6 +87,7 @@ export default function Home() {
     if (parent) setMode("parent");
     if (child && !parent) setMode("child");
 
+    if (!parent) setParentInvitations([]);
     if (parent) {
       const { data: children, error } = await supabase
         .from("child_profiles")
@@ -84,6 +96,14 @@ export default function Home() {
         .order("created_at", { ascending: true });
       if (error) throw error;
       setChildProfiles((children ?? []) as ParentChildProfile[]);
+      const { data: invitations, error: invitationsError } = await supabase
+        .from("child_invitations")
+        .select("id, child_profile_id, email_masked, status, expires_at")
+        .eq("family_id", parent.family_id)
+        .eq("status", "ACTIVE")
+        .gt("expires_at", new Date().toISOString());
+      if (invitationsError) throw invitationsError;
+      setParentInvitations((invitations ?? []) as ParentChildInvitation[]);
     } else if (child) {
       const { data: profiles, error } = await supabase
         .from("child_profiles")
@@ -129,24 +149,31 @@ export default function Home() {
     setRememberMePreference(rememberMe, window.localStorage, window.sessionStorage);
   };
 
-  const requestSignupOtp = async () => {
+  const requestSignupLink = async () => {
     setBusy(true);
     try {
       applyRememberMe();
       if (mode === "child") {
-        const result = await requestChildOtp.mutateAsync({ email });
+        const result = await requestChildOtp.mutateAsync({
+          email,
+          redirectTo: `${window.location.origin}/`,
+        });
         toast.success(result.message);
       } else {
         const { error } = await supabase.auth.signInWithOtp({
           email: email.trim().toLowerCase(),
-          options: { shouldCreateUser: true, data: { account_type: "parent", display_name: displayName.trim() } },
+          options: {
+            shouldCreateUser: true,
+            emailRedirectTo: `${window.location.origin}/`,
+            data: { account_type: "parent", display_name: displayName.trim() },
+          },
         });
         if (error) throw error;
-        toast.success("인증번호를 보냈습니다. 메일함을 확인해 주세요.");
+        toast.success("확인 링크를 보냈습니다. 메일함을 확인해 주세요.");
       }
-      setOtpRequested(true);
+      setEmailSent(true);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "인증번호 요청에 실패했습니다.");
+      toast.error(error instanceof Error ? error.message : "확인 메일 요청에 실패했습니다.");
     } finally {
       setBusy(false);
     }
@@ -161,8 +188,16 @@ export default function Home() {
         password,
       });
       if (error) throw error;
-      setSession(data.session);
-      await refreshAccount(data.session);
+      let activeSession = data.session;
+      if (data.user && needsPasswordSetup(data.user.user_metadata)) {
+        const { error: metadataError } = await supabase.auth.updateUser({
+          data: { password_configured: true },
+        });
+        if (metadataError) throw metadataError;
+        activeSession = (await supabase.auth.getSession()).data.session ?? activeSession;
+      }
+      setSession(activeSession);
+      await refreshAccount(activeSession);
       toast.success("로그인되었습니다.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "이메일과 비밀번호를 확인해 주세요.");
@@ -171,26 +206,21 @@ export default function Home() {
     }
   };
 
-  const verifyOtp = async () => {
+  const finishPasswordSetup = async () => {
     setBusy(true);
     try {
       applyRememberMe();
-      const { data, error } = await supabase.auth.verifyOtp({
-        email: email.trim().toLowerCase(),
-        token: otp.trim(),
-        type: "email",
+      const { error } = await supabase.auth.updateUser({
+        password,
+        data: { password_configured: true },
       });
       if (error) throw error;
-      const { error: passwordError } = await supabase.auth.updateUser({ password });
-      if (passwordError) {
-        await supabase.auth.signOut();
-        throw passwordError;
-      }
-      setSession(data.session);
-      await refreshAccount(data.session);
-      toast.success("이메일 인증과 비밀번호 설정이 완료되었습니다.");
+      const activeSession = (await supabase.auth.getSession()).data.session;
+      setSession(activeSession);
+      await refreshAccount(activeSession);
+      toast.success("비밀번호 설정이 완료되었습니다.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "인증번호를 확인해 주세요.");
+      toast.error(error instanceof Error ? error.message : "비밀번호 설정에 실패했습니다.");
     } finally {
       setBusy(false);
     }
@@ -228,9 +258,38 @@ export default function Home() {
       setChildName("");
       setChildEmail("");
       await refreshAccount(session);
-      toast.success("자녀 이메일 초대를 만들었습니다.");
+      toast.success("자녀 초대를 만들었습니다. 아래 ‘메일 다시 보내기’에서 확인 메일을 요청해 주세요.");
     } catch (error) {
+      if (isActiveInvitationExistsError(error)) {
+        await refreshAccount(session);
+        toast.info("이미 이 이메일의 활성 초대가 있습니다. 자녀 화면에서 첫 연결을 진행해 주세요.");
+        return;
+      }
       toast.error(error instanceof Error ? error.message : "초대 생성에 실패했습니다.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resendInvitation = async () => {
+    const parent = memberships.find(row => ["OWNER_PARENT", "PARENT"].includes(row.role));
+    if (!parent || !resendInvitationId || !resendEmail.trim()) return;
+    setBusy(true);
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session?.access_token) throw new Error("부모 계정으로 다시 로그인해 주세요.");
+      const result = await resendChildEmail.mutateAsync({
+        accessToken: data.session.access_token,
+        familyId: parent.family_id,
+        invitationId: resendInvitationId,
+        email: resendEmail.trim(),
+        redirectTo: `${window.location.origin}/`,
+      });
+      toast.info(result.message);
+      setResendInvitationId(null);
+      setResendEmail("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "확인 메일 요청에 실패했습니다.");
     } finally {
       setBusy(false);
     }
@@ -275,14 +334,16 @@ export default function Home() {
   const logout = async () => {
     await supabase.auth.signOut();
     setSession(null);
-    setOtp("");
     setPassword("");
-    setOtpRequested(false);
+    setEmailSent(false);
   };
 
   const parentMembership = memberships.find(row => ["OWNER_PARENT", "PARENT"].includes(row.role));
   const childMembership = memberships.find(row => row.role === "CHILD");
   const childProfile = childMembership ? (childProfiles[0] as ChildProfile | undefined) ?? null : null;
+  const passwordSetupRequired = Boolean(
+    session && needsPasswordSetup(session.user.user_metadata),
+  );
   const devPreview = import.meta.env.DEV
     ? new URLSearchParams(window.location.search).get("preview")
     : null;
@@ -309,7 +370,13 @@ export default function Home() {
     return (
       <ParentDashboard
         family={{ id: "preview", name: "민후네 가족", timezone: "Asia/Seoul" }}
-        children={[{ id: "preview", display_name: "이민후", status: "ACTIVE", avatar_url: null }]}
+        children={[{ id: "preview", display_name: "이민후", status: "PENDING_LINK", avatar_url: null }]}
+        invitations={[{ id: "preview-invite", child_profile_id: "preview", email_masked: "ch***@example.com", status: "ACTIVE", expires_at: "2099-01-01T00:00:00Z" }]}
+        resendInvitationId={resendInvitationId}
+        resendEmail={resendEmail}
+        onResendInvitationChange={setResendInvitationId}
+        onResendEmailChange={setResendEmail}
+        onResendInvitation={() => toast.info("개발 미리보기입니다. 실제 메일은 보내지 않습니다.")}
         childName={childName}
         childEmail={childEmail}
         busy={false}
@@ -331,6 +398,12 @@ export default function Home() {
       <ParentDashboard
         family={parentMembership.families}
         children={childProfiles}
+        invitations={parentInvitations}
+        resendInvitationId={resendInvitationId}
+        resendEmail={resendEmail}
+        onResendInvitationChange={setResendInvitationId}
+        onResendEmailChange={setResendEmail}
+        onResendInvitation={resendInvitation}
         childName={childName}
         childEmail={childEmail}
         busy={busy}
@@ -375,31 +448,40 @@ export default function Home() {
             {!session ? (
               <Card className="rounded-[28px] border-black/8 bg-white/85 shadow-[0_24px_80px_rgba(51,58,68,.10)] backdrop-blur">
                 <CardContent className="pt-6">
-                  <Tabs value={mode} onValueChange={value => { setMode(value as AccountMode); setEmail(""); setPassword(""); setDisplayName(""); setOtpRequested(false); setOtp(""); }}>
+                  <Tabs value={mode} onValueChange={value => { const nextMode = value as AccountMode; setMode(nextMode); setAuthMode(defaultAuthModeForAccount(nextMode)); setEmail(""); setPassword(""); setDisplayName(""); setEmailSent(false); }}>
                     <TabsList className="grid w-full grid-cols-2 rounded-full bg-[#ebe7de] p-1">
                       <TabsTrigger value="parent" className="rounded-full data-[state=active]:bg-[#4d2ddc] data-[state=active]:text-white">부모</TabsTrigger>
                       <TabsTrigger value="child" className="rounded-full data-[state=active]:bg-[#4d2ddc] data-[state=active]:text-white">자녀</TabsTrigger>
                     </TabsList>
                     <div className="mt-5 grid grid-cols-2 rounded-xl bg-[#f2efe8] p-1 text-sm font-semibold">
-                      <button type="button" aria-pressed={authMode === "login"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "login" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("login"); setOtpRequested(false); setOtp(""); }}>로그인</button>
-                      <button type="button" aria-pressed={authMode === "signup"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "signup" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("signup"); setOtpRequested(false); setOtp(""); }}>가입</button>
+                      <button type="button" aria-pressed={authMode === "login"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "login" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("login"); setEmailSent(false); }}>로그인</button>
+                      <button type="button" aria-pressed={authMode === "signup"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "signup" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("signup"); setEmailSent(false); }}>{mode === "child" ? "첫 연결" : "가입"}</button>
                     </div>
                     <div className="mt-5 rounded-2xl bg-[#cde5de] p-4 text-sm leading-6 text-[#315045]"><strong>(1)</strong> 부모 먼저 가입 <span className="mx-1.5">→</span> <strong>(2)</strong> 기입한 자녀 이메일로 자녀 로그인</div>
                     <TabsContent value="parent" className="mt-5 space-y-5">
-                      {authMode === "signup" && !otpRequested && <div className="space-y-2"><Label htmlFor="display-name">부모 이름</Label><Input id="display-name" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="이름" /></div>}
+                      {authMode === "signup" && !emailSent && <div className="space-y-2"><Label htmlFor="display-name">부모 이름</Label><Input id="display-name" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="이름" /></div>}
                     </TabsContent>
                     <TabsContent value="child" className="mt-5"><div className="rounded-2xl bg-[#d4cfe7] p-4 text-sm leading-6 text-[#51447f]">자녀 가입은 부모가 먼저 등록한 이메일과 같아야 합니다.</div></TabsContent>
-                    <div className="mt-5 space-y-2"><Label htmlFor="email">이메일</Label><Input id="email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com" disabled={otpRequested} /></div>
-                    <div className="mt-5 space-y-2"><Label htmlFor="password">비밀번호</Label><div className="relative"><LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8d87]" /><Input id="password" type="password" minLength={8} autoComplete={authMode === "login" ? "current-password" : "new-password"} value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상" className="pl-10" disabled={otpRequested} /></div></div>
-                    {authMode === "signup" && otpRequested && <div className="mt-5 space-y-2"><Label htmlFor="otp">이메일 인증번호 6자리</Label><Input id="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={event => setOtp(event.target.value.replace(/\D/g, ""))} placeholder="000000" /></div>}
+                    <div className="mt-5 space-y-2"><Label htmlFor="email">이메일</Label><Input id="email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com" disabled={emailSent} /></div>
+                    {authMode === "signup" && emailSent && <div className="mt-5 rounded-2xl border border-[#b9d7ce] bg-[#edf7f3] p-4 text-sm leading-6 text-[#315045]"><strong>확인 메일을 보냈습니다.</strong><br />메일의 확인 링크를 누르면 Play Routine으로 돌아와 비밀번호를 설정합니다.</div>}
+                    {authMode === "login" && <div className="mt-5 space-y-2"><Label htmlFor="password">비밀번호</Label><div className="relative"><LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8d87]" /><Input id="password" type="password" minLength={8} autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상" className="pl-10" /></div></div>}
                     <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border border-black/8 bg-white/70 px-4 py-3 text-sm text-[#555852]">
                       <input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} className="h-4 w-4 accent-[#4d2ddc]" />
                       <span><strong className="text-[#262722]">자동 로그인</strong><span className="ml-2 text-xs text-[#858881]">이 기기에서 로그인 상태 유지</span></span>
                     </label>
-                    <Button className="mt-6 w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || !email || password.length < 8 || (authMode === "signup" && mode === "parent" && !otpRequested && !displayName) || (authMode === "signup" && otpRequested && otp.length !== 6)} onClick={authMode === "login" ? signInWithPassword : otpRequested ? verifyOtp : requestSignupOtp}>
-                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : authMode === "login" ? <><LogIn className="h-4 w-4" /> 로그인</> : otpRequested ? <><ShieldCheck className="h-4 w-4" /> 가입 완료</> : <><UserPlus className="h-4 w-4" /> 이메일 인증 후 가입</>}
+                    <Button className="mt-6 w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || !email || (authMode === "login" && password.length < 8) || (authMode === "signup" && mode === "parent" && !displayName)} onClick={authMode === "login" ? signInWithPassword : requestSignupLink}>
+                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : authMode === "login" ? <><LogIn className="h-4 w-4" /> 로그인</> : emailSent ? <><Mail className="h-4 w-4" /> 확인 메일 다시 보내기</> : <><UserPlus className="h-4 w-4" /> 이메일 확인 링크 받기</>}
                     </Button>
                   </Tabs>
+                </CardContent>
+              </Card>
+            ) : passwordSetupRequired ? (
+              <Card className="rounded-[28px] border-black/8 bg-white/85 shadow-[0_24px_80px_rgba(51,58,68,.10)]">
+                <CardHeader><CardTitle>비밀번호 설정</CardTitle><CardDescription>이메일 확인이 완료되었습니다. 다음 로그인에 사용할 비밀번호를 정해 주세요.</CardDescription></CardHeader>
+                <CardContent className="space-y-5">
+                  <div className="space-y-2"><Label htmlFor="new-password">새 비밀번호</Label><div className="relative"><LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8d87]" /><Input id="new-password" type="password" minLength={8} autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상" className="pl-10" /></div></div>
+                  <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-black/8 bg-white/70 px-4 py-3 text-sm text-[#555852]"><input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} className="h-4 w-4 accent-[#4d2ddc]" /><span><strong className="text-[#262722]">자동 로그인</strong><span className="ml-2 text-xs text-[#858881]">이 기기에서 로그인 상태 유지</span></span></label>
+                  <Button className="w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || password.length < 8} onClick={finishPasswordSetup}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> 비밀번호 설정 완료</>}</Button>
                 </CardContent>
               </Card>
             ) : childInvitations.length > 0 ? (

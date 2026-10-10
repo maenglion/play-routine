@@ -17,6 +17,9 @@ const PUBLIC_APP_ORIGIN = "https://playroutine-nkwde3yc.manus.space";
 
 export function normalizeAuthRedirectUrl(redirectTo: string, production = process.env.NODE_ENV === "production") {
   const url = new URL(redirectTo);
+  if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) {
+    throw new Error("Unsupported authentication redirect origin");
+  }
   const isPublicApp = url.origin === PUBLIC_APP_ORIGIN;
   const isLocalDevelopment = ["localhost", "127.0.0.1"].includes(url.hostname);
   const isManusPreview = url.hostname.endsWith(".manus.computer");

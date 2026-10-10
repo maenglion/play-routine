@@ -11,7 +11,8 @@ import {
   needsPasswordSetup,
 } from "@/lib/auth-flow";
 import { getRememberMePreference, setRememberMePreference } from "@/lib/auth-storage";
-import { supabase } from "@/lib/supabase";
+import { getAuthRedirectUrl, receiveAuthSession } from "@/lib/auth-callback";
+import { initialAuthCallback, supabase } from "@/lib/supabase";
 import { trpc } from "@/lib/trpc";
 import type { Session } from "@supabase/supabase-js";
 import { ArrowRight, Clock3, Loader2, LockKeyhole, LogIn, LogOut, Mail, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
@@ -59,6 +60,7 @@ export default function Home() {
   const [resendEmail, setResendEmail] = useState("");
   const [childName, setChildName] = useState("");
   const [childEmail, setChildEmail] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const requestChildOtp = trpc.supabaseAuth.requestChildOtp.useMutation();
   const resendChildEmail = trpc.supabaseAuth.resendChildInvitationEmail.useMutation();
@@ -74,6 +76,8 @@ export default function Home() {
       return;
     }
 
+    const accountType = activeSession.user.user_metadata?.account_type;
+    if (accountType === "child" || accountType === "parent") setMode(accountType);
     const { data: membershipRows, error: membershipError } = await supabase
       .from("family_memberships")
       .select("family_id, role, status, families(id, name, timezone)")
@@ -123,21 +127,30 @@ export default function Home() {
 
   useEffect(() => {
     let mounted = true;
-    supabase.auth.getSession().then(async ({ data }) => {
-      if (!mounted) return;
-      setSession(data.session);
+    const restore = async () => {
       try {
-        await refreshAccount(data.session);
-      } catch (error) {
-        console.error(error);
+        const nextSession = await receiveAuthSession(supabase.auth, initialAuthCallback);
+        if (!mounted) return;
+        setSession(nextSession);
+        await refreshAccount(nextSession);
+      } catch {
+        if (mounted) setAuthError(initialAuthCallback.errorMessage ?? "인증 또는 계정 정보를 불러오지 못했습니다. 새 확인 메일을 요청하거나 다시 로그인해 주세요.");
       } finally {
+        if (initialAuthCallback.isCallback) window.history.replaceState(null, "", initialAuthCallback.cleanPath);
         if (mounted) setLoading(false);
       }
-    });
+    };
+    void restore();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (!mounted || (_event === "INITIAL_SESSION" && initialAuthCallback.errorMessage)) return;
       setSession(nextSession);
-      window.setTimeout(() => refreshAccount(nextSession).catch(console.error), 0);
+      window.setTimeout(() => {
+        if (!mounted) return;
+        refreshAccount(nextSession).catch(() => {
+          if (mounted) setAuthError("계정 정보를 불러오지 못했습니다. 다시 로그인해 주세요.");
+        });
+      }, 0);
     });
     return () => {
       mounted = false;
@@ -152,11 +165,12 @@ export default function Home() {
   const requestSignupLink = async () => {
     setBusy(true);
     try {
+      setAuthError(null);
       applyRememberMe();
       if (mode === "child") {
         const result = await requestChildOtp.mutateAsync({
           email,
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: getAuthRedirectUrl(window.location.origin),
         });
         toast.success(result.message);
       } else {
@@ -164,7 +178,7 @@ export default function Home() {
           email: email.trim().toLowerCase(),
           options: {
             shouldCreateUser: true,
-            emailRedirectTo: `${window.location.origin}/`,
+            emailRedirectTo: getAuthRedirectUrl(window.location.origin),
             data: { account_type: "parent", display_name: displayName.trim() },
           },
         });
@@ -182,6 +196,7 @@ export default function Home() {
   const signInWithPassword = async () => {
     setBusy(true);
     try {
+      setAuthError(null);
       applyRememberMe();
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
@@ -283,7 +298,7 @@ export default function Home() {
         familyId: parent.family_id,
         invitationId: resendInvitationId,
         email: resendEmail.trim(),
-        redirectTo: `${window.location.origin}/`,
+        redirectTo: getAuthRedirectUrl(window.location.origin),
       });
       toast.info(result.message);
       setResendInvitationId(null);
@@ -393,7 +408,7 @@ export default function Home() {
     return <div className="flex min-h-dvh items-center justify-center bg-[#f9f6ef]"><Loader2 className="h-7 w-7 animate-spin text-[#4d2ddc]" /></div>;
   }
 
-  if (session && parentMembership) {
+  if (session && parentMembership && !passwordSetupRequired) {
     return (
       <ParentDashboard
         family={parentMembership.families}
@@ -416,7 +431,7 @@ export default function Home() {
     );
   }
 
-  if (session && childMembership) {
+  if (session && childMembership && !passwordSetupRequired) {
     return <ChildDashboard session={session} profile={childProfile} onProfileUpdated={next => setChildProfiles([next])} onLogout={logout} />;
   }
 
@@ -445,6 +460,7 @@ export default function Home() {
               {session && <Button variant="ghost" size="icon" onClick={logout} aria-label="로그아웃"><LogOut className="h-5 w-5" /></Button>}
             </div>
 
+            {authError && <div role="alert" className="mb-5 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm leading-6 text-red-900">{authError}</div>}
             {!session ? (
               <Card className="rounded-[28px] border-black/8 bg-white/85 shadow-[0_24px_80px_rgba(51,58,68,.10)] backdrop-blur">
                 <CardContent className="pt-6">

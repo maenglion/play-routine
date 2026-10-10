@@ -24,6 +24,12 @@ describe("Supabase child OTP request", () => {
     );
   });
 
+  it("rejects unsupported protocols, embedded credentials and production localhost", () => {
+    expect(() => normalizeAuthRedirectUrl("ftp://localhost/callback", false)).toThrow();
+    expect(() => normalizeAuthRedirectUrl("https://user@playroutine-nkwde3yc.manus.space/", true)).toThrow();
+    expect(() => normalizeAuthRedirectUrl("http://localhost:3000/", true)).toThrow();
+  });
+
   it("returns a generic response for an email without an active invitation", async () => {
     const ctx: TrpcContext = {
       user: null,

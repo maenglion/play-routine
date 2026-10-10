@@ -2,6 +2,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Download, FileText, LogOut, Mail, Plus, UsersRound } from "lucide-react";
+import ParentAvatarEditor from "./ParentAvatarEditor";
+import GuardianSettings from "./GuardianSettings";
+import ParentRuleSettings from "./ParentRuleSettings";
 
 type Family = { id: string; name: string; timezone: string } | null;
 
@@ -37,6 +40,7 @@ type ParentDashboardProps = {
   onInvite: () => void;
   onDownloadCsv: (dataset: "children" | "invitations" | "auth-links") => void;
   onLogout: () => void;
+  onProfileUpdated?: (child: ParentChildProfile) => void;
 };
 
 export default function ParentDashboard({
@@ -56,6 +60,7 @@ export default function ParentDashboard({
   onInvite,
   onDownloadCsv,
   onLogout,
+  onProfileUpdated,
 }: ParentDashboardProps) {
   return (
     <div className="min-h-dvh bg-[#f9f6ef] text-[#1a1a18]">
@@ -75,6 +80,7 @@ export default function ParentDashboard({
           <div className="rounded-[22px] bg-[#cde5de] p-5"><span className="text-xs font-semibold">오늘 확인 대기</span><strong className="mt-5 block text-4xl tracking-[-0.06em]">0</strong></div>
           <div className="rounded-[22px] bg-[#333a44] p-5 text-white"><span className="text-xs font-semibold text-white/65">열린 잔차</span><strong className="mt-5 block text-4xl tracking-[-0.06em]">0</strong></div>
         </div>
+        <nav aria-label="부모 설정 바로가기" className="mt-5 flex flex-wrap gap-3 text-sm font-semibold"><a href="#parent-rule-registry" className="rounded-full bg-[#4d2ddc] px-5 py-2.5 text-white">규칙 등록하기</a><a href="#guardian-settings" className="rounded-full bg-[#ebe7de] px-5 py-2.5 text-[#333a44]">보호자 추가</a></nav>
 
         <div className="mt-7 grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
           <section className="rounded-[28px] bg-white p-6 shadow-[0_16px_48px_rgba(51,58,68,.08)] sm:p-8">
@@ -100,9 +106,7 @@ export default function ParentDashboard({
                     return (
                     <div key={child.id} className="rounded-2xl border border-black/8 p-3">
                     <div className="flex items-center gap-3">
-                      <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#d4cfe7] text-sm font-bold text-[#4d2ddc]">
-                        {child.avatar_url ? <img src={child.avatar_url} alt="" className="h-full w-full object-cover" /> : child.display_name.slice(0, 1)}
-                      </div>
+                      <ParentAvatarEditor child={child} onUpdated={onProfileUpdated} />
                       <div className="min-w-0 flex-1"><strong className="block truncate text-sm">{child.display_name}</strong><span className="text-xs text-[#8a8b85]">{child.status === "ACTIVE" ? "계정 연결됨" : "초대 대기"}</span></div>
                       <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold ${child.status === "ACTIVE" ? "bg-[#e4f1eb] text-[#315f4d]" : "bg-[#f0edfa] text-[#5b46a3]"}`}>{child.status}</span>
                     </div>
@@ -140,6 +144,8 @@ export default function ParentDashboard({
             </div>
           </section>
         </div>
+        <div className="mt-7" id="guardian-settings"><GuardianSettings familyId={family?.id} preview={family?.id === "preview"} /></div>
+        {family && <div className="mt-7" id="parent-rule-registry"><ParentRuleSettings familyId={family.id} preview={family.id === "preview"} /></div>}
       </main>
     </div>
   );

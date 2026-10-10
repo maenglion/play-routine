@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import type { Session } from "@supabase/supabase-js";
 import {
   CalendarDays,
+  Bell,
   Camera,
   ChartNoAxesColumnIncreasing,
   Check,
@@ -11,8 +12,10 @@ import {
   LogOut,
   UserRound,
 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import AvatarCropDialog from "./AvatarCropDialog";
+import { blobToDataUrl } from "@/lib/avatar-crop";
 
 export type ChildProfile = {
   id: string;
@@ -51,27 +54,28 @@ export default function ChildDashboard({
   const [activeTab, setActiveTab] = useState<(typeof navItems)[number]["key"]>("home");
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [cropImage, setCropImage] = useState<string | null>(null);
+  useEffect(() => () => { if (cropImage) URL.revokeObjectURL(cropImage); }, [cropImage]);
   const childName = profile?.display_name || session.user.user_metadata?.display_name || "나의 하루";
 
-  const uploadAvatar = async (file?: File) => {
+  const selectAvatar = (file?: File) => {
     if (!file) return;
     if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
       toast.error("JPG, PNG, WEBP 이미지만 사용할 수 있습니다.");
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error("프로필 사진은 2MB 이하로 선택해 주세요.");
+    if (file.size > 15 * 1024 * 1024) {
+      toast.error("원본 사진은 15MB 이하로 선택해 주세요. 자른 사진은 작게 압축합니다.");
       return;
     }
+    setCropImage(URL.createObjectURL(file));
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
+  const uploadAvatar = async (blob: Blob) => {
     setUploading(true);
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error("이미지를 읽지 못했습니다."));
-        reader.readAsDataURL(file);
-      });
+      const dataUrl = await blobToDataUrl(blob);
       const response = await fetch("/api/profile/avatar", {
         method: "POST",
         headers: {
@@ -83,9 +87,10 @@ export default function ChildDashboard({
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "프로필 사진을 저장하지 못했습니다.");
       onProfileUpdated(result.profile as ChildProfile);
+      setCropImage(null);
       toast.success("프로필 사진을 바꿨어요.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "프로필 사진을 저장하지 못했습니다.");
+      throw new Error(error instanceof Error ? error.message : "프로필 사진을 저장하지 못했습니다.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -94,25 +99,27 @@ export default function ChildDashboard({
 
   return (
     <div className="min-h-dvh bg-[#f9f6ef] text-[#151515]">
+      <AvatarCropDialog imageUrl={cropImage} onCancel={() => setCropImage(null)} onSave={uploadAvatar} busy={uploading} />
       <main className="relative mx-auto min-h-dvh max-w-[430px] overflow-hidden px-4 pb-28 pt-7 sm:px-5">
         <header className="flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#7c7a72]">Play Routine</p>
             <h1 className="mt-1 text-[21px] font-semibold tracking-[-0.03em] text-[#333a44]">{childName}</h1>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex h-9 items-center gap-1 rounded-full bg-black p-0.5 pl-2 shadow-none">
+            <button type="button" disabled className="flex h-7 w-6 items-center justify-center text-white/60" aria-label="알림 화면 준비 중" title="알림 화면 준비 중"><Bell className="h-4 w-4" /></button>
             <input
               ref={inputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
               className="hidden"
-              onChange={event => uploadAvatar(event.target.files?.[0])}
+              onChange={event => selectAvatar(event.target.files?.[0])}
             />
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
               disabled={uploading}
-              className="group relative h-11 w-11 overflow-hidden rounded-full border-2 border-[#333a44] bg-[#d4cfe7] shadow-[0_4px_12px_rgba(51,58,68,.12)] transition-transform duration-150 active:scale-[.97]"
+              className="group relative h-8 w-8 overflow-hidden rounded-full bg-[#d4cfe7] shadow-none transition-transform duration-150 active:scale-[.97]"
               aria-label="프로필 사진 바꾸기"
             >
               {profile?.avatar_url ? (
@@ -137,9 +144,11 @@ export default function ChildDashboard({
               <h2 className="mt-3 text-[30px] font-bold tracking-[-0.055em]">매일 한걸음씩</h2>
             </section>
 
-            <section className="ticket-shell mt-7 grid grid-cols-2 overflow-hidden bg-white shadow-[0_6px_18px_rgba(58,54,47,.12)]">
+            <section className="ticket-frame mt-7">
+            <img src="/manus-storage/Subtract_amount_d9f68ee2.svg" alt="" aria-hidden="true" className="ticket-paper" />
+            <div className="ticket-content relative grid grid-cols-2">
               <div className="flex min-h-[132px] flex-col justify-center border-r border-dashed border-[#d9d6cf] px-7">
-                <span className="text-xs font-semibold text-[#8a8b8d]">오늘 모으는 중</span>
+                <span className="flex items-center gap-2 text-xs font-semibold text-[#8a8b8d]"><img src="/manus-storage/artifact_today_54fa0ca5.svg" alt="" className="h-6 w-6" />오늘 모으는 중</span>
                 <div className="mt-2 flex items-baseline gap-1 text-[#8d8f91]">
                   <strong className="text-[34px] leading-none tracking-[-0.05em]">0</strong>
                   <span className="text-sm font-semibold">min</span>
@@ -147,13 +156,14 @@ export default function ChildDashboard({
                 <span className="mt-2 inline-flex w-fit rounded-full bg-[#efefec] px-2.5 py-1 text-[10px] font-semibold text-[#777a7d]">확인 전</span>
               </div>
               <div className="flex min-h-[132px] flex-col justify-center px-7">
-                <span className="text-xs font-semibold text-[#4d2ddc]">현재 보유량</span>
+                <span className="flex items-center gap-2 text-xs font-semibold text-[#4d2ddc]"><img src="/manus-storage/artifact_amount_80f85ebe.svg" alt="" className="h-6 w-6" />현재 보유량</span>
                 <div className="mt-2 flex items-baseline gap-1 text-[#333a44]">
                   <strong className="text-[34px] leading-none tracking-[-0.05em]">0</strong>
                   <span className="text-sm font-semibold">min</span>
                 </div>
                 <span className="mt-2 text-[11px] font-medium text-[#898a84]">지금 사용할 수 있어요</span>
               </div>
+            </div>
             </section>
 
             <section className="mt-9">
@@ -199,11 +209,11 @@ export default function ChildDashboard({
             </div>
             <h2 className="mt-5 text-xl font-bold">{activeTab === "profile" ? "나의 프로필" : activeTab === "calendar" ? "나의 일정" : "나의 진행 기록"}</h2>
             <p className="mt-2 text-sm leading-6 text-[#777a78]">핵심 데이터 구조가 연결되면 이 화면에서 바로 확인할 수 있어요.</p>
-            {activeTab === "profile" && <Button variant="outline" className="mt-6" onClick={onLogout}><LogOut className="h-4 w-4" /> 로그아웃</Button>}
+            {activeTab === "profile" && <div className="mt-6 flex flex-col gap-3"><Button onClick={() => inputRef.current?.click()} disabled={uploading} className="bg-[#4d2ddc] text-white"><Camera className="h-4 w-4" /> 프로필 사진 등록·변경</Button><Button variant="outline" onClick={onLogout}><LogOut className="h-4 w-4" /> 로그아웃</Button></div>}
           </section>
         )}
 
-        <nav className="fixed bottom-[max(10px,env(safe-area-inset-bottom))] left-1/2 z-40 grid h-[58px] w-[calc(100%-24px)] max-w-[404px] -translate-x-1/2 grid-cols-4 rounded-[30px] bg-black px-4 shadow-[0_14px_35px_rgba(0,0,0,.28)]">
+        <nav className="fixed bottom-[max(10px,env(safe-area-inset-bottom))] left-1/2 z-40 grid h-[52px] w-[calc(100%-24px)] max-w-[404px] -translate-x-1/2 grid-cols-4 rounded-[30px] bg-black px-4 shadow-[0_14px_35px_rgba(0,0,0,.28)]">
           {navItems.map(item => {
             const Icon = item.icon;
             const active = activeTab === item.key;

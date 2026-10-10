@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import ChildDashboard, { type ChildProfile } from "@/components/play-routine/ChildDashboard";
 import ParentDashboard, { type ParentChildProfile, type ParentChildInvitation } from "@/components/play-routine/ParentDashboard";
+import GuardianDashboard from "@/components/play-routine/GuardianDashboard";
 import {
   defaultAuthModeForAccount,
   isActiveInvitationExistsError,
@@ -19,7 +20,7 @@ import { ArrowRight, Clock3, Loader2, LockKeyhole, LogIn, LogOut, Mail, ShieldCh
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
-type AccountMode = "parent" | "child";
+type AccountMode = "parent" | "child" | "guardian";
 type AuthMode = "login" | "signup";
 
 type FamilyMembership = {
@@ -39,6 +40,8 @@ type ChildInvitation = {
   expires_at: string;
 };
 
+type GuardianInvitation = { invitation_id: string; family_id: string; family_name: string; email_masked: string; expires_at: string };
+
 export default function Home() {
   const [mode, setMode] = useState<AccountMode>("parent");
   const [authMode, setAuthMode] = useState<AuthMode>("login");
@@ -54,6 +57,7 @@ export default function Home() {
   const [familyName, setFamilyName] = useState("");
   const [memberships, setMemberships] = useState<FamilyMembership[]>([]);
   const [childInvitations, setChildInvitations] = useState<ChildInvitation[]>([]);
+  const [guardianInvitations, setGuardianInvitations] = useState<GuardianInvitation[]>([]);
   const [childProfiles, setChildProfiles] = useState<ParentChildProfile[]>([]);
   const [parentInvitations, setParentInvitations] = useState<ParentChildInvitation[]>([]);
   const [resendInvitationId, setResendInvitationId] = useState<string | null>(null);
@@ -69,6 +73,7 @@ export default function Home() {
     if (!activeSession) {
       setMemberships([]);
       setChildInvitations([]);
+      setGuardianInvitations([]);
       setChildProfiles([]);
       setParentInvitations([]);
       setResendInvitationId(null);
@@ -77,7 +82,7 @@ export default function Home() {
     }
 
     const accountType = activeSession.user.user_metadata?.account_type;
-    if (accountType === "child" || accountType === "parent") setMode(accountType);
+    if (accountType === "child" || accountType === "parent" || accountType === "guardian") setMode(accountType);
     const { data: membershipRows, error: membershipError } = await supabase
       .from("family_memberships")
       .select("family_id, role, status, families(id, name, timezone)")
@@ -88,8 +93,10 @@ export default function Home() {
     setMemberships(normalizedMemberships);
     const parent = normalizedMemberships.find(row => ["OWNER_PARENT", "PARENT"].includes(row.role));
     const child = normalizedMemberships.find(row => row.role === "CHILD");
+    const guardian = normalizedMemberships.find(row => row.role === "GUARDIAN");
     if (parent) setMode("parent");
     if (child && !parent) setMode("child");
+    if (guardian && !parent && !child) setMode("guardian");
 
     if (!parent) setParentInvitations([]);
     if (parent) {
@@ -123,6 +130,10 @@ export default function Home() {
     const { data: invitationRows, error: invitationError } = await supabase.rpc("list_my_active_child_invitations");
     if (invitationError) throw invitationError;
     setChildInvitations((invitationRows ?? []) as ChildInvitation[]);
+    const { data: guardianRows, error: guardianError } = await supabase.rpc("list_my_active_guardian_invitations");
+    if (guardianError) throw guardianError;
+    setGuardianInvitations((guardianRows ?? []) as GuardianInvitation[]);
+    if (!parent && !child && (guardianRows ?? []).length > 0) setMode("guardian");
   }, []);
 
   useEffect(() => {
@@ -179,7 +190,7 @@ export default function Home() {
           options: {
             shouldCreateUser: true,
             emailRedirectTo: getAuthRedirectUrl(window.location.origin),
-            data: { account_type: "parent", display_name: displayName.trim() },
+            data: { account_type: mode, display_name: displayName.trim() },
           },
         });
         if (error) throw error;
@@ -353,8 +364,19 @@ export default function Home() {
     setEmailSent(false);
   };
 
+  const acceptGuardianInvitation = async (id: string) => {
+    setBusy(true);
+    try {
+      const {error} = await supabase.rpc("complete_guardian_invitation", {p_invitation_id:id});
+      if (error) throw new Error("보호자 초대를 수락하지 못했습니다. 이메일과 초대 유효기간을 확인해 주세요.");
+      await refreshAccount(session); toast.success("상태를 볼 수 있는 보호자로 연결됐습니다.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "초대 수락에 실패했습니다."); }
+    finally { setBusy(false); }
+  };
+
   const parentMembership = memberships.find(row => ["OWNER_PARENT", "PARENT"].includes(row.role));
   const childMembership = memberships.find(row => row.role === "CHILD");
+  const guardianMembership = memberships.find(row => row.role === "GUARDIAN");
   const childProfile = childMembership ? (childProfiles[0] as ChildProfile | undefined) ?? null : null;
   const passwordSetupRequired = Boolean(
     session && needsPasswordSetup(session.user.user_metadata),
@@ -427,12 +449,17 @@ export default function Home() {
         onInvite={inviteChild}
         onDownloadCsv={downloadCsv}
         onLogout={logout}
+        onProfileUpdated={next => setChildProfiles(rows => rows.map(row => row.id === next.id ? next : row))}
       />
     );
   }
 
   if (session && childMembership && !passwordSetupRequired) {
     return <ChildDashboard session={session} profile={childProfile} onProfileUpdated={next => setChildProfiles([next])} onLogout={logout} />;
+  }
+
+  if (session && guardianMembership && !passwordSetupRequired) {
+    return <GuardianDashboard session={session} family={{id:guardianMembership.family_id,name:guardianMembership.families?.name ?? "보호자 상태판",timezone:"Asia/Seoul"}} onLogout={logout} />;
   }
 
   return (
@@ -465,19 +492,21 @@ export default function Home() {
               <Card className="rounded-[28px] border-black/8 bg-white/85 shadow-[0_24px_80px_rgba(51,58,68,.10)] backdrop-blur">
                 <CardContent className="pt-6">
                   <Tabs value={mode} onValueChange={value => { const nextMode = value as AccountMode; setMode(nextMode); setAuthMode(defaultAuthModeForAccount(nextMode)); setEmail(""); setPassword(""); setDisplayName(""); setEmailSent(false); }}>
-                    <TabsList className="grid w-full grid-cols-2 rounded-full bg-[#ebe7de] p-1">
+                    <TabsList className="grid w-full grid-cols-3 rounded-full bg-[#ebe7de] p-1">
                       <TabsTrigger value="parent" className="rounded-full data-[state=active]:bg-[#4d2ddc] data-[state=active]:text-white">부모</TabsTrigger>
                       <TabsTrigger value="child" className="rounded-full data-[state=active]:bg-[#4d2ddc] data-[state=active]:text-white">자녀</TabsTrigger>
+                      <TabsTrigger value="guardian" className="rounded-full data-[state=active]:bg-[#4d2ddc] data-[state=active]:text-white">보호자</TabsTrigger>
                     </TabsList>
                     <div className="mt-5 grid grid-cols-2 rounded-xl bg-[#f2efe8] p-1 text-sm font-semibold">
                       <button type="button" aria-pressed={authMode === "login"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "login" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("login"); setEmailSent(false); }}>로그인</button>
-                      <button type="button" aria-pressed={authMode === "signup"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "signup" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("signup"); setEmailSent(false); }}>{mode === "child" ? "첫 연결" : "가입"}</button>
+                      <button type="button" aria-pressed={authMode === "signup"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "signup" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("signup"); setEmailSent(false); }}>{mode !== "parent" ? "첫 연결" : "가입"}</button>
                     </div>
                     <div className="mt-5 rounded-2xl bg-[#cde5de] p-4 text-sm leading-6 text-[#315045]"><strong>(1)</strong> 부모 먼저 가입 <span className="mx-1.5">→</span> <strong>(2)</strong> 기입한 자녀 이메일로 자녀 로그인</div>
                     <TabsContent value="parent" className="mt-5 space-y-5">
                       {authMode === "signup" && !emailSent && <div className="space-y-2"><Label htmlFor="display-name">부모 이름</Label><Input id="display-name" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="이름" /></div>}
                     </TabsContent>
                     <TabsContent value="child" className="mt-5"><div className="rounded-2xl bg-[#d4cfe7] p-4 text-sm leading-6 text-[#51447f]">자녀 가입은 부모가 먼저 등록한 이메일과 같아야 합니다.</div></TabsContent>
+                    <TabsContent value="guardian" className="mt-5"><div className="rounded-2xl bg-[#d4cfe7] p-4 text-sm leading-6 text-[#51447f]">부모가 초대한 같은 이메일로 확인 후 수락합니다. 보호자는 상태창만 볼 수 있고 규칙·프로필·기록을 변경할 수 없습니다.</div></TabsContent>
                     <div className="mt-5 space-y-2"><Label htmlFor="email">이메일</Label><Input id="email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com" disabled={emailSent} /></div>
                     {authMode === "signup" && emailSent && <div className="mt-5 rounded-2xl border border-[#b9d7ce] bg-[#edf7f3] p-4 text-sm leading-6 text-[#315045]"><strong>확인 메일을 보냈습니다.</strong><br />메일의 확인 링크를 누르면 Play Routine으로 돌아와 비밀번호를 설정합니다.</div>}
                     {authMode === "login" && <div className="mt-5 space-y-2"><Label htmlFor="password">비밀번호</Label><div className="relative"><LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8d87]" /><Input id="password" type="password" minLength={8} autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상" className="pl-10" /></div></div>}
@@ -500,6 +529,10 @@ export default function Home() {
                   <Button className="w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || password.length < 8} onClick={finishPasswordSetup}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> 비밀번호 설정 완료</>}</Button>
                 </CardContent>
               </Card>
+            ) : guardianInvitations.length > 0 && mode === "guardian" ? (
+              <div className="space-y-4">
+                {guardianInvitations.map(invitation => <Card key={invitation.invitation_id} className="rounded-[24px] border-black/8 bg-white/85"><CardHeader><CardTitle>{invitation.family_name}</CardTitle><CardDescription>상태창 보기 전용 · {invitation.email_masked}</CardDescription></CardHeader><CardContent><Button className="w-full rounded-xl bg-[#4d2ddc] text-white" disabled={busy} onClick={() => acceptGuardianInvitation(invitation.invitation_id)}>보호자 초대 수락</Button></CardContent></Card>)}
+              </div>
             ) : childInvitations.length > 0 ? (
               <div className="space-y-4">
                 <div className="rounded-2xl bg-[#d4cfe7] p-4 text-sm text-[#51447f]">이메일 인증이 완료되었습니다. 연결할 가족 초대를 확인하세요.</div>

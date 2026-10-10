@@ -2,8 +2,8 @@ export function needsPasswordSetup(userMetadata: Record<string, unknown> | null 
   return userMetadata?.password_configured !== true;
 }
 
-export function defaultAuthModeForAccount(accountMode: "parent" | "child") {
-  return accountMode === "child" ? "signup" : "login";
+export function defaultAuthModeForAccount(accountMode: "parent" | "child" | "guardian") {
+  return accountMode === "parent" ? "login" : "signup";
 }
 
 export function isActiveInvitationExistsError(error: unknown) {

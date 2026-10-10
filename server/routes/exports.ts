@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Express, Request } from "express";
 import { Pool } from "pg";
+import { getSupabaseConnectionString } from "../supabaseConnection";
 
 type Dataset = "children" | "invitations" | "auth-links";
 
@@ -8,8 +9,7 @@ let pool: Pool | null = null;
 
 function getPool() {
   if (!pool) {
-    const connectionString = process.env.SUPABASE_DATABASE_URL;
-    if (!connectionString) throw new Error("SUPABASE_DATABASE_URL is missing");
+    const connectionString = getSupabaseConnectionString();
     pool = new Pool({
       connectionString,
       max: 4,

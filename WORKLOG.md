@@ -307,3 +307,11 @@ Windows `C:\play_routine`을 최신 소스로 교체할 수 있다는 사용자�
 안전한 입력창에 등록된 새 DB 값으로 실제 연결시험을 실행했으나 DNS 조회 실패가 발생했다. 비밀값을 출력하지 않고 구조를 검사한 결과 `postgresql://` URI 형식이 아니며 URL 파싱도 실패했다. 따라서 올바른 Session pooler 연결 문자열이 입력된 상태가 아니다. 비밀번호 오류나 새 Supabase 장애로 판단하지 않는다.
 
 사용자에게 Connect → Session pooler에서 `postgresql://`로 시작하는 연결 문자열 전체를 복사해 안전한 입력창에 다시 등록하도록 안내한다. 비밀번호만 또는 화면 항목명만 입력하지 않는다. DB migration은 아직 실행하지 않았고 실제 테이블 설치 완료로 기록하지 않는다. 새 Auth 연결 성공 상태와 DB 연결 대기 상태를 구분한다.
+
+### 2026-10-10 15:09 KST — Session pooler 경로 확정·비밀번호 인증 실패
+
+사용자 화면으로 Session pooler의 실제 host `aws-0-ap-southeast-2.pooler.supabase.com`, port `5432`, user `postgres.dsnvohyinazotouqbzrv`를 확인했다. Type은 URI로 맞다. 화면 확인 전 안내에서 사용한 ‘Method’는 사용자의 현재 연결 화면과 달랐으며, 실제 Direct/Shared pooler 화면 기준으로 정정했다.
+
+기존에 제공받은 비밀번호와 확인된 host/user로 설정하고 접속시험을 실행했다. 네트워크 경로는 DB 서버에 도달했으며 `password authentication failed`로 실패했다. 이전 IPv6 연결 불가나 문자열 형식 실패와 다른 단계다. screenshot의 ‘새 비밀번호 표시’ 문구가 있었으므로 현재 DB 비밀번호를 안전한 입력창으로 다시 확인한다. 비밀번호를 추측·자동 변형해 반복 시도하지 않는다.
+
+연결 문자열 전체를 계속 요청하는 대신 `SUPABASE_DATABASE_PASSWORD` 분리 입력을 지원하는 서버 helper를 추가했다. URI 특수문자 인코딩 단위시험 2개와 타입 검사를 통과했다. 운영 코드와 실연결시험이 같은 helper를 사용하도록 연결했다. 새 비밀번호 실제 연결시험과 DB migration은 아직 미완료다. 비밀값은 워크로그·소스에 기록하지 않는다.

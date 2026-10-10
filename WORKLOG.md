@@ -283,3 +283,21 @@ sinbo가 ‘프로젝트 이름’인 경우 그 프로젝트 아래에 새 프�
 **다음 한 단계:** 새 프로젝트 Connect 화면의 DB 연결정보를 안전한 환경 입력으로 받는다. 기존 DB 연결 문자열을 단순히 새 프로젝트 ID로 치환하지 말고 생성 화면이 제공하는 올바른 host/port/user를 사용한다.
 
 메모 근거: https://docs.google.com/document/d/1n7goMbTxu-hr7khx8A5JOpK2Y9GZMs7AtO1BE_Euasg/edit
+
+### 2026-10-10 14:29 KST — 로컬 설치 안내 적용 여부 확인
+
+사용자가 첨부한 설치 안내는 Next.js용 예제다. `NEXT_PUBLIC_*`, `next/headers`, `page.tsx`, `@supabase/ssr`의 서버·브라우저 쿠키 middleware를 전제로 한다. 현재 앱은 React + Vite + Express이며 Next.js가 아니므로 예제를 그대로 적용하지 않는다.
+
+현재 package.json에 `@supabase/supabase-js`가 이미 있고, 브라우저 클라이언트도 `VITE_SUPABASE_*` 환경변수로 생성돼 있다. 세션 지속·자동 refresh·확인 링크 세션 감지도 구현됐다. 새 프로젝트 Auth 실제 health 시험도 이미 통과했다. 따라서 이번 DB 복구를 위해 사용자 PC에 패키지나 로컬 Supabase·Docker를 먼저 설치할 필요는 없다. `@supabase/ssr`와 선택사항인 agent skills 설치도 현재 연결 복구의 선행 조건이 아니다.
+
+남은 차단점은 설치 누락이 아니라 새 PostgreSQL 연결정보 부재다. 제공된 publishable 키는 데이터 API 접근용이며 테이블·DB 함수·RLS schema 설치 권한이 아니다. 다음 한 단계는 새 프로젝트 Connect에서 Session pooler 연결정보를 확보하고 안전한 환경 입력으로 등록하는 것이다. 실제 DB 연결 문자열·비밀번호를 채팅이나 공개 소스에 남기지 않는다.
+
+### 2026-10-10 14:31 KST — DB 직접 연결의 IPv6 차단
+
+사용자가 새 프로젝트 직접 PostgreSQL 연결정보를 제공해 서버 전용 환경에 등록하고 실제 연결 Vitest를 실행했다. 결과는 `ENETUNREACH`(IPv6 주소에 연결 불가)다. 이 실패는 비밀번호 검증 전에 발생하므로 비밀번호가 맞거나 틀리다고 판단하지 않는다. 현재 환경에서는 Connect 화면의 IPv4 호환 Session pooler 연결정보가 필요하다. pooler host·지역·사용자·포트를 추정하거나 이전 프로젝트 주소를 단순 치환하지 않는다.
+
+사용자는 비밀번호 변경을 구현 완료 후 직접 진행하기로 했다. 현재 등록된 비밀값은 로그·공개 소스에 넣지 않는다. 변경 후 서버 환경도 갱신하고 다시 연결을 시험해야 한다. 이번 시험이 실패했으므로 DB migration은 아직 실행하지 않았다.
+
+Windows `C:\play_routine`을 최신 소스로 교체할 수 있다는 사용자의 허락이 있다. 현재 장치 목록에는 접근 가능한 Windows 장치가 없으므로 실제 로컬 폴더 수정은 하지 않았다. 소스 패키지 준비만 시작했으며 아직 제공·실행 완료로 처리하지 않는다. 로컬 Supabase/Next.js 예제 설치는 이번 클라우드 DB 복구의 선행 조건이 아니다.
+
+**다음 한 단계:** 새 Supabase Connect에서 Session pooler를 선택하고 실제 연결 문자열을 안전한 입력창에 등록한다. 비밀번호 자체는 재요청하거나 반복 표시하지 않는다.

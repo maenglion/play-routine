@@ -223,3 +223,17 @@
 - **재사용 절차:** 패키지 구조 검증 통과. 다른 담당자는 저장소 `docs/skills/supabase-family-link-e2e/` 또는 제공된 절차 패키지로 이어받을 수 있다.
 - **실제 연결:** Auth·DB 연결 실패 및 자녀 메일 수신·초대 수락 시험 미완료 상태를 유지한다. 부모/가족 데이터를 새로 지우거나 다른 프로젝트로 옮기지 않았다.
 - **다음 한 단계:** 기존 Supabase 프로젝트가 대시보드에서 정상·일시중지·찾을 수 없음 중 어떤 상태인지 확인한다. 비밀값 없이 상태만 공유하면 이어서 연결 복구와 메일 시험을 진행할 수 있다.
+
+### 2026-10-10 14:01 KST — Supabase 프로젝트 존재 재확인
+
+사용자는 기존 Supabase의 생존 여부 확인과, 없어졌다면 재생성을 지시했다. 우선 현재 사용되는 앱 프로젝트 `dzbiwxqcmsgmtfyghmhx`와 별도 REST 연동의 옛 프로젝트 `eqtwmtzicrpawbzfkrrv`를 구분해 검사했다.
+
+두 프로젝트 도메인 모두 Google·Cloudflare 공개 DNS에서 `Status=3`(NXDOMAIN), Answer 없음으로 확인됐다. 두 Auth health 요청도 `ENOTFOUND`로 실패했다. 앞서 앱 DB pooler에서도 `XX000 / tenant-user not found`가 확인돼, 현재 운영 endpoint가 서비스되지 않는 것은 분명하다. 다만 이 결과만으로 프로젝트 삭제와 일시중지를 구분하지 못한다.
+
+로그인 브라우저에서 Supabase 대시보드를 열었으나 지연 안내만 반환됐고 후속 페이지 조회가 시간 초과됐다. 따라서 프로젝트 목록·Resume 가능 여부·삭제 여부를 확인하지 못했다. 새 프로젝트 생성이나 기존 프로젝트 변경은 실행하지 않았다.
+
+공식 현재 문서는 무료 프로젝트의 낮은 활동에 따른 자동 일시중지와, 일시중지 후 최대 1년 내 `Resume project` 복원을 설명한다. 복원하면 기존 데이터와 설정이 돌아온다. 이 프로젝트의 현재 요금제·중단 시각은 미확인이며 해당 정책만으로 실제 상태를 확정하지 않는다.
+
+**다음 한 단계:** 사용자 대시보드에서 Play Routine 프로젝트가 `Paused / Resume project`, 정상, 목록에 없음 중 어느 상태인지 확인한다. 일시중지면 기존 프로젝트를 재개하고 health·DB를 검증한다. 삭제가 확인되면 사용자 지시에 따라 새 프로젝트에 기존 Auth migration과 RLS를 적용하되 예전 시트·원장·개인 데이터를 이관하지 않는다. 새 프로젝트의 조직·지역·비용이 수반되는 선택은 실제 생성 화면에서 확인한다.
+
+근거: https://supabase.com/docs/guides/platform/free-project-pausing · https://supabase.com/docs/guides/troubleshooting/restore-project-after-90-days-pause

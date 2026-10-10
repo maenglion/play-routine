@@ -1,67 +1,61 @@
-# Play Routine 인증 콜백 점검 — 2026-10-10
+# Play Routine 인증 콜백 점검 — 2026-10-10 16:48 KST 갱신
 
-**판정: 앱 코드는 보강했지만, 새 Supabase의 운영 콜백 설정은 아직 올바르지 않다.** 실제 Auth 서버가 공개 앱 대신 `http://localhost:3000/`로 리디렉션한다. 인증 health 성공·DB 접속 성공만으로 이 설정까지 정상이라고 볼 수 없다.
+**판정: localhost 콜백 설정 오류는 해결됐고, 현재 SPA 콜백 코드와 실제 공개 복귀 정책은 검증을 통과했다.** 실제 이메일 수신·유효한 확인 링크의 세션 생성·부모–자녀 연결은 별도 종단시험 전이다.
 
-## 실제로 확인한 문제
+## 실제 설정 변경 후 확인
 
-대상은 새 프로젝트 `dsnvohyinazotouqbzrv`다. 공개 앱 JavaScript 번들이 이 프로젝트를 쓰며, 사라진 이전 프로젝트 주소는 포함하지 않는 것을 확인했다. 앱 서버·브라우저 환경의 프로젝트 URL도 일치한다.
+새 프로젝트는 `dsnvohyinazotouqbzrv`다. 사용자에게 Site URL 수정을 안내했고 사용자가 완료한 뒤 실제 Auth 응답을 다시 검사했다. 공개 앱 번들과 서버·브라우저 환경 모두 새 프로젝트를 쓰며 이전 프로젝트 주소는 포함하지 않는다.
 
-실제 이메일이나 유효한 사용자 토큰을 사용하지 않고 `GET /auth/v1/verify`에 무효 토큰을 전달해 오류 콜백 정책을 확인했다. redirect를 자동으로 따라가지 않고 HTTP 303의 Location에서 목적지의 origin·path만 읽었다.
+실제 사용자 토큰이나 이메일 발송 없이 `GET /auth/v1/verify`에 무효 토큰을 전달했다. HTTP 303의 Location에서 origin·path만 읽었으며 결과는 다음과 같다.
 
-- redirect를 생략했을 때: `http://localhost:3000/`
-- 공개 앱의 `/`를 요청했을 때: `http://localhost:3000/`
-- 공개 앱의 `/auth/callback`을 요청했을 때: `http://localhost:3000/`
-- 무관한 외부 주소를 요청했을 때: `http://localhost:3000/`
+- redirect 생략: `https://playroutine-nkwde3yc.manus.space/`
+- 공개 `/` 요청: 동일 공개 루트로 복귀
+- 공개 `/auth/callback` 요청: 동일 전용 콜백 경로로 복귀
+- 무관한 외부 주소 요청: 외부 주소가 아니라 공개 Site URL로 복귀
 
-따라서 **실효 기본 Site URL은 localhost이며, 공개 목적지도 현재 허용된 주소로 처리되지 않는다.** 관리 화면 자체는 브라우저 로딩·시간 초과로 값을 읽지 못했지만, 실제 Auth 응답은 재현했다. 정확한 허용목록 전체와 이메일 템플릿은 아직 관리 화면에서 읽지 못했다.
+수정 전에는 위 요청이 모두 `http://localhost:3000/`으로 돌아갔다. **16:47 재검증에서는 localhost 목적지가 사라졌다.** Site URL의 실효 값과 두 공개 목적지의 수용 정책을 확인한 것이며, 관리 대시보드의 Redirect URLs 목록 전체를 직접 읽거나 모든 외부 origin을 전수 검사한 것은 아니다. Supabase는 Site URL과 요청 주소의 정책에 따라 복귀 주소를 결정하므로 실효 정책과 목록 등록 사실을 혼동하지 않는다.[2] [3]
 
-별도로 추가한 실제 설정 Vitest 3개는 모두 실패했다. 이 결과는 코드 단위시험 통과와 구분해야 한다. 무효 토큰 오류 경로의 redirect 정책 검증이며, 실제 정상 메일의 수신·성공 콜백까지 시험한 것은 아니다.
+## 현재 콜백 구현
 
-## `/auth/callback`이 반드시 서버 라우트여야 하는 것은 아니다
+앱은 Next.js가 아니라 React + Vite + Express SPA다. Supabase 클라이언트는 `flowType: "implicit"`, `detectSessionInUrl: true`로 브라우저 URL fragment의 세션을 수신한다. 이 방식에서는 `/`도 유효한 콜백 수신 지점이며 토큰 fragment는 서버에 전송되지 않는다.[1]
 
-현재 앱은 Next.js가 아니라 React + Vite + Express SPA다. 기존 Supabase 클라이언트는 `detectSessionInUrl: true`로 이메일 확인 후 URL fragment의 세션을 수신한다. 이 **implicit 브라우저 인증 방식에서는 `/` 자체가 유효한 콜백 수신 지점**이다. fragment는 서버에 전송되지 않으므로 Node 서버에서 `access_token`을 읽는 GET 라우트를 만들 필요가 없다.[1]
+현재 이메일 요청은 부모 가입·자녀 첫 연결·부모 재전송 모두 현재 origin의 `/`를 사용한다. `/auth/callback`도 React 라우트로 등록해 같은 인증 흐름으로 받는다. 전용 경로가 꼭 서버 GET 라우트일 필요는 없다.
 
-점검 전에는 앱의 React 라우트가 `/`만 등록했고 `/auth/callback`은 미등록이었다. HTTP 200이 나와도 SPA 정적 파일 fallback 응답일 뿐, React 화면은 Not Found로 갈 수 있었다. `/api/oauth/callback` 파일은 이전 플랫폼 OAuth 코드이며 현재 Supabase 이메일 인증의 콜백이 아니다. 이 주소를 Supabase Redirect URL로 지정해서는 안 된다.
+`/api/oauth/callback`은 이전 플랫폼 OAuth 코드이며 현재 Supabase 이메일 콜백이 아니다. 현재 앱은 Next.js `@supabase/ssr`·서버 쿠키·PKCE `exchangeCodeForSession` 구조가 아니다. `?code=...` 또는 `token_hash` 전용 템플릿을 추가하려면 별도 인증 설계가 필요하며 현재는 형식 불일치 안내를 표시한다.
 
-또 현재 앱은 Next.js용 `@supabase/ssr` 서버 쿠키나 PKCE의 `exchangeCodeForSession` 방식이 아니다. 이를 혼합하거나 이메일 템플릿을 별도 `token_hash` 경로로 바꾸면 추가 구현이 필요하다.
+이번 보강은 SDK 초기화 전에 콜백 여부·안전한 오류 안내만 보존하고 토큰 원문은 상태에 저장하지 않는다. `getSession()`의 세션 수신 완료를 기다린 후 계정을 갱신한다. 만료·이미 사용된 링크를 한국어로 안내하고 외부 `error_description`이나 SDK 오류 원문은 그대로 화면·로그에 출력하지 않는다. 처리 후 URL의 인증정보·fragment를 제거한다. 외부 `next` 주소를 따라가는 open redirect는 없다.
 
-## 이번에 수정한 코드
-
-`client/src/App.tsx`에 `/auth/callback`을 등록해 기존 Home 인증 흐름으로 수신한다. 기존 `/` 이메일 복귀도 유지한다. 허용목록이 아직 잘못된 상황에서 발송 주소만 전용 경로로 바꾸지는 않았다. **현재 모든 이메일 요청은 공개 origin의 `/`를 사용한다.** `/auth/callback`은 추가 수신 가능한 별칭이다.
-
-Supabase 클라이언트에 `flowType: "implicit"`을 명시했다. SDK 초기화 전에 콜백 여부·안전한 오류 안내만 읽고, 반환 상태에는 access/refresh token 값을 보존하지 않는다. `getSession()`이 SDK의 세션 수신을 완료할 때까지 기다린 후 화면을 갱신한다.
-
-만료·이미 사용된 링크는 한국어 오류 안내를 표시한다. 외부 `error_description`이나 SDK 오류 원문은 그대로 화면·로그에 출력하지 않는다. 처리 후 주소에서 인증 파라미터·fragment를 제거하고 홈 경로로 정리한다. 외부 `next` 주소를 따라가는 open redirect는 구현하지 않는다.
-
-확인 링크 복귀 후 계정 metadata의 parent/child 표시를 복원한다. 이는 UI 표시용이며, 실제 가족 접근 권한은 기존 DB membership·RLS로 판정한다. 기존 부모·자녀 membership이 있어도 비밀번호가 아직 설정되지 않았으면 대시보드보다 비밀번호 설정 화면을 먼저 보여준다.
-
-서버 redirect origin 검증에는 http/https 프로토콜과 사용자정보 없는 URL 조건을 추가했다. 운영 환경의 localhost·무관한 외부 origin은 계속 거절한다.
+부모/자녀 metadata는 UI 모드 복원에만 사용하며 접근 권한은 DB membership·RLS로 판정한다. 기존 가족 연결이 있어도 비밀번호 설정이 필요하면 대시보드보다 설정 화면을 먼저 보여준다. 서버 이메일 redirect 검증은 운영에서 공개 origin만 허용하고 비웹 프로토콜·URL 사용자정보를 거절한다.
 
 ## 검증 결과와 남은 한계
 
-TypeScript 검사, 42개 단위시험, 프로덕션 빌드를 통과했다. 기본 실행에서 외부 연결시험 2개와 새 실제 callback 설정시험 3개는 명시적 실행 대상이라 skip된다. 별도 실행한 실제 callback 설정시험 3개는 localhost 응답 때문에 실패했다.
+코드 TypeScript·42개 단위시험·프로덕션 빌드를 통과했다. 별도 실제 콜백 설정시험에 전용 경로를 추가해 4개 정책을 검증한다. 기본 코드 시험에서 실제 서버 시험은 명시적 실행 전까지 skip된다.
 
-격리된 개발 브라우저에서 `/auth/callback#error=...&error_code=otp_expired`를 열어 한국어 만료 안내·로그인 화면·주소의 `/` 정리를 시각적으로 확인했다. 실제 사용자 세션이나 인증 링크는 사용하지 않았다.
+격리된 **공개 배포 브라우저**에서 가짜 만료 콜백을 열어 한국어 만료 안내·로그인 화면·홈 URL 정리를 확인했다. 이는 실제 계정을 쓰지 않는 오류 화면 시험이다. 정상 유효 링크의 로그인 세션 생성·비밀번호 설정·실제 자녀 초대 수락까지 끝난 것으로 보고하지 않는다.
 
-현재 미완료 사항은 새 프로젝트 Site URL/허용 Redirect URL 수정, 이메일 템플릿 확인, 실제 부모·자녀 확인 메일 수신 및 정상 링크 복귀다. SMTP 발송 가능 여부는 콜백 문제와 별개다. 이번 코드 수정만으로 실제 이메일 인증이 끝까지 정상이라고 보고하지 않는다.
+기존 메일은 만료·1회 사용·생성 당시 주소가 적용될 수 있으므로 종단시험에는 새 확인 메일을 사용한다. 실제 메일 수신은 SMTP 발송 설정과 별개로 확인해야 한다. 설정 수정과 함께 메일 전달이 자동 해결됐다고 판단하지 않는다.
 
-## 적용해야 할 Supabase 값
+## 현재 실효 설정과 재검증 명령
 
-새 프로젝트의 Authentication → URL Configuration에서 **Site URL**은 다음으로 설정해야 한다.
+Site URL의 실효 값은 다음이다.
 
 ```text
 https://playroutine-nkwde3yc.manus.space/
 ```
 
-현재 앱이 요청하는 주소에 맞춰 **Redirect URLs**에는 최소한 동일 공개 루트 주소가 필요하다. 추가 콜백 수신 경로를 쓰려면 다음도 등록한다.
+공개 루트와 다음 전용 수신 경로가 실제 Auth redirect에서 수용된다.
 
 ```text
 https://playroutine-nkwde3yc.manus.space/auth/callback
 ```
 
-로컬 개발은 실제 필요할 때만 `http://localhost:3000/` 등을 허용목록에 추가하되 **공개 서비스의 Site URL을 localhost로 두지 않는다.** 운영에는 와일드카드 대신 정확한 주소를 권장한다.[2]
+운영 Site URL은 localhost로 되돌리지 않는다. 로컬 주소는 개발 시 필요할 때만 별도 허용하고, 운영에는 정확한 주소 설정을 권장한다.[2]
 
-수정 후 `RUN_LIVE_AUTH_CALLBACK_TESTS=1 pnpm exec vitest run server/auth-callback.live.test.ts`를 실행해 기본 공개 복귀·공개 루트 수락·외부 주소의 공개 Site URL fallback 3개를 통과시킨다. 전용 경로의 실제 수신과 정상 메일 성공은 추가 실제 흐름으로 확인해야 한다. 실제 메일 링크·비밀번호·토큰은 채팅에 보내지 않는다.
+```bash
+RUN_LIVE_AUTH_CALLBACK_TESTS=1 pnpm exec vitest run server/auth-callback.live.test.ts
+```
+
+다음 실제 단계는 공개 앱에서 부모 가입용 **새 확인 메일**을 요청하고 수신 여부를 확인하는 것이다. 메일 링크·토큰·비밀번호는 채팅에 보내지 않는다.
 
 ## References
 

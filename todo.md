@@ -214,4 +214,6 @@
 
 - [x] Auth Callback SPA 라우트·세션 수신·오류 안내·비밀번호 우선순위를 점검하고 보강했다.
 - [x] 새 Supabase 실제 redirect가 localhost로 복귀하는 설정 오류를 검증 시험 3개로 확인했다.
-- [ ] 새 프로젝트 Site URL·Redirect URLs를 공개 앱으로 수정하고 실설정시험 3개를 통과시킨다.
+- [x] 사용자의 Site URL 변경 후 공개 루트·전용 callback·외부 fallback 등 실제 콜백 정책시험 4개를 통과했다.
+
+- [x] 공개 배포에서 가짜 만료 callback의 오류 안내와 홈 URL 정리를 검증했다.

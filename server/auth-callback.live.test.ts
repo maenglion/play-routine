@@ -25,6 +25,9 @@ describe.runIf(process.env.RUN_LIVE_AUTH_CALLBACK_TESTS === "1")("Supabase live 
   it("requested public root is accepted", async () => {
     expect(await redirect(expected)).toBe(expected);
   });
+  it("dedicated callback is accepted", async () => {
+    expect(await redirect(`${expected}auth/callback`)).toBe(`${expected}auth/callback`);
+  });
   it("unrelated external URL falls back to public Site URL", async () => {
     expect(await redirect("https://example.invalid/callback")).toBe(expected);
   });

@@ -265,3 +265,21 @@ sinbo가 ‘프로젝트 이름’인 경우 그 프로젝트 아래에 새 프�
 공식 문서상 요금제는 조직 단위이고 각 프로젝트는 별도 컴퓨트 비용이 발생한다. 기본 Micro 추가 프로젝트는 월 약 10달러부터 시간 단위 과금이며, 실제 총액은 현재 인스턴스·크레딧·사용량·세금에 따라 달라진다. 같은 유료 조직 아래 추가한다고 무료로 포함되는 것은 아니다. 프로젝트 생성·결제 변경은 사용자가 직접 진행한다.
 
 근거: https://supabase.com/docs/guides/platform/billing-on-supabase · https://supabase.com/docs/guides/platform/billing-faq
+
+### 2026-10-10 14:26 KST — 새 Auth 연결 성공과 당시 메모 대조
+
+**새 프로젝트:** 사용자가 `dsnvohyinazotouqbzrv` 프로젝트 주소와 publishable 키를 제공했다. 앱의 브라우저·서버 URL/키를 안전한 환경 설정에 반영했고, 기존 REST 연동도 같은 새 프로젝트로 갱신했다. 키 값은 이 기록과 소스에 남기지 않는다. 실제 Auth health Vitest 1개를 통과했다. REST health도 확인했다. `families` 테이블 조회는 HTTP 404/PGRST205로 아직 해당 테이블이 API schema에 없는 상태다. 새 DB의 0001~0004 적용은 아직 하지 않았다. publishable 키는 schema 생성 권한이 아니므로 새 DB 연결정보가 추가로 필요하다.
+
+**공유 메모:** 사용자가 제공한 ‘플레이 루틴 전체 구조’ 문서의 탭 전체를 읽었다. 핵심 구조는 현재 보존된 전체 DB 구조 v0.2와 일치한다. ref는 승인 정본, 잔차는 미해결 질문이며 `residual_cases → evidence/candidates → residual_decisions → residual_applications`로 사람 결정과 실제 적용을 분리한다. 과거 사실 정정은 `supersedes_event_id`로 원사건을 연결하고 원장은 상쇄·소급 추가 거래로 처리한다. 미확인/미분류/상충 상태를 보상/패널티 결과 enum과 섞지 않는다. AI는 후보만 작성하고 사람 검토 없이는 공용 지식으로 게시하지 않는다.
+
+**재구성 범위:** 문서는 Auth·가족을 당시 적용 영역으로, 나머지를 물리 migration 전 통합 설계로 명시한다. 새 프로젝트에는 과거 적용 완료를 그대로 승계하지 않는다. Auth 복구 후 ref·활동·정책 → 사건·평가 → 잔차·결정 → 정산·원장 → 보상 권리·쿠폰 → 약 지원 → CSV·시뮬레이션 순서로 적용한다. 원본의 오래된 TODO 체크표를 현재 실제 구현 완료 근거로 사용하지 않는다. 새 메모를 읽었다는 이유로 확정된 정책을 재설계하지 않는다.
+
+**과거 실패 재발 방지:** 메모의 핵심 실패 원인은 중간 구간 미설계, 늦은 체크 처리 방침 누락, 중간 규칙 추가 시 버전관리 누락, 원장 직접 수정, 강제 정산 반복이다. 재구성에서 정책 게시 버전 고정·사건 멱등키·원장 불변·잔차 상태 분리·정산 재실행 멱등성을 유지한다.
+
+**Edge 역할:** 사용자의 Edge 질문은 Supabase Edge Functions로 해석해 답했다. 현재 발송·부모 권한은 기존 Node 서버, 원자적 처리는 PostgreSQL 함수가 담당하므로 인증 재연결에 새 Edge Function은 필요하지 않다. 자정 정산의 예약 실행 방식은 아직 배포하지 않았고 후속 업무 구현 때 정한다.
+
+**현재 검증:** 새 Auth 실제 연결 1개 통과, TypeScript 통과, 단위시험 29개 통과. 새 DB 연결·schema 적용·실제 부모/자녀 메일·RLS·정산은 미검증이다. 별도 SMTP 조건은 그대로 남는다.
+
+**다음 한 단계:** 새 프로젝트 Connect 화면의 DB 연결정보를 안전한 환경 입력으로 받는다. 기존 DB 연결 문자열을 단순히 새 프로젝트 ID로 치환하지 말고 생성 화면이 제공하는 올바른 host/port/user를 사용한다.
+
+메모 근거: https://docs.google.com/document/d/1n7goMbTxu-hr7khx8A5JOpK2Y9GZMs7AtO1BE_Euasg/edit

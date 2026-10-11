@@ -39,3 +39,7 @@ Migration은 `pnpm exec tsx scripts/apply-supabase-migrations.ts <현재-project
 `pnpm exec tsx scripts/verify-family-link.ts`는 실제 PostgreSQL 역할·RPC·RLS·컬럼 권한을 검사한 후 전체 fixture를 롤백합니다. `pnpm exec tsx scripts/verify-resend-live.ts`는 자기가 생성한 UUID fixture만 사용해 소유권 SQL·3개 동시 요청·60초/24시간 제한을 시험하고 해당 fixture만 정리합니다. 두 시험 모두 실제 이메일을 보내지 않으며, 실제 메일 수신 시험을 대신하지 않습니다.
 
 0005 migration은 새 프로젝트의 기본 전체 table grants를 제거하고 `anon`과 `authenticated`에 필요한 최소 권한만 부여합니다. RLS와 별개로 `TRUNCATE`·민감 컬럼 UPDATE·초대 fingerprint 읽기를 차단합니다. 테이블별 권한과 policy를 모두 확인해야 합니다.
+
+## 활동 배정·체크·부모 확인 검증 (0009)
+
+`RUN_LIVE_ACTIVITY_TESTS=1 pnpm exec vitest run server/activity-flow.live.test.ts`로 현재 DB의 활동 쓰기·읽기 권한, 중립 구간, 수행일/입력일 분리, 고정 규칙 버전·중복키·revision을 롤백 시험한다. 실DB fixture끼리는 공통 advisory lock으로 직렬화한다. 이 시험은 원장·잔액을 생성하지 않으며 새 배정 시작일은 가족 시간대 기준 다음날 이후다.

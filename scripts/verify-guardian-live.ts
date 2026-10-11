@@ -147,6 +147,7 @@ export async function verifyGuardianLiveAccess() {
   await client.connect();
   try {
     await client.query("begin");
+    await client.query("select pg_advisory_xact_lock(hashtext('play-routine-live-fixtures'))");
     await assertMigrationReady(client);
     const fixture = await createFixtures(client);
 

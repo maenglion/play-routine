@@ -9,6 +9,7 @@ function ok(value:unknown,label:string) {if(!value)throw new Error(label);consol
 async function user(id:string){await c.query("reset role");await c.query("select set_config('request.jwt.claim.sub',$1,true)",[id]);await c.query("set local role authenticated");}
 try {
   await c.connect();await c.query("begin");
+    await c.query("select pg_advisory_xact_lock(hashtext('play-routine-live-fixtures'))");
   const [parent,child,guardian,other] = Array.from({length:4},()=>randomUUID());
   const suffix=randomUUID();
   for(const [id,name] of [[parent,"parent"],[child,"child"],[guardian,"guardian"],[other,"other"]])await c.query("insert into auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values($1,'authenticated','authenticated',$2,now(),'{}','{}',now(),now())",[id,`${name}-${suffix}@example.invalid`]);

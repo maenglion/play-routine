@@ -321,7 +321,7 @@ export default function Home() {
     }
   };
 
-  const downloadCsv = async (dataset: "children" | "invitations" | "auth-links") => {
+  const downloadCsv = async (dataset: "children" | "invitations" | "auth-links" | "activity-records" | "activity-assignments") => {
     const parent = memberships.find(row => ["OWNER_PARENT", "PARENT"].includes(row.role));
     if (!session?.access_token || !parent) return;
     setBusy(true);
@@ -399,6 +399,7 @@ export default function Home() {
         profile={{ id: "preview", family_id: "preview", display_name: "이민후", status: "ACTIVE", avatar_url: null, avatar_updated_at: null }}
         onProfileUpdated={() => undefined}
         onLogout={async () => undefined}
+        preview
       />
     );
   }
@@ -407,8 +408,8 @@ export default function Home() {
     return (
       <ParentDashboard
         family={{ id: "preview", name: "민후네 가족", timezone: "Asia/Seoul" }}
-        children={[{ id: "preview", display_name: "이민후", status: "PENDING_LINK", avatar_url: null }]}
-        invitations={[{ id: "preview-invite", child_profile_id: "preview", email_masked: "ch***@example.com", status: "ACTIVE", expires_at: "2099-01-01T00:00:00Z" }]}
+        children={[{ id: "preview", display_name: "이민후", status: "ACTIVE", avatar_url: null }]}
+        invitations={[]}
         resendInvitationId={resendInvitationId}
         resendEmail={resendEmail}
         onResendInvitationChange={setResendInvitationId}
@@ -455,7 +456,7 @@ export default function Home() {
   }
 
   if (session && childMembership && !passwordSetupRequired) {
-    return <ChildDashboard session={session} profile={childProfile} onProfileUpdated={next => setChildProfiles([next])} onLogout={logout} />;
+    return <ChildDashboard session={session} profile={childProfile} onProfileUpdated={next => setChildProfiles([next])} onLogout={logout} timezone={childMembership.families?.timezone ?? "Asia/Seoul"} />;
   }
 
   if (session && guardianMembership && !passwordSetupRequired) {

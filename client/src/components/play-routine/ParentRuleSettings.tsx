@@ -84,7 +84,7 @@ function dateLabel(value: string | null) {
  * 부모 대시보드에서 familyId가 확보된 위치에 독립적으로 삽입하는 룰 등록 패널.
  * Home/ParentDashboard의 인증·레이아웃을 수정하지 않는다.
  */
-export default function ParentRuleSettings({ familyId, preview = false }: { familyId: string; preview?: boolean }) {
+export default function ParentRuleSettings({ familyId, preview = false, onPublished }: { familyId: string; preview?: boolean; onPublished?: () => void }) {
   const [draft, setDraft] = useState<DraftForm>(initialDraft);
   const [rows, setRows] = useState<RuleRegistryRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -177,6 +177,7 @@ export default function ParentRuleSettings({ familyId, preview = false }: { fami
       if (error) throw error;
       const effectiveFrom = (data?.[0] as { effective_from?: string } | undefined)?.effective_from;
       await refresh();
+      onPublished?.();
       toast.success(`게시했습니다. ${dateLabel(effectiveFrom ?? null)}부터 새 규칙이 적용됩니다.`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "게시할 수 없습니다. 세 구간과 시간 효과를 확인해 주세요.");
@@ -286,7 +287,7 @@ export default function ParentRuleSettings({ familyId, preview = false }: { fami
           <Button type="button" disabled={saving || !familyId || preview} onClick={() => void saveDraft()} className="rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FilePlus2 className="h-4 w-4" />} 초안 저장
           </Button>
-          <p className="text-center text-xs text-[#777a74]">등록과 내일부터 효력. 아직 사건·평가·정산과 연결 전입니다.</p>
+          <p className="text-center text-xs text-[#777a74]">게시한 뒤 아래에서 자녀에게 배정하세요. 사용 가능한 원장 정산은 별도입니다.</p>
         </div>
       </div>
 

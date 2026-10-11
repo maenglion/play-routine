@@ -5,6 +5,9 @@ import { Download, FileText, LogOut, Mail, Plus, UsersRound } from "lucide-react
 import ParentAvatarEditor from "./ParentAvatarEditor";
 import GuardianSettings from "./GuardianSettings";
 import ParentRuleSettings from "./ParentRuleSettings";
+import ParentActivitySettings from "./ParentActivitySettings";
+import ParentReviewQueue from "./ParentReviewQueue";
+import { useState } from "react";
 
 type Family = { id: string; name: string; timezone: string } | null;
 
@@ -38,7 +41,7 @@ type ParentDashboardProps = {
   onChildNameChange: (value: string) => void;
   onChildEmailChange: (value: string) => void;
   onInvite: () => void;
-  onDownloadCsv: (dataset: "children" | "invitations" | "auth-links") => void;
+  onDownloadCsv: (dataset: "children" | "invitations" | "auth-links" | "activity-records" | "activity-assignments") => void;
   onLogout: () => void;
   onProfileUpdated?: (child: ParentChildProfile) => void;
 };
@@ -62,6 +65,7 @@ export default function ParentDashboard({
   onLogout,
   onProfileUpdated,
 }: ParentDashboardProps) {
+  const [rulesKey, setRulesKey] = useState(0);
   return (
     <div className="min-h-dvh bg-[#f9f6ef] text-[#1a1a18]">
       <header className="border-b border-black/8 bg-[#333a44] text-white">
@@ -77,10 +81,10 @@ export default function ParentDashboard({
       <main className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
         <div className="grid gap-4 sm:grid-cols-3">
           <div className="rounded-[22px] bg-[#d4cfe7] p-5"><span className="text-xs font-semibold">연결된 자녀</span><strong className="mt-5 block text-4xl tracking-[-0.06em]">{children.filter(child => child.status === "ACTIVE").length}</strong></div>
-          <div className="rounded-[22px] bg-[#cde5de] p-5"><span className="text-xs font-semibold">오늘 확인 대기</span><strong className="mt-5 block text-4xl tracking-[-0.06em]">0</strong></div>
-          <div className="rounded-[22px] bg-[#333a44] p-5 text-white"><span className="text-xs font-semibold text-white/65">열린 잔차</span><strong className="mt-5 block text-4xl tracking-[-0.06em]">0</strong></div>
+          <a href="#parent-review" className="rounded-[22px] bg-[#cde5de] p-5"><span className="text-xs font-semibold">부모 확인</span><strong className="mt-5 block text-xl tracking-[-0.04em]">날짜별 확인하기</strong><span className="mt-2 block text-xs text-[#52675d]">밀린 체크도 수행일로 기록</span></a>
+          <div className="rounded-[22px] bg-[#333a44] p-5 text-white"><span className="text-xs font-semibold text-white/65">열린 잔차</span><strong className="mt-5 block text-4xl tracking-[-0.06em]">—</strong><span className="mt-2 block text-xs text-white/65">잔차 큐 연결 전</span></div>
         </div>
-        <nav aria-label="부모 설정 바로가기" className="mt-5 flex flex-wrap gap-3 text-sm font-semibold"><a href="#parent-rule-registry" className="rounded-full bg-[#4d2ddc] px-5 py-2.5 text-white">규칙 등록하기</a><a href="#guardian-settings" className="rounded-full bg-[#ebe7de] px-5 py-2.5 text-[#333a44]">보호자 추가</a></nav>
+        <nav aria-label="부모 설정 바로가기" className="mt-5 flex flex-wrap gap-3 text-sm font-semibold"><a href="#parent-rule-registry" className="rounded-full bg-[#4d2ddc] px-5 py-2.5 text-white">1. 규칙 등록</a><a href="#parent-assignments" className="rounded-full bg-[#d4cfe7] px-5 py-2.5 text-[#4d2ddc]">2. 자녀에게 배정</a><a href="#parent-review" className="rounded-full bg-[#cde5de] px-5 py-2.5 text-[#315f4d]">3. 날짜별 확인</a><a href="#guardian-settings" className="rounded-full bg-[#ebe7de] px-5 py-2.5 text-[#333a44]">보호자 추가</a></nav>
 
         <div className="mt-7 grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
           <section className="rounded-[28px] bg-white p-6 shadow-[0_16px_48px_rgba(51,58,68,.08)] sm:p-8">
@@ -130,12 +134,14 @@ export default function ParentDashboard({
           <section className="rounded-[28px] bg-[#eeeae1] p-6 sm:p-8">
             <div className="flex h-11 w-11 items-center justify-center rounded-full bg-white text-[#333a44]"><FileText className="h-5 w-5" /></div>
             <h2 className="mt-5 text-2xl font-bold tracking-[-0.04em]">기록 내려받기</h2>
-            <p className="mt-3 text-sm leading-6 text-[#73766f]">Google Sheets 없이 부모 화면에서 필요한 연결 기록을 CSV로 보관합니다.</p>
+            <p className="mt-3 text-sm leading-6 text-[#73766f]">Google Sheets 없이 부모 화면에서 연결·배정·체크·확인 기록을 CSV로 보관합니다. 활동의 분 값은 예정분이며 잔액이 아닙니다.</p>
             <div className="mt-7 space-y-3">
               {([
                 ["children", "자녀 프로필"],
                 ["invitations", "이메일 초대"],
                 ["auth-links", "계정 연결 이력"],
+                ["activity-assignments", "활동 배정 일정"],
+                ["activity-records", "활동 체크·부모 확인 이력"],
               ] as const).map(([dataset, label]) => (
                 <button key={dataset} type="button" disabled={busy} onClick={() => onDownloadCsv(dataset)} className="flex w-full items-center justify-between rounded-2xl bg-white px-4 py-4 text-left text-sm font-semibold shadow-[0_5px_15px_rgba(51,58,68,.05)] transition-transform duration-150 active:scale-[.98]">
                   {label}<Download className="h-4 w-4 text-[#4d2ddc]" />
@@ -145,7 +151,7 @@ export default function ParentDashboard({
           </section>
         </div>
         <div className="mt-7" id="guardian-settings"><GuardianSettings familyId={family?.id} preview={family?.id === "preview"} /></div>
-        {family && <div className="mt-7" id="parent-rule-registry"><ParentRuleSettings familyId={family.id} preview={family.id === "preview"} /></div>}
+        {family && <><div className="mt-7" id="parent-rule-registry"><ParentRuleSettings familyId={family.id} preview={family.id === "preview"} onPublished={()=>setRulesKey(key=>key+1)} /></div><div className="mt-7" id="parent-assignments"><ParentActivitySettings refreshKey={rulesKey} familyId={family.id} timezone={family.timezone} children={children} preview={family.id === "preview"}/></div><div className="mt-7" id="parent-review"><ParentReviewQueue familyId={family.id} timezone={family.timezone} children={children} preview={family.id === "preview"}/></div></>}
       </main>
     </div>
   );

@@ -18,6 +18,8 @@ describe("parent CSV export authorization", () => {
     expect(toCsv([{ name: "+SUM(1,2)", note: "safe" }])).toContain(
       `"'+SUM(1,2)"`,
     );
+    expect(csvCell(" \t=1+1")).toBe('"\' \t=1+1"');
+    expect(csvCell("\tformula")).toBe('"\'\tformula"');
   });
 
   it("rejects a request without a Supabase bearer token", async () => {
@@ -37,5 +39,9 @@ describe("parent CSV export authorization", () => {
 
     expect(response.status).toBe(401);
     await expect(response.json()).resolves.toEqual({ error: "AUTH_REQUIRED" });
+    for (const dataset of ["activity-records", "activity-assignments"]) {
+      const exported = await fetch(`http://127.0.0.1:${port}/api/exports/family.csv?dataset=${dataset}`);
+      expect(exported.status).toBe(401);
+    }
   });
 });

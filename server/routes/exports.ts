@@ -3,7 +3,7 @@ import type { Express, Request } from "express";
 import { Pool } from "pg";
 import { getSupabaseConnectionString } from "../supabaseConnection";
 
-type Dataset = "children" | "invitations" | "auth-links";
+type Dataset = "children" | "invitations" | "auth-links" | "activity-records" | "activity-assignments";
 
 let pool: Pool | null = null;
 
@@ -38,7 +38,7 @@ function bearerToken(req: Request) {
 
 export function csvCell(value: unknown) {
   let text = value == null ? "" : String(value);
-  if (/^[=+\-@]/.test(text)) text = `'${text}`;
+  if (/^[\s\u0000-\u001f]*[=+\-@]/.test(text) || /^[\t\r\n]/.test(text)) text = `'${text}`;
   return `"${text.replaceAll('"', '""')}"`;
 }
 
@@ -56,6 +56,7 @@ async function parentFamilyForAuthUser(authUserId: string, requestedFamilyId?: s
     `select fm.family_id
        from public.principals p
        join public.family_memberships fm on fm.principal_id = p.id
+       join public.families f on f.id = fm.family_id and f.status = 'ACTIVE'
       where p.auth_user_id = $1
         and p.status = 'ACTIVE'
         and fm.status = 'ACTIVE'
@@ -69,6 +70,30 @@ async function parentFamilyForAuthUser(authUserId: string, requestedFamilyId?: s
 }
 
 async function exportRows(dataset: Dataset, familyId: string) {
+  if (dataset === "activity-records") {
+    return (await getPool().query(`select o.id as occurrence_id, cp.display_name as child_name,
+      o.business_date as source_business_date, av.name as activity_name, o.policy_rule_id,
+      e.id as event_id, e.event_kind, e.performed_at, e.recorded_at,
+      e.parent_score, e.reason as child_visible_reason, e.outcome_code,
+      e.planned_minutes as pending_minutes_not_balance,
+      o.current_revision, 'NOT_SETTLED' as settlement_status
+      from public.activity_occurrences o
+      join public.child_profiles cp on cp.id=o.child_profile_id and cp.family_id=o.family_id
+      join public.policy_rules pr on pr.id=o.policy_rule_id
+      join public.activity_versions av on av.id=pr.activity_version_id
+      left join public.activity_occurrence_events e on e.occurrence_id=o.id and e.family_id=o.family_id
+      where o.family_id=$1 order by o.business_date, o.id, e.recorded_at, e.id`,[familyId])).rows;
+  }
+  if (dataset === "activity-assignments") {
+    return (await getPool().query(`select a.id as assignment_id,cp.display_name as child_name,
+      av.name as activity_name,a.policy_rule_id,a.starts_on,a.ends_on,
+      array_to_string(a.weekdays,',') as iso_weekdays,a.repeat_kind,a.created_at
+      from public.activity_assignments a
+      join public.child_profiles cp on cp.id=a.child_profile_id and cp.family_id=a.family_id
+      join public.policy_rules pr on pr.id=a.policy_rule_id
+      join public.activity_versions av on av.id=pr.activity_version_id
+      where a.family_id=$1 order by a.starts_on, a.created_at`,[familyId])).rows;
+  }
   if (dataset === "children") {
     return (
       await getPool().query(
@@ -137,12 +162,12 @@ export function registerExportRoutes(app: Express) {
       if (!token) return res.status(401).json({ error: "AUTH_REQUIRED" });
 
       const { data, error } = await getSupabase().auth.getUser(token);
-      if (error || !data.user) {
+      if (error || !data.user || !data.user.email_confirmed_at) {
         return res.status(401).json({ error: "INVALID_SESSION" });
       }
 
       const dataset = String(req.query.dataset ?? "children") as Dataset;
-      if (!["children", "invitations", "auth-links"].includes(dataset)) {
+      if (!["children", "invitations", "auth-links", "activity-records", "activity-assignments"].includes(dataset)) {
         return res.status(400).json({ error: "INVALID_DATASET" });
       }
 
@@ -161,7 +186,7 @@ export function registerExportRoutes(app: Express) {
       );
       return res.send(`\uFEFF${toCsv(rows)}`);
     } catch (error) {
-      console.error("[CSV Export]", error);
+      console.error("[CSV Export] failed", (error as {code?:string})?.code ?? "EXPORT_ERROR");
       return res.status(500).json({ error: "EXPORT_FAILED" });
     }
   });

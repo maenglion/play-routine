@@ -8,6 +8,7 @@ async function asUser(id:string){await client.query("reset role");await client.q
 async function rejected(sql:string,values:unknown[],code:string,label:string){await client.query("savepoint expected_failure");let actual="";try{await client.query(sql,values);}catch(e){actual=(e as {code?:string}).code??"unknown";}await client.query("rollback to savepoint expected_failure");assert(actual===code,label);}
 try {
  await client.connect();await client.query("begin");
+    await client.query("select pg_advisory_xact_lock(hashtext('play-routine-live-fixtures'))");
  const suffix=randomUUID(),parent=randomUUID(),guardian=randomUUID(),other=randomUUID();
  for(const [id,name] of [[parent,"parent"],[guardian,"guardian"],[other,"other"]])await client.query("insert into auth.users(id,aud,role,email,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values($1,'authenticated','authenticated',$2,now(),'{}','{}',now(),now())",[id,`rule-${name}-${suffix}@example.invalid`]);
  await asUser(parent);const familyId=(await client.query("select * from public.bootstrap_parent_family('RULE ROLLBACK','Asia/Seoul')")).rows[0].family_id;

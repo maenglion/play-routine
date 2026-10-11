@@ -23,6 +23,7 @@ async function rejected(sql: string, values: unknown[], code: string, label: str
 try {
   await client.connect();
   await client.query("begin");
+    await client.query("select pg_advisory_xact_lock(hashtext('play-routine-live-fixtures'))");
   const parent = randomUUID(), otherParent = randomUUID(), child = randomUUID(), wrongChild = randomUUID();
   const suffix = randomUUID();
   const childEmail = `child-${suffix}@example.invalid`;

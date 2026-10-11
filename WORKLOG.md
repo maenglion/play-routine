@@ -445,3 +445,13 @@ Netlify 최종 검토 주소: https://6acbe0f4dd77be8940fc6114--play-routine.net
 `shared/frontend-build-config.ts`와 Vite 빌드 훅으로 누락 설정은 JS 출력 전 빌드 실패 처리한다. 5개 새 회귀시험과 기본 전체84개·타입·Manus/Netlify 양쪽 빌드를 통과했다. 빈 환경으로 실제 Vite build를 실행해 의도한 오류로 중단됨을 확인했다. 함수형 Vite config는 기존 Express의 객체 스프레드 방식과 충돌하므로 객체형 config와 플러그인 config 훅으로 수정했고 개발 `/src/main.tsx` 응답200도 확인했다.
 
 `unload` 경고는 앱 코드가 아닌 미리보기 컨테이너 runtime의 `window.addEventListener("unload")` 주입 때문이다. NETLIFY=true일 때만 runtime 플러그인을 제외하여 Netlify HTML에서 해당 등록이 없어졌음을 확인했다. Manus 개발·관리용 runtime은 유지한다. 수정 소스를 main에 반영해 실제 Git 자동빌드 결과를 이어서 검증한다.
+
+### 2026-10-12 07:59 KST — Netlify main 자동배포 실제 성공
+
+수정 소스 main `b2d072cbea587f3ac6b3445c4d566be78cb767cb` 푸시가 Netlify production 빌드를 자동 실행했다. 배포 `6acc14043484ca000886d736`가 ready·published_at 있음·commit_ref 일치로 완료됐다. 수동 업로드가 아니라 Git push→main 빌드→공개 게시까지 실제 확인했다.
+
+공개 `/assets/index-B0FCwPML.js`에 Supabase 프로젝트·publishable key·PASS·특별보너스·주간 금액 입력이 모두 포함된다. HTML의 unload 등록과 컨테이너 runtime이 없어졌으며 실제 브라우저에서 부모/자녀/보호자 탭·이메일/비밀번호 폼·복구 버튼이 정상 표시된다. 최초 브라우저 캡처가 빈 화면이었으나 자원 로딩 완료 후 DOM과 후속 화면 정상으로 확인됐으므로 초기 로드 캡처를 설정 오류로 오인하지 않는다.
+
+공개 callback200·tRPC JSON200·CSV 및 프로필 무인증401·SVG200·Supabase health200을 확인했다. 브라우저에서도 API JSON200과 로그인 폼 표시·Supabase URL 포함·unload/runtime 부재를 재확인했다. 원격 수정 커밋 새 clone의 frozen-lockfile 설치·타입·84개 기본 시험·Netlify build도 통과했다. 기존 실DB91개 검증 이후 추가한 빌드 회귀5개는 포함됐지만 이번 턴에서 모든 실DB 시험을 재실행한 것은 아니다.
+
+main 자동배포 stop_builds=false를 유지한다. 이메일 인증/복구는 여전히 허용된 기존 공개 콜백으로 복귀하며 시간 원장/정산은 다음 별도 구현 단계다. 사용자에게는 기존 탭에서 Ctrl+Shift+R로 새 HTML을 로드하도록 안내한다. 실제 비밀번호 로그인은 사용자 입력 없이 대신 실행하지 않았다. 계정·가족·기존 데이터는 변경하지 않았다.

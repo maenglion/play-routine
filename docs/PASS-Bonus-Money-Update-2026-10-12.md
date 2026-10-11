@@ -68,4 +68,6 @@
 
 GitHub main `53333a9` 푸시와 원격 재복제 설치·타입·기본 79개 시험·빌드를 확인했다. 체크포인트 `25fc17be` 및 기존 공개 앱 새 번들의 기능 전파를 확인했다. Netlify 최종 초안 `6acbe0f4dd77be8940fc6114`는 로컬 빌드와 JS 바이트 일치·인증 없는 CSV/프로필 API 401·미로그인 관리 접근 차단까지 통과했다. 2026-10-12 07:49 KST 사용자 승인 후 기존 공개 사이트에 게시하고 `main`, `stop_builds=false`, 잠금 없음을 확인했다.
 
-추가 보고된 `Supabase client configuration is missing`는 사이트 빌드 환경변수 누락이다. URL·publishable 변수 두 개를 기본 전체 범위·all context로 실제 저장한 뒤 API로 재조회했다. 누락 시 빌드 자체를 차단하고 Netlify에서는 `unload`를 등록하는 미리보기 runtime을 제외했다. 5개 새 회귀시험·기본 전체84개·타입·양쪽 빌드 및 빈 설정 빌드 실패를 검증했다. 해당 수정의 main 자동빌드 결과는 작업기록에 이어서 남긴다.
+추가 보고된 `Supabase client configuration is missing`는 사이트 빌드 환경변수 누락이다. URL·publishable 변수 두 개를 기본 전체 범위·all context로 실제 저장한 뒤 API로 재조회했다. 누락 시 빌드 자체를 차단하고 Netlify에서는 `unload`를 등록하는 미리보기 runtime을 제외했다. 5개 새 회귀시험·기본 전체84개·타입·양쪽 빌드 및 빈 설정 빌드 실패를 검증했다.
+
+수정 커밋 `b2d072c`의 Git push가 Netlify production 배포 `6acc14043484ca000886d736`를 자동 실행·공개 게시했다. 실제 공개 JS의 URL·키·새 기능 포함, 브라우저 로그인 폼 정상, unload/runtime 부재, callback·tRPC·저장소·Supabase health200 및 무인증 CSV/프로필401을 확인했다. 원격 재복제84개 기본 시험·Netlify build도 통과했다. 기존 탭에 옛 HTML이 남아 있다면 **Ctrl+Shift+R**로 한 번 새로고침한다.

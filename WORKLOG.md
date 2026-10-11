@@ -405,3 +405,5 @@ GitHub main `80ed2d1`을 새 작업공간에 재복제해 frozen-lockfile 설치
 TypeScript·기본 67개 시험(외부 9개 제외)·실제 공개 콜백 정책 4개·빌드 통과. 브라우저에서 mock recovery endpoint를 가로채 이메일 정규화·공개 root redirect·일반 대기 안내·재전송 UI를 검증했다. 실제 메일은 보내지 않았고 운영 비밀번호를 조회·대신 변경하지 않았다. 사용자가 앱에서 가입한 이메일로 링크를 요청하고 자기 브라우저에서 새 비밀번호를 입력해야 한다.
 
 공식 계약: https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail — 메일 요청 후 PASSWORD_RECOVERY로 화면 표시, updateUser로 사용자 본인이 변경.
+
+02:19 KST: 공개 새 index-BAY3EW-h.js에 복구 버튼·reset 화면·PASSWORD_RECOVERY·비밀번호 확인이 모두 포함됐고 공개 브라우저 버튼 표시를 확인했다. 실제 사용자 메일 요청/비밀번호 변경은 아직 진행하지 않았다.

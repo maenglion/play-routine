@@ -3,8 +3,9 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import fs from "node:fs";
 import path from "node:path";
-import { defineConfig, type Plugin, type ViteDevServer } from "vite";
+import { defineConfig, loadEnv, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { assertSupabaseBuildEnvironment, includeManusPreviewRuntime } from "./shared/frontend-build-config";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,7 +151,20 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const buildConfigGuard: Plugin = {
+  name: "supabase-build-config-guard",
+  config(_config, { command, mode }) {
+    if (command === "build") {
+      assertSupabaseBuildEnvironment({ ...loadEnv(mode, PROJECT_ROOT, ""), ...process.env });
+    }
+  },
+};
+
+const plugins = [
+  react(), tailwindcss(), jsxLocPlugin(), buildConfigGuard,
+  ...(includeManusPreviewRuntime(process.env) ? [vitePluginManusRuntime()] : []),
+  vitePluginManusDebugCollector(),
+];
 
 export default defineConfig({
   plugins,

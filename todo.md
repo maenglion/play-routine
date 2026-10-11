@@ -240,4 +240,7 @@
 ## 2026-10-12 PASS·특별보너스·돈 보상
 - [x] PASS·독립 특별보너스·일/주/월/이벤트 돈 기록을 DB/UI에 연결하고 실DB 포함 91개 회귀·타입·build를 통과했다.
 - [x] 최종 GitHub main 53333a9·재복제·체크포인트25fc17be·공개앱 새번들·Netlify 최종초안 바이트/API/접근 차단을 확인했다.
-- [ ] 사용자 승인 후 기존 Netlify 공개사이트를 최종 초안6acbe0f4dd77be8940fc6114로 교체하고 main 자동빌드를 다시 활성화한다.
+- [x] 사용자 승인 후 기존 Netlify 공개사이트를 최종 초안6acbe0f4dd77be8940fc6114로 교체하고 main 자동빌드(stop_builds=false)를 다시 활성화했다.
+- [x] Supabase URL·publishable 빌드변수가 실제 없었음을 확인하고 기본 전체 범위로 사이트에 저장·재조회했다.
+- [x] 설정 누락 빌드 중단·Netlify 컨테이너 runtime 제외·5개 회귀시험·전체 기본84개·양쪽 빌드를 검증했다.
+- [ ] 수정 소스를 main에 푸시하여 Netlify 자동 빌드·공개 게시 및 Supabase 오류·unload 경고 제거를 최종 확인한다.

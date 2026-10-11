@@ -433,3 +433,15 @@ GitHub main `53333a905cfc594be429e1f3415e70d060d08a9f`에 31개 변경 파일을
 체크포인트 `25fc17be`를 저장했고 기존 공개 앱 번들에 PASS_FAIL·특별보너스·주간 직접 금액 입력이 실제 전파됐다. Netlify 최종 초안 `6acbe0f4dd77be8940fc6114`의 JS 바이트가 로컬 최종 빌드와 일치하며 동일 기능을 포함한다. 초안에서 `/auth/callback` 200·tRPC JSON·SVG 저장소 정상, 부모 CSV·프로필 API 무인증 401과 공개 `preview=parent`의 로그인 화면 차단을 확인했다.
 
 Netlify 최종 검토 주소: https://6acbe0f4dd77be8940fc6114--play-routine.netlify.app/ . 기존 공개 주소 https://play-routine.netlify.app/ 를 이 정확한 배포본으로 교체하고 main 자동 빌드를 다시 활성화하는 외부 공개 조치는 사용자 최종 승인 대기다. 이미 권한·토큰 검증은 끝났으며 로그인이나 토큰 재입력을 요청하지 않는다. 기존 공개 앱은 새 기능이 반영됐다.
+
+### 2026-10-12 07:55 KST — 승인된 공개 전환·Supabase 빌드 설정 오류 보정
+
+사용자가 최종 배포본 공개 교체와 main 자동 배포 활성화를 승인했다. 기존 사이트에 배포 `6acbe0f4dd77be8940fc6114`를 게시했고 published_at·published_deploy 일치·main·stop_builds=false·배포 잠금 없음까지 API로 확인했다.
+
+추가 사용자 캡처의 핵심 오류는 `Supabase client configuration is missing`다. 캡처 JS 해시는 `index-DiYLxnHk.js`이며 승인된 정상 배포 JS `index-B0FCwPML.js`와 다르다. 현재 공개 정상 번들에는 최신 프로젝트와 공개키가 있으나 Netlify 사이트 환경 API 및 레거시 build_settings.env에는 두 VITE_SUPABASE 변수가 실제 없었다. 앞서 등록 도구의 응답만으로 영구 저장을 확인한 것은 불충분했다.
+
+환경 API 특정 builds 범위 요청은 403과 `specific scopes` 제약으로 거절됐다. 권한 우회·요금 변경 없이 기본 전체 범위 요청으로 저장에 성공했고 GET 재조회에서 URL·publishable 키 두 개의 all context 값 일치를 확인했다. 서버 DB 비밀번호·비밀키는 Netlify에 넣지 않았다.
+
+`shared/frontend-build-config.ts`와 Vite 빌드 훅으로 누락 설정은 JS 출력 전 빌드 실패 처리한다. 5개 새 회귀시험과 기본 전체84개·타입·Manus/Netlify 양쪽 빌드를 통과했다. 빈 환경으로 실제 Vite build를 실행해 의도한 오류로 중단됨을 확인했다. 함수형 Vite config는 기존 Express의 객체 스프레드 방식과 충돌하므로 객체형 config와 플러그인 config 훅으로 수정했고 개발 `/src/main.tsx` 응답200도 확인했다.
+
+`unload` 경고는 앱 코드가 아닌 미리보기 컨테이너 runtime의 `window.addEventListener("unload")` 주입 때문이다. NETLIFY=true일 때만 runtime 플러그인을 제외하여 Netlify HTML에서 해당 등록이 없어졌음을 확인했다. Manus 개발·관리용 runtime은 유지한다. 수정 소스를 main에 반영해 실제 Git 자동빌드 결과를 이어서 검증한다.

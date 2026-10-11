@@ -14,13 +14,14 @@ import {
 const CHILD_MESSAGE =
   "초대가 유효하면 확인 메일 발송을 요청했습니다. 메일함과 스팸함을 확인해 주세요.";
 const PUBLIC_APP_ORIGIN = "https://playroutine-nkwde3yc.manus.space";
+const NETLIFY_APP_ORIGIN = "https://play-routine.netlify.app";
 
 export function normalizeAuthRedirectUrl(redirectTo: string, production = process.env.NODE_ENV === "production") {
   const url = new URL(redirectTo);
   if (!["http:", "https:"].includes(url.protocol) || url.username || url.password) {
     throw new Error("Unsupported authentication redirect origin");
   }
-  const isPublicApp = url.origin === PUBLIC_APP_ORIGIN;
+  const isPublicApp = [PUBLIC_APP_ORIGIN, NETLIFY_APP_ORIGIN].includes(url.origin);
   const isLocalDevelopment = ["localhost", "127.0.0.1"].includes(url.hostname);
   const isManusPreview = url.hostname.endsWith(".manus.computer");
   if (!isPublicApp && (production || (!isLocalDevelopment && !isManusPreview))) {

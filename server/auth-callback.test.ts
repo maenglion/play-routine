@@ -50,5 +50,6 @@ describe("SPA Supabase callback", () => {
   it("메일 요청은 현재 루트 허용 주소를 유지한다", () => {
     expect(getAuthRedirectUrl(origin)).toBe(`${origin}/`);
     expect(getAuthRedirectUrl("http://localhost:3000")).toBe("http://localhost:3000/");
+    expect(getAuthRedirectUrl("https://play-routine.netlify.app")).toBe(`${origin}/`);
   });
 });

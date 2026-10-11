@@ -1,0 +1,38 @@
+# Netlify는 프런트 배포, 기존 Manus 서비스는 인증 API/CSV/프로필 업로드 서버 역할.
+# 공개 VITE_SUPABASE_URL/VITE_SUPABASE_PUBLISHABLE_KEY만 Netlify 빌드 환경에 등록.
+# PostgreSQL 비밀번호와 서버 키는 Netlify 정적 번들에 넣지 않는다.
+[build]
+  command = "pnpm build"
+  publish = "dist/public"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://playroutine-nkwde3yc.manus.space/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/manus-storage/*"
+  to = "https://playroutine-nkwde3yc.manus.space/manus-storage/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/auth/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    Referrer-Policy = "no-referrer"

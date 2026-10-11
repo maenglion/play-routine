@@ -5,7 +5,7 @@ export const RULE_CATEGORIES = [
   "OTHER",
 ] as const;
 
-export const MEASUREMENT_KINDS = ["PERCENT", "QUANTITY"] as const;
+export const MEASUREMENT_KINDS = ["PERCENT", "QUANTITY", "PASS_FAIL"] as const;
 export const RULE_OUTCOMES = ["PENALTY", "NO_REWARD", "REWARD"] as const;
 
 export type RuleCategory = (typeof RULE_CATEGORIES)[number];
@@ -28,6 +28,20 @@ export type NumericRuleInput = {
   penaltyMinutes: number;
   rewardMinutes: number;
 };
+
+export type PassRuleInput = {
+  rewardMinutes: number;
+};
+
+/**
+ * PASS는 부모가 그날 문제없음을 명시 확인할 때만 보상하는 이진 측정값이다.
+ * 0/100은 DB 내부의 기존 세 구간 호환값일 뿐, UI에 점수·기준값으로 노출하지 않는다.
+ */
+export const PASS_METRIC_LABEL = "부모가 그날 문제없음을 확인";
+
+export function isPassMeasurementKind(kind: MeasurementKind) {
+  return kind === "PASS_FAIL";
+}
 
 export function isRuleOutcome(value: unknown): value is RuleOutcome {
   return typeof value === "string" && (RULE_OUTCOMES as readonly string[]).includes(value);
@@ -58,6 +72,13 @@ export function validateNumericRule(input: NumericRuleInput): string[] {
   }
 
   return errors;
+}
+
+export function validatePassRule(input: PassRuleInput): string[] {
+  if (!isFiniteNumber(input.rewardMinutes) || !Number.isInteger(input.rewardMinutes) || input.rewardMinutes < 0 || input.rewardMinutes > 240) {
+    return ["PASS 시간 보상은 0~240 사이의 정수 분이어야 합니다."];
+  }
+  return [];
 }
 
 /**

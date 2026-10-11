@@ -7,9 +7,12 @@ import {
   buildThreeRuleBands,
   formatBand,
   MEASUREMENT_KINDS,
+  PASS_METRIC_LABEL,
   RULE_CATEGORIES,
+  isPassMeasurementKind,
   type MeasurementKind,
   type RuleCategory,
+  validatePassRule,
   validateNumericRule,
 } from "@/lib/rule-registry";
 import { CheckCircle2, Clock3, FilePlus2, Loader2, ShieldCheck } from "lucide-react";
@@ -50,8 +53,8 @@ const initialDraft: DraftForm = {
   name: "",
   category: "DAILY_STUDY",
   description: "",
-  measurementKind: "PERCENT",
-  metricLabel: "",
+  measurementKind: "PASS_FAIL",
+  metricLabel: PASS_METRIC_LABEL,
   penaltyLimit: "50",
   rewardLimit: "80",
   penaltyMinutes: "0",
@@ -68,6 +71,7 @@ const categoryLabels: Record<RuleCategory, string> = {
 const measurementLabels: Record<MeasurementKind, string> = {
   PERCENT: "퍼센트(0~100)",
   QUANTITY: "수량 점수(0~100)",
+  PASS_FAIL: "약속 PASS / 확인 필요",
 };
 
 function asNumber(value: string) {
@@ -91,6 +95,8 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
   const [saving, setSaving] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
 
+  const isPassRule = isPassMeasurementKind(draft.measurementKind);
+
   const numericInput = useMemo(() => ({
     penaltyLimit: asNumber(draft.penaltyLimit),
     rewardLimit: asNumber(draft.rewardLimit),
@@ -99,14 +105,17 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
   }), [draft.penaltyLimit, draft.rewardLimit, draft.penaltyMinutes, draft.rewardMinutes]);
 
   const numericErrors = useMemo(() => validateNumericRule(numericInput), [numericInput]);
+  const passErrors = useMemo(() => validatePassRule({ rewardMinutes: numericInput.rewardMinutes }), [numericInput.rewardMinutes]);
+  const formErrors = isPassRule ? passErrors : numericErrors;
   const previewBands = useMemo(() => {
+    if (isPassRule) return null;
     if (numericErrors.length > 0) return null;
     try {
       return buildThreeRuleBands(numericInput);
     } catch {
       return null;
     }
-  }, [numericErrors, numericInput]);
+  }, [isPassRule, numericErrors, numericInput]);
 
   const update = <K extends keyof DraftForm>(key: K, value: DraftForm[K]) => {
     setDraft(current => ({ ...current, [key]: value }));
@@ -139,23 +148,32 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
     const name = draft.name.trim();
     const metricLabel = draft.metricLabel.trim();
     if (!name) return toast.error("활동 이름을 입력해 주세요.");
-    if (!metricLabel) return toast.error("부모가 확인할 측정 기준을 직접 입력해 주세요.");
-    if (numericErrors.length > 0) return toast.error(numericErrors[0]);
+    if (!isPassRule && !metricLabel) return toast.error("부모가 확인할 측정 기준을 직접 입력해 주세요.");
+    if (formErrors.length > 0) return toast.error(formErrors[0]);
 
     setSaving(true);
     try {
-      const { error } = await supabase.rpc("save_parent_rule_draft", {
-        p_family_id: familyId,
-        p_name: name,
-        p_category_code: draft.category,
-        p_description: draft.description.trim() || null,
-        p_measurement_kind: draft.measurementKind,
-        p_metric_label: metricLabel,
-        p_penalty_limit: numericInput.penaltyLimit,
-        p_reward_limit: numericInput.rewardLimit,
-        p_reward_minutes: numericInput.rewardMinutes,
-        p_penalty_minutes: numericInput.penaltyMinutes,
-      });
+      const { error } = isPassRule
+        ? await supabase.rpc("save_parent_pass_rule_draft", {
+          p_family_id: familyId,
+          p_name: name,
+          p_category_code: draft.category,
+          p_description: draft.description.trim() || null,
+          p_metric_label: metricLabel || PASS_METRIC_LABEL,
+          p_reward_minutes: numericInput.rewardMinutes,
+        })
+        : await supabase.rpc("save_parent_rule_draft", {
+          p_family_id: familyId,
+          p_name: name,
+          p_category_code: draft.category,
+          p_description: draft.description.trim() || null,
+          p_measurement_kind: draft.measurementKind,
+          p_metric_label: metricLabel,
+          p_penalty_limit: numericInput.penaltyLimit,
+          p_reward_limit: numericInput.rewardLimit,
+          p_reward_minutes: numericInput.rewardMinutes,
+          p_penalty_minutes: numericInput.penaltyMinutes,
+        });
       if (error) throw error;
       setDraft(initialDraft);
       await refresh();
@@ -232,7 +250,14 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
           </div>
           <div className="space-y-2">
             <Label htmlFor="rule-measurement">측정 방식</Label>
-            <select id="rule-measurement" value={draft.measurementKind} onChange={event => update("measurementKind", event.target.value as MeasurementKind)} disabled={saving} className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
+            <select id="rule-measurement" value={draft.measurementKind} onChange={event => {
+              const measurementKind = event.target.value as MeasurementKind;
+              setDraft(current => ({
+                ...current,
+                measurementKind,
+                metricLabel: measurementKind === "PASS_FAIL" ? PASS_METRIC_LABEL : current.metricLabel,
+              }));
+            }} disabled={saving} className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50">
               {MEASUREMENT_KINDS.map(kind => <option key={kind} value={kind}>{measurementLabels[kind]}</option>)}
             </select>
           </div>
@@ -242,16 +267,20 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
           </div>
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="rule-metric">부모 확인 측정 기준</Label>
-            <Input id="rule-metric" value={draft.metricLabel} onChange={event => update("metricLabel", event.target.value)} placeholder={draft.measurementKind === "PERCENT" ? "예: 채점한 정답률" : "예: 부모가 확인한 완료량 점수"} disabled={saving} />
-            <p className="text-xs leading-5 text-[#777a74]">자녀 자기보고만으로 패널티를 확정하지 않습니다. 약 복용은 이 룰 등록 대상이 아닙니다.</p>
+            <Input id="rule-metric" value={draft.metricLabel} onChange={event => update("metricLabel", event.target.value)} placeholder={isPassRule ? PASS_METRIC_LABEL : draft.measurementKind === "PERCENT" ? "예: 채점한 정답률" : "예: 부모가 확인한 완료량 점수"} disabled={saving} readOnly={isPassRule} />
+            <p className="text-xs leading-5 text-[#777a74]">{isPassRule ? "선생님의 문제 지적이 없었음을 부모가 확인하면 PASS입니다. 확인 자체가 없으면 유보이며, 연락 여부만으로 자동 판정하거나 패널티를 주지 않습니다. 약 복용은 별도 관리입니다." : "자녀 자기보고만으로 패널티를 확정하지 않습니다. 약 복용은 이 룰 등록 대상이 아닙니다."}</p>
           </div>
         </div>
 
         <aside className="rounded-2xl bg-[#f5f3ed] p-4">
-          <p className="text-xs font-bold text-[#4d2ddc]">구간 미리보기</p>
-          <p className="mt-2 text-xs leading-5 text-[#666963]">평가된 0~100 값은 빈틈 없이 세 구간 중 하나가 됩니다. 중간 구간은 항상 차감·보상 없음입니다.</p>
+          <p className="text-xs font-bold text-[#4d2ddc]">{isPassRule ? "PASS 약속" : "구간 미리보기"}</p>
+          <p className="mt-2 text-xs leading-5 text-[#666963]">{isPassRule ? "점수나 기준값을 입력하지 않습니다. 부모가 그날 문제없음을 확인할 때만 등록한 기본 시간이 예정됩니다. 주간 현금·칭찬 보너스는 별도 수동 확인입니다." : "평가된 0~100 값은 빈틈 없이 세 구간 중 하나가 됩니다. 중간 구간은 항상 차감·보상 없음입니다."}</p>
           <div className="mt-4 space-y-2 text-sm">
-            {previewBands ? previewBands.map((band, index) => (
+            {isPassRule ? <>
+              <div className="rounded-xl bg-white px-3 py-2"><strong className="block text-xs">문제없음 PASS</strong><span className="text-xs text-[#666963]">부모 확인 시 +{numericInput.rewardMinutes || 0}분 예정</span></div>
+              <div className="rounded-xl bg-white px-3 py-2"><strong className="block text-xs">문제 있음 / 확인 필요</strong><span className="text-xs text-[#666963]">보상 없음 · 자동 패널티 없음</span></div>
+              <p className="px-1 text-[11px] leading-5 text-[#777a74]">칭찬 보너스와 실제 정산은 별도 기능입니다.</p>
+            </> : previewBands ? previewBands.map((band, index) => (
               <div key={index} className="rounded-xl bg-white px-3 py-2">
                 <strong className="block text-xs">{formatBand(band)}</strong>
                 <span className="text-xs text-[#666963]">
@@ -265,6 +294,11 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
 
       <div className="mt-6 grid gap-4 border-t border-black/8 pt-6 sm:grid-cols-2">
         <div className="grid gap-4 sm:grid-cols-2">
+          {isPassRule ? <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="pass-reward-minutes">PASS 기본 시간 보상 <span className="font-normal text-muted-foreground">(0 = 시간 보상 없음)</span></Label>
+            <Input id="pass-reward-minutes" type="number" min="0" max="240" step="1" inputMode="numeric" value={draft.rewardMinutes} onChange={event => update("rewardMinutes", event.target.value)} placeholder="30" disabled={saving} />
+            <p className="text-xs leading-5 text-[#777a74]">부모가 문제없음 PASS를 확인한 경우의 예정 시간입니다. 일일 현금 지급이 아니며, 주간 현금·칭찬 보너스와 실제 정산은 별도 수동 확인입니다.</p>
+          </div> : <>
           <div className="space-y-2">
             <Label htmlFor="penalty-limit">하한 기준 <span className="font-normal text-muted-foreground">(미만)</span></Label>
             <Input id="penalty-limit" type="number" min="1" max="98" step="1" inputMode="decimal" value={draft.penaltyLimit} onChange={event => update("penaltyLimit", event.target.value)} placeholder="50" disabled={saving} />
@@ -281,9 +315,10 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
             <Label htmlFor="reward-minutes">+분 <span className="font-normal text-muted-foreground">(0 = 보상 없음)</span></Label>
             <Input id="reward-minutes" type="number" min="0" max="240" step="1" inputMode="numeric" value={draft.rewardMinutes} onChange={event => update("rewardMinutes", event.target.value)} placeholder="30" disabled={saving} />
           </div>
+          </>}
         </div>
         <div className="flex flex-col justify-end gap-2">
-          {numericErrors.length > 0 && <p className="text-xs leading-5 text-[#9b453f]">{numericErrors[0]}</p>}
+          {formErrors.length > 0 && <p className="text-xs leading-5 text-[#9b453f]">{formErrors[0]}</p>}
           <Button type="button" disabled={saving || !familyId || preview} onClick={() => void saveDraft()} className="rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]">
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <FilePlus2 className="h-4 w-4" />} 초안 저장
           </Button>
@@ -303,6 +338,7 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
             {rows.map(row => {
               const penalty = Number(row.penalty_minutes);
               const reward = Number(row.reward_minutes);
+              const isPassRow = isPassMeasurementKind(row.measurement_kind);
               return <article key={row.config_version_id} className="rounded-2xl border border-black/8 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
@@ -314,11 +350,14 @@ export default function ParentRuleSettings({ familyId, preview = false, onPublis
                     {publishingId === row.config_version_id ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />} 내일부터 게시
                   </Button> : <span className="inline-flex items-center gap-1 text-xs font-medium text-[#315f4d]"><Clock3 className="h-4 w-4" /> {dateLabel(row.effective_from)}부터</span>}
                 </div>
-                <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
+                {isPassRow ? <div className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
+                  <span className="rounded-lg bg-[#edf7f3] px-3 py-2">문제없음 PASS: +{reward}분 예정</span>
+                  <span className="rounded-lg bg-[#f5f3ed] px-3 py-2">문제 있음 / 확인 필요: 보상 없음 · 자동 패널티 없음</span>
+                </div> : <div className="mt-3 grid gap-2 text-xs sm:grid-cols-3">
                   <span className="rounded-lg bg-[#f5f3ed] px-3 py-2">0 ~ {Number(row.penalty_limit)} 미만: {penalty > 0 ? `-${penalty}분 후보` : "차감 없음"}</span>
                   <span className="rounded-lg bg-[#f5f3ed] px-3 py-2">{Number(row.penalty_limit)} ~ {Number(row.reward_limit)} 미만: 보상·차감 없음</span>
                   <span className="rounded-lg bg-[#f5f3ed] px-3 py-2">{Number(row.reward_limit)} ~ 100 이하: {reward > 0 ? `+${reward}분` : "보상 없음"}</span>
-                </div>
+                </div>}
                 <div className="mt-3"><Button type="button" variant="outline" size="sm" onClick={() => startNewVersion(row)} disabled={saving || preview}>이 룰의 새 버전</Button></div>
               </article>;
             })}

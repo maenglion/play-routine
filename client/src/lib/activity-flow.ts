@@ -25,6 +25,8 @@ export type ActivityDayRow = {
   /** Parent-approved explanation shown with the verification; never a private memo. */
   parent_reason?: string | null;
   parent_verified_at?: string | null;
+  /** Added by list_activity_day in 0011; optional while older fixtures/RPC deployments remain readable. */
+  measurement_kind?: "PERCENT" | "QUANTITY" | "PASS_FAIL" | null;
 };
 
 export type ActivityDaySummary = {

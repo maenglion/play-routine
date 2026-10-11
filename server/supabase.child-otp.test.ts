@@ -19,6 +19,8 @@ describe("Supabase child OTP request", () => {
     expect(
       normalizeAuthRedirectUrl("https://playroutine-nkwde3yc.manus.space/account?from=otp", true),
     ).toBe("https://playroutine-nkwde3yc.manus.space/");
+    expect(normalizeAuthRedirectUrl("https://play-routine.netlify.app/auth/callback", true)).toBe("https://play-routine.netlify.app/");
+    expect(() => normalizeAuthRedirectUrl("https://play-routine.netlify.app.attacker.test/", true)).toThrow();
     expect(() => normalizeAuthRedirectUrl("https://attacker.example/callback", true)).toThrow(
       "Unsupported authentication redirect origin",
     );

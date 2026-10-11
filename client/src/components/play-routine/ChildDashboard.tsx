@@ -19,6 +19,7 @@ import AvatarCropDialog from "./AvatarCropDialog";
 import { blobToDataUrl } from "@/lib/avatar-crop";
 import { useActivityDay } from "@/hooks/useActivityDay";
 import { familyBusinessDate, summarizeActivityDay } from "@/lib/activity-flow";
+import ChildRewardList from "./ChildRewardList";
 import ChildActivityList, { activityCategoryLabels } from "./ChildActivityList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -199,6 +200,7 @@ export default function ChildDashboard({
               {stats.missing>0 && !activity.loading && <div role="status" className="mb-4 rounded-2xl border border-[#dad3bd] bg-[#f0ebdc] p-4 text-xs leading-5 text-[#625a40]">아직 체크하지 않은 할 일이 {stats.missing}개 있어요. 했다면 알려주고, 기억나지 않으면 부모에게 확인을 부탁해요. 미확인은 패널티가 아니에요.</div>}
               <ChildActivityList emptyMessage={filter==="done"?"아직 체크 완료한 할 일이 없어요.":filter==="open"?"체크하지 않은 할 일이 없어요.":undefined} rows={visibleRows} loading={activity.loading} error={activity.error} reporting={activity.reporting} onReport={row=>void activity.report(row)} onRefresh={()=>void activity.refresh()} />
             </section>
+            {profile && <div className="mt-8"><ChildRewardList childId={profile.id} preview={preview} /></div>}
             <section className="mt-10 pb-4">
               <div className="flex items-end gap-2"><h2 className="text-2xl font-bold tracking-[-0.05em] text-[#333a44]">부모 확인 진행률</h2><strong className="pb-0.5 text-xl text-[#4d2ddc]">{stats.total?Math.round(stats.confirmed/stats.total*100):0}%</strong></div>
               {Object.entries(activityCategoryLabels).map(([code,label])=>{

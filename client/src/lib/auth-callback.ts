@@ -42,5 +42,10 @@ export async function receiveAuthSession(
 // 기존 요청 계약인 루트 복귀 주소를 유지한다. 새 프로젝트의 허용목록은 별도 설정 필요.
 // /auth/callback은 수신 가능 별칭이며, 미확인 설정을 전제로 요청 주소를 바꾸지 않는다.
 export function getAuthRedirectUrl(origin: string) {
-  return `${new URL(origin).origin}/`;
+  const actualOrigin = new URL(origin).origin;
+  // Netlify는 아직 Supabase 허용목록에 없으므로 검증된 공개 앱에서 링크 인증을 마친다.
+  // 비밀번호 로그인과 DB 조회는 Netlify에서도 같은 계정을 사용한다.
+  return actualOrigin === "https://play-routine.netlify.app"
+    ? "https://playroutine-nkwde3yc.manus.space/"
+    : `${actualOrigin}/`;
 }

@@ -122,3 +122,6 @@ docs/google-sheet-summary.json
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json
 .project-config.json
+
+# Netlify local deployment metadata
+.netlify/

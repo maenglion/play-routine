@@ -7,6 +7,7 @@ import GuardianSettings from "./GuardianSettings";
 import ParentRuleSettings from "./ParentRuleSettings";
 import ParentActivitySettings from "./ParentActivitySettings";
 import ParentReviewQueue from "./ParentReviewQueue";
+import ParentRewardSettings from "./ParentRewardSettings";
 import { useState } from "react";
 
 type Family = { id: string; name: string; timezone: string } | null;
@@ -84,7 +85,7 @@ export default function ParentDashboard({
           <a href="#parent-review" className="rounded-[22px] bg-[#cde5de] p-5"><span className="text-xs font-semibold">부모 확인</span><strong className="mt-5 block text-xl tracking-[-0.04em]">날짜별 확인하기</strong><span className="mt-2 block text-xs text-[#52675d]">밀린 체크도 수행일로 기록</span></a>
           <div className="rounded-[22px] bg-[#333a44] p-5 text-white"><span className="text-xs font-semibold text-white/65">열린 잔차</span><strong className="mt-5 block text-4xl tracking-[-0.06em]">—</strong><span className="mt-2 block text-xs text-white/65">잔차 큐 연결 전</span></div>
         </div>
-        <nav aria-label="부모 설정 바로가기" className="mt-5 flex flex-wrap gap-3 text-sm font-semibold"><a href="#parent-rule-registry" className="rounded-full bg-[#4d2ddc] px-5 py-2.5 text-white">1. 규칙 등록</a><a href="#parent-assignments" className="rounded-full bg-[#d4cfe7] px-5 py-2.5 text-[#4d2ddc]">2. 자녀에게 배정</a><a href="#parent-review" className="rounded-full bg-[#cde5de] px-5 py-2.5 text-[#315f4d]">3. 날짜별 확인</a><a href="#guardian-settings" className="rounded-full bg-[#ebe7de] px-5 py-2.5 text-[#333a44]">보호자 추가</a></nav>
+        <nav aria-label="부모 설정 바로가기" className="mt-5 flex flex-wrap gap-3 text-sm font-semibold"><a href="#parent-rule-registry" className="rounded-full bg-[#4d2ddc] px-5 py-2.5 text-white">1. 규칙 등록</a><a href="#parent-assignments" className="rounded-full bg-[#d4cfe7] px-5 py-2.5 text-[#4d2ddc]">2. 자녀에게 배정</a><a href="#parent-review" className="rounded-full bg-[#cde5de] px-5 py-2.5 text-[#315f4d]">3. 날짜별 확인</a><a href="#parent-rewards" className="rounded-full bg-[#f0e5c9] px-5 py-2.5 text-[#69521f]">특별보너스·돈 보상</a><a href="#guardian-settings" className="rounded-full bg-[#ebe7de] px-5 py-2.5 text-[#333a44]">보호자 추가</a></nav>
 
         <div className="mt-7 grid gap-6 lg:grid-cols-[1.08fr_.92fr]">
           <section className="rounded-[28px] bg-white p-6 shadow-[0_16px_48px_rgba(51,58,68,.08)] sm:p-8">
@@ -151,7 +152,7 @@ export default function ParentDashboard({
           </section>
         </div>
         <div className="mt-7" id="guardian-settings"><GuardianSettings familyId={family?.id} preview={family?.id === "preview"} /></div>
-        {family && <><div className="mt-7" id="parent-rule-registry"><ParentRuleSettings familyId={family.id} preview={family.id === "preview"} onPublished={()=>setRulesKey(key=>key+1)} /></div><div className="mt-7" id="parent-assignments"><ParentActivitySettings refreshKey={rulesKey} familyId={family.id} timezone={family.timezone} children={children} preview={family.id === "preview"}/></div><div className="mt-7" id="parent-review"><ParentReviewQueue familyId={family.id} timezone={family.timezone} children={children} preview={family.id === "preview"}/></div></>}
+        {family && <><div className="mt-7" id="parent-rule-registry"><ParentRuleSettings familyId={family.id} preview={family.id === "preview"} onPublished={()=>setRulesKey(key=>key+1)} /></div><div className="mt-7" id="parent-assignments"><ParentActivitySettings refreshKey={rulesKey} familyId={family.id} timezone={family.timezone} children={children} preview={family.id === "preview"}/></div><div className="mt-7" id="parent-review"><ParentReviewQueue familyId={family.id} timezone={family.timezone} children={children} preview={family.id === "preview"}/></div><div className="mt-7" id="parent-rewards"><ParentRewardSettings familyId={family.id} timezone={family.timezone} children={children} preview={family.id === "preview"} /></div></>}
       </main>
     </div>
   );

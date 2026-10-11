@@ -25,6 +25,7 @@ export type ParentReviewQueueProps = {
 
 type ReviewDraft = {
   score: string;
+  pass: boolean | null;
   reason: string;
 };
 
@@ -96,12 +97,16 @@ function statusClass(status: ActivityDayRow["verification_status"]) {
 }
 
 function draftFingerprint(row: ActivityDayRow, draft: ReviewDraft) {
-  return `${row.occurrence_id}|${row.revision}|${draft.score.trim()}|${draft.reason.trim()}`;
+  const assessment = row.measurement_kind === "PASS_FAIL" ? String(draft.pass) : draft.score.trim();
+  return `${row.occurrence_id}|${row.revision}|${assessment}|${draft.reason.trim()}`;
 }
 
 function defaultDraft(row: ActivityDayRow): ReviewDraft {
   return {
     score: typeof row.parent_score === "number" && Number.isFinite(row.parent_score) ? String(row.parent_score) : "",
+    pass: row.measurement_kind === "PASS_FAIL" && typeof row.parent_score === "number"
+      ? row.parent_score === 100
+      : null,
     reason: row.parent_reason ?? "",
   };
 }
@@ -127,6 +132,7 @@ function errorMessage(error: unknown, fallback: string) {
 }
 
 function outcomeLabel(row: ActivityDayRow) {
+  if (row.measurement_kind === "PASS_FAIL") return row.parent_score === 100 ? "문제없음 PASS" : "확인 필요";
   if (row.outcome_code === "REWARD") return "보상 예정";
   if (row.outcome_code === "PENALTY") return "차감 검토";
   if (row.outcome_code === "NO_REWARD" || row.outcome_code === "NEUTRAL") return "보상·차감 없음";
@@ -232,11 +238,16 @@ export default function ParentReviewQueue({
   const submitVerification = async (row: ActivityDayRow) => {
     if (submitting.current) return;
     const submitSelection = selectionRef.current;
+    const isPassRule = row.measurement_kind === "PASS_FAIL";
     if (preview) {
       const draft = drafts[row.occurrence_id] ?? defaultDraft(row);
-      const score = Number(draft.score);
+      const score = isPassRule ? (draft.pass ? 100 : 0) : Number(draft.score);
       const reason = draft.reason.trim();
-      if (!draft.score.trim() || !Number.isFinite(score) || score < 0 || score > 100) {
+      if (isPassRule && draft.pass === null) {
+        toast.error("문제없음 PASS 또는 확인 필요를 선택해 주세요.");
+        return;
+      }
+      if (!isPassRule && (!draft.score.trim() || !Number.isFinite(score) || score < 0 || score > 100)) {
         toast.error("부모 확인 점수는 0~100 사이의 유한한 숫자로 입력해 주세요.");
         return;
       }
@@ -270,9 +281,13 @@ export default function ParentReviewQueue({
     }
 
     const draft = drafts[row.occurrence_id] ?? defaultDraft(row);
-    const score = Number(draft.score);
+    const score = isPassRule ? (draft.pass ? 100 : 0) : Number(draft.score);
     const reason = draft.reason.trim();
-    if (!draft.score.trim() || !Number.isFinite(score) || score < 0 || score > 100) {
+    if (isPassRule && draft.pass === null) {
+      toast.error("문제없음 PASS 또는 확인 필요를 선택해 주세요.");
+      return;
+    }
+    if (!isPassRule && (!draft.score.trim() || !Number.isFinite(score) || score < 0 || score > 100)) {
       toast.error("부모 확인 점수는 0~100 사이의 유한한 숫자로 입력해 주세요.");
       return;
     }
@@ -291,13 +306,21 @@ export default function ParentReviewQueue({
     submitting.current = true;
     setSubmittingId(row.occurrence_id);
     try {
-      const { error } = await supabase.rpc("verify_activity_occurrence", {
-        p_occurrence_id: row.occurrence_id,
-        p_score: score,
-        p_reason: reason,
-        p_expected_revision: row.revision,
-        p_idempotency_key: idempotencyKey,
-      });
+      const { error } = isPassRule
+        ? await supabase.rpc("verify_activity_pass", {
+          p_occurrence_id: row.occurrence_id,
+          p_pass: draft.pass,
+          p_reason: reason,
+          p_expected_revision: row.revision,
+          p_idempotency_key: idempotencyKey,
+        })
+        : await supabase.rpc("verify_activity_occurrence", {
+          p_occurrence_id: row.occurrence_id,
+          p_score: score,
+          p_reason: reason,
+          p_expected_revision: row.revision,
+          p_idempotency_key: idempotencyKey,
+        });
       if (error) throw error;
       attempts.current.delete(row.occurrence_id);
       setDrafts(current => {
@@ -305,7 +328,7 @@ export default function ParentReviewQueue({
         return rest;
       });
       if (selectionRef.current === submitSelection) await load();
-      toast.success(row.verification_status === "CONFIRMED" ? "점수 정정을 기록했습니다." : "부모 확인을 기록했습니다.");
+      toast.success(isPassRule ? (draft.pass ? "문제없음 PASS를 기록했습니다." : "확인 필요를 기록했습니다.") : row.verification_status === "CONFIRMED" ? "점수 정정을 기록했습니다." : "부모 확인을 기록했습니다.");
     } catch (error) {
       if (isRevisionConflict(error)) {
         setConflictedId(row.occurrence_id);
@@ -331,12 +354,12 @@ export default function ParentReviewQueue({
           <p className="text-xs font-semibold text-[#4d2ddc]">PARENT REVIEW</p>
           <h2 id="parent-review-queue-title" className="mt-1 text-2xl font-bold tracking-[-0.04em]">자녀 활동 확인</h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#747670]">
-            자녀의 체크는 유보 상태입니다. 부모가 직접 관찰했거나 기록을 검토한 뒤 점수와 근거를 남겨 확인하세요. 약 복용은 이 평가 대상이 아닙니다.
+            자녀의 체크는 유보 상태입니다. 부모가 직접 관찰했거나 기록을 검토한 뒤 확인 결과와 근거를 남겨 주세요. PASS 약속은 문제없음 PASS 또는 확인 필요만 기록합니다.
           </p>
         </div>
         <div className="flex items-center gap-2 rounded-2xl bg-[#edf7f3] px-3 py-2 text-xs leading-5 text-[#315045]">
           <ShieldCheck className="h-4 w-4 shrink-0" />
-          점수 0~100 · 확인 전 자동 보상·차감 없음
+          부모 확인 전 자동 PASS·보상·차감 없음
         </div>
       </div>
 
@@ -372,9 +395,10 @@ export default function ParentReviewQueue({
           <div className="space-y-4">
             {rows.map(row => {
               const draft = drafts[row.occurrence_id] ?? defaultDraft(row);
+              const isPassRule = row.measurement_kind === "PASS_FAIL";
               const isConfirmed = row.verification_status === "CONFIRMED";
               const reviewing = submittingId === row.occurrence_id;
-              const mayNeedPenaltyReview = !isConfirmed && row.penalty_minutes > 0;
+              const mayNeedPenaltyReview = !isPassRule && !isConfirmed && row.penalty_minutes > 0;
               const isConflicted = conflictedId === row.occurrence_id;
               return <article key={row.occurrence_id} className="rounded-2xl border border-black/8 p-4 sm:p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -384,13 +408,13 @@ export default function ParentReviewQueue({
 
                 {mayNeedPenaltyReview && <div className="mt-4 rounded-xl bg-[#fff4e9] p-3 text-xs leading-5 text-[#7d4a22]"><div className="flex gap-2"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" /><p><strong>검토 안내</strong><br />이 활동의 규칙에는 차감 구간이 있을 수 있습니다. 실제 결과는 서버가 부모 점수로 판정하며, 아래 확인 전에는 보상·차감이 확정되지 않습니다. 현재 원장·실제 차감은 연결되지 않았습니다.</p></div></div>}
 
-                {isConfirmed ? <div className="mt-4 rounded-xl bg-[#edf7f3] p-3 text-xs leading-5 text-[#315045]"><strong>{outcomeLabel(row)}</strong>{typeof row.parent_score === "number" && Number.isFinite(row.parent_score) ? <span> · 부모 점수 {row.parent_score} / 100</span> : null}{typeof row.confirmed_minutes === "number" && Number.isFinite(row.confirmed_minutes) ? <p className="mt-1">확인된 {row.confirmed_minutes > 0 ? `+${row.confirmed_minutes}` : row.confirmed_minutes}분은 <strong>예정 / 아직 사용 불가 / 정산 미연결</strong> 상태입니다.</p> : <p className="mt-1">확인 결과는 <strong>예정 / 아직 사용 불가 / 정산 미연결</strong> 상태입니다.</p>}{row.parent_reason ? <p className="mt-2 rounded-lg bg-white/60 px-3 py-2"><strong>자녀에게 보이는 확인 이유:</strong> {row.parent_reason}</p> : null}</div> : <div className="mt-4 rounded-xl bg-[#f5f3ed] p-3 text-xs leading-5 text-[#62656a]">{row.verification_status === "MISSING" ? "자녀 체크가 없어도 직접 관찰한 사실이라면 부모가 확인할 수 있습니다. 체크가 없다는 이유만으로 차감하지 않습니다." : "자녀가 알려준 내용은 아직 유보입니다. 부모가 확인하기 전에는 보상·차감이 확정되지 않습니다."}</div>}
+                {isConfirmed ? <div className="mt-4 rounded-xl bg-[#edf7f3] p-3 text-xs leading-5 text-[#315045]"><strong>{outcomeLabel(row)}</strong>{!isPassRule && typeof row.parent_score === "number" && Number.isFinite(row.parent_score) ? <span> · 부모 점수 {row.parent_score} / 100</span> : null}{typeof row.confirmed_minutes === "number" && Number.isFinite(row.confirmed_minutes) ? <p className="mt-1">{isPassRule && row.parent_score === 0 ? "문제 있음으로 확인되어 보상은 없습니다. 자동 패널티는 없습니다." : `확인된 ${row.confirmed_minutes > 0 ? `+${row.confirmed_minutes}` : row.confirmed_minutes}분은 `}<strong>{isPassRule && row.parent_score === 0 ? "실제 정산과 무관한 확인 결과" : "예정 / 아직 사용 불가 / 정산 미연결"}</strong> 상태입니다.</p> : <p className="mt-1">확인 결과는 <strong>예정 / 아직 사용 불가 / 정산 미연결</strong> 상태입니다.</p>}{row.parent_reason ? <p className="mt-2 rounded-lg bg-white/60 px-3 py-2"><strong>자녀에게 보이는 확인 이유:</strong> {row.parent_reason}</p> : null}</div> : <div className="mt-4 rounded-xl bg-[#f5f3ed] p-3 text-xs leading-5 text-[#62656a]">{isPassRule ? "자녀 체크·미확인·연락 없음만으로는 PASS가 되지 않습니다. 부모가 그날 문제없음을 확인하면 PASS, 문제가 있으면 확인 필요로 남깁니다." : row.verification_status === "MISSING" ? "자녀 체크가 없어도 직접 관찰한 사실이라면 부모가 확인할 수 있습니다. 체크가 없다는 이유만으로 차감하지 않습니다." : "자녀가 알려준 내용은 아직 유보입니다. 부모가 확인하기 전에는 보상·차감이 확정되지 않습니다."}</div>}
 
                 <div className="mt-5 grid gap-4 border-t border-black/8 pt-4 sm:grid-cols-[150px_minmax(0,1fr)]">
-                  <div className="space-y-2"><Label htmlFor={`score-${row.occurrence_id}`}>부모 점수 <span className="font-normal text-muted-foreground">(0~100)</span></Label><Input id={`score-${row.occurrence_id}`} type="number" min="0" max="100" step="any" inputMode="decimal" value={draft.score} disabled={reviewing || isConflicted} onChange={event => updateDraft(row, { score: event.target.value })} placeholder="점수 입력" /></div>
-                  <div className="space-y-2"><Label htmlFor={`reason-${row.occurrence_id}`}>자녀에게 보여줄 확인 이유 <span className="text-[#9b453f]">(필수)</span></Label><Textarea id={`reason-${row.occurrence_id}`} value={draft.reason} disabled={reviewing || isConflicted} onChange={event => updateDraft(row, { reason: event.target.value })} placeholder={isConfirmed ? "점수를 정정하는 이유를 자녀에게 이해되게 적어 주세요." : row.verification_status === "MISSING" ? "직접 관찰한 사실을 자녀에게 이해되게 적어 주세요." : "확인한 내용과 근거를 자녀에게 이해되게 적어 주세요."} maxLength={1000} /><p className="text-xs leading-5 text-[#777a74]">비공개 메모가 아닙니다. 자녀가 확인 결과와 함께 볼 수 있는 설명을 적어 주세요.</p></div>
+                  <div className="space-y-2">{isPassRule ? <><Label>부모 확인 결과</Label><div className="grid gap-2"><Button type="button" variant={draft.pass === true ? "default" : "outline"} disabled={reviewing || isConflicted} onClick={() => updateDraft(row, { pass: true })}>문제없음 PASS</Button><Button type="button" variant={draft.pass === false ? "default" : "outline"} disabled={reviewing || isConflicted} onClick={() => updateDraft(row, { pass: false })}>문제 있음 · 확인 필요</Button></div></> : <><Label htmlFor={`score-${row.occurrence_id}`}>부모 점수 <span className="font-normal text-muted-foreground">(0~100)</span></Label><Input id={`score-${row.occurrence_id}`} type="number" min="0" max="100" step="any" inputMode="decimal" value={draft.score} disabled={reviewing || isConflicted} onChange={event => updateDraft(row, { score: event.target.value })} placeholder="점수 입력" /></>}</div>
+                  <div className="space-y-2"><Label htmlFor={`reason-${row.occurrence_id}`}>자녀에게 보여줄 확인 이유 <span className="text-[#9b453f]">(필수)</span></Label><Textarea id={`reason-${row.occurrence_id}`} value={draft.reason} disabled={reviewing || isConflicted} onChange={event => updateDraft(row, { reason: event.target.value })} placeholder={isPassRule ? draft.pass === false ? "무슨 확인이 더 필요한지 자녀가 이해되게 적어 주세요." : "문제없음 PASS를 확인한 근거를 자녀가 이해되게 적어 주세요." : isConfirmed ? "점수를 정정하는 이유를 자녀에게 이해되게 적어 주세요." : row.verification_status === "MISSING" ? "직접 관찰한 사실을 자녀에게 이해되게 적어 주세요." : "확인한 내용과 근거를 자녀에게 이해되게 적어 주세요."} maxLength={1000} /><p className="text-xs leading-5 text-[#777a74]">비공개 메모가 아닙니다. 자녀가 확인 결과와 함께 볼 수 있는 설명을 적어 주세요.</p></div>
                 </div>
-                {isConflicted ? <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-3 text-xs leading-5 text-red-800"><span><CircleAlert className="mr-1 inline h-4 w-4 align-text-bottom" />다른 확인으로 revision이 바뀌었습니다. 자동 재시도하지 않았습니다.</span><Button type="button" variant="outline" size="sm" onClick={() => void load()}><RefreshCw className="h-4 w-4" /> 새로고침</Button></div> : <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-5 text-[#777a74]">점수와 자녀에게 보여줄 이유는 새 확인 사건으로 기록됩니다. 저장 후 서버의 최신 결과를 다시 불러옵니다.</p><Button type="button" disabled={Boolean(submittingId)} onClick={() => void submitVerification(row)} className="shrink-0 rounded-xl bg-[#333a44] text-white hover:bg-[#232932]">{reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}{isConfirmed ? "점수 정정 기록" : row.verification_status === "MISSING" ? "직접 관찰로 확인" : "부모 확인"}</Button></div>}
+                {isConflicted ? <div role="alert" className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-red-50 p-3 text-xs leading-5 text-red-800"><span><CircleAlert className="mr-1 inline h-4 w-4 align-text-bottom" />다른 확인으로 revision이 바뀌었습니다. 자동 재시도하지 않았습니다.</span><Button type="button" variant="outline" size="sm" onClick={() => void load()}><RefreshCw className="h-4 w-4" /> 새로고침</Button></div> : <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><p className="text-xs leading-5 text-[#777a74]">{isPassRule ? "PASS 여부와 자녀에게 보여줄 이유는 새 확인 사건으로 기록됩니다. 확인 필요는 보상 없음이며 자동 패널티가 아닙니다." : "점수와 자녀에게 보여줄 이유는 새 확인 사건으로 기록됩니다. 저장 후 서버의 최신 결과를 다시 불러옵니다."}</p><Button type="button" disabled={Boolean(submittingId)} onClick={() => void submitVerification(row)} className="shrink-0 rounded-xl bg-[#333a44] text-white hover:bg-[#232932]">{reviewing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}{isPassRule ? isConfirmed ? "PASS 확인 정정 기록" : "PASS 확인 기록" : isConfirmed ? "점수 정정 기록" : row.verification_status === "MISSING" ? "직접 관찰로 확인" : "부모 확인"}</Button></div>}
               </article>;
             })}
           </div>

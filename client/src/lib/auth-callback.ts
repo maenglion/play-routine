@@ -21,7 +21,7 @@ export function inspectAuthCallback(href: string) {
   for (const key of AUTH_PARAMS) clean.searchParams.delete(key);
   if (isCallback) clean.hash = "";
   if (clean.pathname === AUTH_CALLBACK_PATH) clean.pathname = "/";
-  return { isCallback, errorMessage, cleanPath: `${clean.pathname}${clean.search}${clean.hash}` };
+  return { isCallback, isRecovery: get("type") === "recovery" && !errorMessage, errorMessage, cleanPath: `${clean.pathname}${clean.search}${clean.hash}` };
 }
 
 export async function receiveAuthSession(

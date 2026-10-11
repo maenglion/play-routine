@@ -397,3 +397,11 @@ GitHub maenglion/play-routine main의 a113bd7에 프로필/보호자/부모 규�
 ### 2026-10-12 01:54 KST — 활동 연결 공개 반영 완료
 
 GitHub main `80ed2d1`을 새 작업공간에 재복제해 frozen-lockfile 설치·TypeScript·기본 60개 시험(실서비스 opt-in 9개 제외)·프로덕션 빌드를 통과했다. 운영 작업공간에서는 앞서 69개 전체 실서비스 시험을 통과했다. 공개 앱 HTTP 200과 새 `/assets/index-DWAxB-kR.js`에 배정·부모 확인·오늘 조회·활동 CSV·원장 미연결·refreshKey 변경이 모두 포함됨을 확인했다. 공개 익명 브라우저는 preview=parent에서도 로그인 화면으로 차단되고 가족 데이터가 노출되지 않으며 보호자 탭과 제작 배지 비노출을 유지한다. 실제 부모 로그인 후 새 배정을 확인·작성하는 사용자 종단시험은 다음 운영 단계이며, 이 공개 검증을 그 시험으로 과장하지 않는다.
+
+### 2026-10-12 02:16 KST — 비밀번호 분실 복구 UI
+
+사용자가 비밀번호 분실을 알려 기존 로그인에 없던 ‘비밀번호를 잊었어요’를 추가했다. resetPasswordForEmail만 사용해 새 계정을 만들지 않으며, 일반 응답으로 이메일 존재를 노출하지 않는다. recovery fragment와 PASSWORD_RECOVERY 이벤트는 기존 가족 대시보드보다 새 비밀번호 설정을 우선하고 동일 계정의 sessionStorage 비밀 없는 marker로 새로고침 후 설정 상태를 유지한다. 비밀번호는 8자 이상·재입력 일치가 필요하고 성공 후 입력값/marker를 지운다. 기존 가족·초대·principal을 변경하지 않는다.
+
+TypeScript·기본 67개 시험(외부 9개 제외)·실제 공개 콜백 정책 4개·빌드 통과. 브라우저에서 mock recovery endpoint를 가로채 이메일 정규화·공개 root redirect·일반 대기 안내·재전송 UI를 검증했다. 실제 메일은 보내지 않았고 운영 비밀번호를 조회·대신 변경하지 않았다. 사용자가 앱에서 가입한 이메일로 링크를 요청하고 자기 브라우저에서 새 비밀번호를 입력해야 한다.
+
+공식 계약: https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail — 메일 요청 후 PASSWORD_RECOVERY로 화면 표시, updateUser로 사용자 본인이 변경.

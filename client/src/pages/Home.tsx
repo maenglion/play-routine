@@ -14,6 +14,7 @@ import {
 import { getRememberMePreference, setRememberMePreference } from "@/lib/auth-storage";
 import { getAuthRedirectUrl, receiveAuthSession } from "@/lib/auth-callback";
 import { initialAuthCallback, supabase } from "@/lib/supabase";
+import { RECOVERY_NOTICE, RECOVERY_SESSION_KEY, passwordsMatch, requestPasswordRecovery, requiresRecoverySetup } from "@/lib/password-recovery";
 import { trpc } from "@/lib/trpc";
 import type { Session } from "@supabase/supabase-js";
 import { ArrowRight, Clock3, Loader2, LockKeyhole, LogIn, LogOut, Mail, ShieldCheck, Sparkles, UserPlus } from "lucide-react";
@@ -21,7 +22,7 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 type AccountMode = "parent" | "child" | "guardian";
-type AuthMode = "login" | "signup";
+type AuthMode = "login" | "signup" | "reset";
 
 type FamilyMembership = {
   family_id: string;
@@ -49,6 +50,9 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [recoveryLink, setRecoveryLink] = useState(initialAuthCallback.isRecovery);
+  const [recoveryUserId, setRecoveryUserId] = useState(() => window.sessionStorage.getItem(RECOVERY_SESSION_KEY));
   const [emailSent, setEmailSent] = useState(false);
   const [rememberMe, setRememberMe] = useState(() =>
     typeof window === "undefined" ? true : getRememberMePreference(window.localStorage),
@@ -143,6 +147,10 @@ export default function Home() {
         const nextSession = await receiveAuthSession(supabase.auth, initialAuthCallback);
         if (!mounted) return;
         setSession(nextSession);
+        if (initialAuthCallback.isRecovery && nextSession) {
+          setRecoveryUserId(nextSession.user.id);
+          window.sessionStorage.setItem(RECOVERY_SESSION_KEY, nextSession.user.id);
+        }
         await refreshAccount(nextSession);
       } catch {
         if (mounted) setAuthError(initialAuthCallback.errorMessage ?? "인증 또는 계정 정보를 불러오지 못했습니다. 새 확인 메일을 요청하거나 다시 로그인해 주세요.");
@@ -156,6 +164,16 @@ export default function Home() {
     const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (!mounted || (_event === "INITIAL_SESSION" && initialAuthCallback.errorMessage)) return;
       setSession(nextSession);
+      if (_event === "PASSWORD_RECOVERY" && nextSession) {
+        setRecoveryLink(true);
+        setRecoveryUserId(nextSession.user.id);
+        window.sessionStorage.setItem(RECOVERY_SESSION_KEY, nextSession.user.id);
+        setPassword(""); setPasswordConfirmation("");
+      }
+      if (_event === "SIGNED_OUT") {
+        setRecoveryLink(false); setRecoveryUserId(null);
+        window.sessionStorage.removeItem(RECOVERY_SESSION_KEY);
+      }
       window.setTimeout(() => {
         if (!mounted) return;
         refreshAccount(nextSession).catch(() => {
@@ -232,7 +250,20 @@ export default function Home() {
     }
   };
 
+  const requestResetLink = async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      setAuthError(null); applyRememberMe();
+      const notice = await requestPasswordRecovery(supabase.auth, email, window.location.origin);
+      setEmailSent(true); toast.info(notice);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "재설정 메일 요청에 실패했습니다.");
+    } finally { setBusy(false); }
+  };
+
   const finishPasswordSetup = async () => {
+    if (!session || busy || (requiresRecoverySetup(session.user.id, recoveryLink, recoveryUserId) && !passwordsMatch(password, passwordConfirmation))) return;
     setBusy(true);
     try {
       applyRememberMe();
@@ -241,10 +272,14 @@ export default function Home() {
         data: { password_configured: true },
       });
       if (error) throw error;
+      const wasRecovery = requiresRecoverySetup(session.user.id, recoveryLink, recoveryUserId);
+      setRecoveryLink(false); setRecoveryUserId(null);
+      window.sessionStorage.removeItem(RECOVERY_SESSION_KEY);
+      setPassword(""); setPasswordConfirmation("");
       const activeSession = (await supabase.auth.getSession()).data.session;
       setSession(activeSession);
       await refreshAccount(activeSession);
-      toast.success("비밀번호 설정이 완료되었습니다.");
+      toast.success(wasRecovery ? "새 비밀번호로 변경되었습니다. 기존 가족 연결은 그대로입니다." : "비밀번호 설정이 완료되었습니다.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "비밀번호 설정에 실패했습니다.");
     } finally {
@@ -361,6 +396,8 @@ export default function Home() {
     await supabase.auth.signOut();
     setSession(null);
     setPassword("");
+    setPasswordConfirmation(""); setRecoveryLink(false); setRecoveryUserId(null);
+    window.sessionStorage.removeItem(RECOVERY_SESSION_KEY);
     setEmailSent(false);
   };
 
@@ -378,8 +415,9 @@ export default function Home() {
   const childMembership = memberships.find(row => row.role === "CHILD");
   const guardianMembership = memberships.find(row => row.role === "GUARDIAN");
   const childProfile = childMembership ? (childProfiles[0] as ChildProfile | undefined) ?? null : null;
+  const passwordRecoveryRequired = requiresRecoverySetup(session?.user.id, recoveryLink, recoveryUserId);
   const passwordSetupRequired = Boolean(
-    session && needsPasswordSetup(session.user.user_metadata),
+    session && (needsPasswordSetup(session.user.user_metadata) || passwordRecoveryRequired),
   );
   const devPreview = import.meta.env.DEV
     ? new URLSearchParams(window.location.search).get("preview")
@@ -510,24 +548,28 @@ export default function Home() {
                     <TabsContent value="guardian" className="mt-5"><div className="rounded-2xl bg-[#d4cfe7] p-4 text-sm leading-6 text-[#51447f]">부모가 초대한 같은 이메일로 확인 후 수락합니다. 보호자는 상태창만 볼 수 있고 규칙·프로필·기록을 변경할 수 없습니다.</div></TabsContent>
                     <div className="mt-5 space-y-2"><Label htmlFor="email">이메일</Label><Input id="email" type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="name@example.com" disabled={emailSent} /></div>
                     {authMode === "signup" && emailSent && <div className="mt-5 rounded-2xl border border-[#b9d7ce] bg-[#edf7f3] p-4 text-sm leading-6 text-[#315045]"><strong>확인 메일을 보냈습니다.</strong><br />메일의 확인 링크를 누르면 Play Routine으로 돌아와 비밀번호를 설정합니다.</div>}
+                    {authMode === "reset" && <div role="status" className="mt-5 rounded-2xl border border-[#b9d7ce] bg-[#edf7f3] p-4 text-sm leading-6 text-[#315045]"><strong>비밀번호 재설정</strong><p>{emailSent ? RECOVERY_NOTICE : "가입했던 이메일로 재설정 링크를 받습니다. 계정을 다시 만들거나 자녀를 다시 연결할 필요는 없습니다."}</p>{emailSent && <p className="mt-2">메일의 최신 링크를 누른 뒤 새 비밀번호를 입력해 주세요. 링크와 비밀번호는 채팅에 보내지 마세요.</p>}</div>}
                     {authMode === "login" && <div className="mt-5 space-y-2"><Label htmlFor="password">비밀번호</Label><div className="relative"><LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8d87]" /><Input id="password" type="password" minLength={8} autoComplete="current-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상" className="pl-10" /></div></div>}
+                    {authMode === "login" && <button type="button" className="mt-3 text-sm font-semibold text-[#4d2ddc] underline underline-offset-4" disabled={busy} onClick={() => { setAuthMode("reset"); setEmailSent(false); setPassword(""); setAuthError(null); }}>비밀번호를 잊었어요</button>}
                     <label className="mt-5 flex cursor-pointer items-center gap-3 rounded-xl border border-black/8 bg-white/70 px-4 py-3 text-sm text-[#555852]">
                       <input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} className="h-4 w-4 accent-[#4d2ddc]" />
                       <span><strong className="text-[#262722]">자동 로그인</strong><span className="ml-2 text-xs text-[#858881]">이 기기에서 로그인 상태 유지</span></span>
                     </label>
-                    <Button className="mt-6 w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || !email || (authMode === "login" && password.length < 8) || (authMode === "signup" && mode === "parent" && !displayName)} onClick={authMode === "login" ? signInWithPassword : requestSignupLink}>
-                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : authMode === "login" ? <><LogIn className="h-4 w-4" /> 로그인</> : emailSent ? <><Mail className="h-4 w-4" /> 확인 메일 다시 보내기</> : <><UserPlus className="h-4 w-4" /> 이메일 확인 링크 받기</>}
+                    <Button className="mt-6 w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || !email || (authMode === "login" && password.length < 8) || (authMode === "signup" && mode === "parent" && !displayName)} onClick={authMode === "login" ? signInWithPassword : authMode === "reset" ? requestResetLink : requestSignupLink}>
+                      {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : authMode === "login" ? <><LogIn className="h-4 w-4" /> 로그인</> : authMode === "reset" ? <><Mail className="h-4 w-4" /> {emailSent ? "재설정 메일 다시 보내기" : "재설정 링크 받기"}</> : emailSent ? <><Mail className="h-4 w-4" /> 확인 메일 다시 보내기</> : <><UserPlus className="h-4 w-4" /> 이메일 확인 링크 받기</>}
                     </Button>
+                    {authMode === "reset" && <button type="button" disabled={busy} className="mt-4 w-full text-sm text-[#737670] underline underline-offset-4" onClick={() => { setAuthMode("login"); setEmailSent(false); }}>로그인으로 돌아가기</button>}
                   </Tabs>
                 </CardContent>
               </Card>
             ) : passwordSetupRequired ? (
               <Card className="rounded-[28px] border-black/8 bg-white/85 shadow-[0_24px_80px_rgba(51,58,68,.10)]">
-                <CardHeader><CardTitle>비밀번호 설정</CardTitle><CardDescription>이메일 확인이 완료되었습니다. 다음 로그인에 사용할 비밀번호를 정해 주세요.</CardDescription></CardHeader>
+                <CardHeader><CardTitle>{passwordRecoveryRequired ? "새 비밀번호 설정" : "비밀번호 설정"}</CardTitle><CardDescription>{passwordRecoveryRequired ? "이메일 본인 확인이 완료되었습니다. 새 비밀번호를 정해 주세요. 기존 가족과 자녀 연결은 유지됩니다." : "이메일 확인이 완료되었습니다. 다음 로그인에 사용할 비밀번호를 정해 주세요."}</CardDescription></CardHeader>
                 <CardContent className="space-y-5">
                   <div className="space-y-2"><Label htmlFor="new-password">새 비밀번호</Label><div className="relative"><LockKeyhole className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8a8d87]" /><Input id="new-password" type="password" minLength={8} autoComplete="new-password" value={password} onChange={event => setPassword(event.target.value)} placeholder="8자 이상" className="pl-10" /></div></div>
+                  {passwordRecoveryRequired && <div className="space-y-2"><Label htmlFor="confirm-password">새 비밀번호 확인</Label><Input id="confirm-password" type="password" autoComplete="new-password" value={passwordConfirmation} onChange={event => setPasswordConfirmation(event.target.value)} placeholder="같은 비밀번호를 다시 입력" />{passwordConfirmation && !passwordsMatch(password, passwordConfirmation) && <p role="status" className="text-xs text-red-700">8자 이상이며 두 비밀번호가 같아야 합니다.</p>}</div>}
                   <label className="flex cursor-pointer items-center gap-3 rounded-xl border border-black/8 bg-white/70 px-4 py-3 text-sm text-[#555852]"><input type="checkbox" checked={rememberMe} onChange={event => setRememberMe(event.target.checked)} className="h-4 w-4 accent-[#4d2ddc]" /><span><strong className="text-[#262722]">자동 로그인</strong><span className="ml-2 text-xs text-[#858881]">이 기기에서 로그인 상태 유지</span></span></label>
-                  <Button className="w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || password.length < 8} onClick={finishPasswordSetup}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> 비밀번호 설정 완료</>}</Button>
+                  <Button className="w-full rounded-xl bg-[#4d2ddc] text-white hover:bg-[#3d20c7]" disabled={busy || password.length < 8 || (passwordRecoveryRequired && !passwordsMatch(password, passwordConfirmation))} onClick={finishPasswordSetup}>{busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <><ShieldCheck className="h-4 w-4" /> {passwordRecoveryRequired ? "새 비밀번호 저장" : "비밀번호 설정 완료"}</>}</Button>
                 </CardContent>
               </Card>
             ) : guardianInvitations.length > 0 && mode === "guardian" ? (

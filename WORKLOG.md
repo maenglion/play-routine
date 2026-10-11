@@ -425,3 +425,11 @@ Netlify origin은 아직 Supabase redirect 허용목록에 없어 이메일 링�
 최종 전체 회귀·소스 게시·초안 배포와 기존 공개 사이트 교체 승인 상태는 아래 이어서 기록한다.
 
 최종 검증 완료: 모든 외부 연결 opt-in을 켠 22개 파일 91개 시험 전부 통과, TypeScript·build 통과. 수동 보상 롤백은 45개 검사이며 부모 직접금액 7,000원·미완료 주간 대기·자녀 지급/쿠폰 사용 차단까지 포함했다.
+
+### 최종 소스·배포 검증 — 2026-10-12 04:20 KST
+
+GitHub main `53333a905cfc594be429e1f3415e70d060d08a9f`에 31개 변경 파일을 푸시했다. 공개 패턴·현재 환경 비밀값 검사 통과. 원격에서 새 디렉터리로 재복제 후 frozen-lockfile 설치·TypeScript·기본 79개 시험·프로덕션 빌드 재현에 성공했다. 실DB 및 Netlify opt-in을 모두 포함한 22개 파일 91개 시험은 전부 통과했다.
+
+체크포인트 `25fc17be`를 저장했고 기존 공개 앱 번들에 PASS_FAIL·특별보너스·주간 직접 금액 입력이 실제 전파됐다. Netlify 최종 초안 `6acbe0f4dd77be8940fc6114`의 JS 바이트가 로컬 최종 빌드와 일치하며 동일 기능을 포함한다. 초안에서 `/auth/callback` 200·tRPC JSON·SVG 저장소 정상, 부모 CSV·프로필 API 무인증 401과 공개 `preview=parent`의 로그인 화면 차단을 확인했다.
+
+Netlify 최종 검토 주소: https://6acbe0f4dd77be8940fc6114--play-routine.netlify.app/ . 기존 공개 주소 https://play-routine.netlify.app/ 를 이 정확한 배포본으로 교체하고 main 자동 빌드를 다시 활성화하는 외부 공개 조치는 사용자 최종 승인 대기다. 이미 권한·토큰 검증은 끝났으며 로그인이나 토큰 재입력을 요청하지 않는다. 기존 공개 앱은 새 기능이 반영됐다.

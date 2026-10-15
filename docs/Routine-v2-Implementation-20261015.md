@@ -1,6 +1,6 @@
 # 데일리·Quest 룰 등록 v2 — 20261015
 
-**기준:** 사용자가 승인한 `Rule-Registry-Change-20261015-1.md`. 구현·DB 적용·종합시험 완료. GitHub·공개 배포는 아래 최종 검증 기록에서 확정한다.
+**기준:** 사용자가 승인한 `Rule-Registry-Change-20261015-1.md`. 구현·DB 적용·종합시험·GitHub·양쪽 공개 배포 완료.
 
 ## 이번 변경의 핵심
 
@@ -73,7 +73,7 @@ PASS를 매일 확인했다고 주간 보상이 매일 지급되지 않는다. �
 
 `pnpm check`, `pnpm test`, `pnpm build`와 Netlify 방식 `NETLIFY=true pnpm exec vite build`를 구분한다. 실제 DB는 `RUN_LIVE_ROUTINE_V2_TESTS=1 pnpm exec vitest run server/routine-v2.live.test.ts`로 별도 검사한다. 실DB fixture는 전부 롤백하며 실제 메일 발송·금전 거래를 수행하지 않는다.
 
-**최종 적용·시험·GitHub·공개 배포 결과는 검증 완료 후 이 문서에 추가한다.**
+최종 적용·시험·GitHub·공개 배포 결과는 아래 검증 기록을 따른다.
 
 ## 최종 검증 — 2026-10-15
 
@@ -88,3 +88,9 @@ PASS를 매일 확인했다고 주간 보상이 매일 지급되지 않는다. �
 | 익명 RPC | 실제 REST의 신규 3개 조회 모두 401/42501; Auth health 200 |
 
 전체 실DB 검증에서만 파일을 직렬화한다. 단위시험 병렬 실행은 유지하며, DB fixture의 테이블 잠금과 제한시간 충돌을 피한다. 실제 운영 부모의 새 룰 입력은 배포 후 별도로 확인한다.
+
+## 최종 게시·재현 결과
+
+GitHub `maenglion/play-routine`의 `main`에 **3e5a7fd**를 푸시했다. 같은 커밋의 Netlify 자동 production 배포 **6ad09d33bba7645c87f62eab**가 ready 및 실제 published 상태이며 main 자동 배포는 켜져 있다. Netlify와 Manus 공개 앱 양쪽에서 새 데일리·Quest·CSV·Supabase 설정 번들을 확인했다. CSV 두 종류와 프로필 업로드의 익명 요청은 모두 401, 티켓 SVG는 양쪽 200으로 확인했다.
+
+GitHub를 별도 폴더로 재복제한 정확한 커밋에서 frozen-lockfile 설치·TypeScript·기본 105개 시험·서버 빌드·Netlify Vite 빌드를 재현했고 작업 트리는 깨끗했다. 공개 브라우저에서 로그인 입력이 정상 렌더링되고 익명 `preview=parent`는 관리 화면을 열지 않으며 Supabase 누락 오류·제작 배지·컨테이너 runtime 스크립트가 없음을 확인했다. 실제 부모 계정의 새 룰 운영 입력은 이후 사용자가 확인한다.

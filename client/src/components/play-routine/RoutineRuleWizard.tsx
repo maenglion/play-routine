@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { focusReinforcerRegistration } from "@/lib/reinforcer-navigation";
 import {
   categoryLabel,
   createEmptyRoutinePayload,
@@ -155,9 +156,7 @@ export default function RoutineRuleWizard({
   preview = false,
   onPublished,
 }: RoutineRuleWizardProps) {
-  const [tab, setTab] = useState<"reward" | "penalty" | "reinforcers">(
-    "reward"
-  );
+  const [tab, setTab] = useState<"reward" | "penalty">("reward");
   const [payload, setPayload] = useState<RoutineDraftPayload>(() =>
     createEmptyRoutinePayload()
   );
@@ -761,6 +760,20 @@ export default function RoutineRuleWizard({
     if (step === 2)
       return (
         <div className="space-y-5">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#cde5de]/50 p-4">
+            <p className="text-sm text-[#315f4d]">
+              보상 목록에 원하는 항목이 없나요? 강화물을 등록하면 여기서 바로
+              선택할 수 있습니다.
+            </p>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={actionDisabled}
+              onClick={() => focusReinforcerRegistration()}
+            >
+              <Gift className="h-4 w-4" /> 강화물 등록하기
+            </Button>
+          </div>
           {payload.flow === "QUEST" ? (
             <section className="rounded-2xl bg-[#f9f6ef] p-4">
               <h3 className="font-bold">Quest 패널티 후보</h3>
@@ -1256,6 +1269,36 @@ export default function RoutineRuleWizard({
           <FilePlus2 className="h-4 w-4" /> 새 초안
         </Button>
       </div>
+      <section
+        id="parent-reinforcers"
+        aria-labelledby="reinforcer-registration-title"
+        className="mt-6 scroll-mt-6 rounded-2xl border border-[#b9d7cc] bg-white p-4 sm:p-5"
+      >
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-[#315f4d]">
+            보상에 사용할 항목
+          </p>
+          <h3
+            id="reinforcer-registration-title"
+            tabIndex={-1}
+            className="mt-1 text-xl font-bold outline-offset-4"
+          >
+            강화물 등록
+          </h3>
+          <p className="mt-2 text-sm leading-6 text-[#747670]">
+            쿠페이머니·자유 시간·소원처럼 보상에 쓸 항목을 등록하세요.
+            금액·시간·소원 내용은 룰의 조건별로 입력합니다.
+          </p>
+        </div>
+        <RoutineReinforcers
+          familyId={familyId}
+          preview={preview}
+          rows={reinforcers}
+          onRowsChange={setReinforcers}
+          externalBusy={saving || Boolean(publishingId) || loading}
+          onBusyChange={setReinforcerBusy}
+        />
+      </section>
       <Tabs
         value={tab}
         onValueChange={value => {
@@ -1278,24 +1321,7 @@ export default function RoutineRuleWizard({
           >
             Penalty
           </TabsTrigger>
-          <TabsTrigger
-            value="reinforcers"
-            className="min-w-[120px]"
-            disabled={mutationBusy}
-          >
-            Reinforcers
-          </TabsTrigger>
         </TabsList>
-        <TabsContent value="reinforcers" className="mt-5">
-          <RoutineReinforcers
-            familyId={familyId}
-            preview={preview}
-            rows={reinforcers}
-            onRowsChange={setReinforcers}
-            externalBusy={mutationBusy || loading}
-            onBusyChange={setReinforcerBusy}
-          />
-        </TabsContent>
         <TabsContent value="penalty" className="mt-5">
           <div className="rounded-2xl bg-[#f9f6ef] p-5 text-sm leading-6 text-[#565852]">
             <strong>Penalty</strong>

@@ -24,6 +24,13 @@ export type RoutineReinforcersProps = {
 
 type NewReinforcer = { name: string; unit: ReinforcerUnit; unitLabel: string };
 
+const reinforcerKindLabel: Record<ReinforcerUnit, string> = {
+  WON: "돈 · 원",
+  MIN: "시간 · 분",
+  POINT: "포인트 · 점",
+  STRING: "소원·활동 · 내용",
+};
+
 const previewRows: ReinforcerRow[] = [
   { id: "preview-min", name: "자유 시간", unit: "MIN", unit_label: "분" },
   {
@@ -200,9 +207,9 @@ export default function RoutineReinforcers({
     <div className="space-y-5">
       <div className="rounded-2xl bg-[#f9f6ef] p-4 text-sm leading-6 text-[#565852]">
         <Gift className="mr-2 inline h-4 w-4 text-[#4d2ddc]" />
-        강화물은 가족의 불변 카탈로그입니다. <strong>이름</strong>과{" "}
-        <strong>값 종류</strong>를 먼저 정하고, 룰의 조건별로 값 또는 약속
-        내용을 정합니다. 자동 송금·충전은 하지 않습니다.
+        강화물의 <strong>이름</strong>과 <strong>값 종류</strong>를 먼저 정하고,
+        룰의 조건별로 값 또는 약속 내용을 정합니다. 등록한 이름·종류는 기존 룰을
+        보존하기 위해 고정됩니다.
       </div>
       <div className="grid gap-4 rounded-2xl border border-black/10 p-4 sm:grid-cols-2">
         <div className="space-y-2">
@@ -230,7 +237,7 @@ export default function RoutineReinforcers({
             <>
               {REINFORCER_UNITS.map(unit => (
                 <option key={unit} value={unit}>
-                  {unitLabel[unit]} ({unit})
+                  {reinforcerKindLabel[unit]}
                 </option>
               ))}
             </>
@@ -264,7 +271,7 @@ export default function RoutineReinforcers({
             ) : (
               <Plus className="h-4 w-4" />
             )}{" "}
-            강화물 추가
+            강화물 저장
           </Button>
         </div>
       </div>

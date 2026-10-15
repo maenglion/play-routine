@@ -21,3 +21,20 @@ describe('활동 CSV 가족별 접근 보안',()=>{
  it('허용 부모의 사건 CSV는 가족 필터·공개 이유·예정분 표시만 포함한다',async()=>{mocks.getUser.mockResolvedValue(verified());mocks.query.mockResolvedValueOnce({rows:[{family_id:'authorized-family'}]}).mockResolvedValueOnce({rows:[{source_business_date:'2026-10-10',child_visible_reason:'확인',pending_minutes_not_balance:30,settlement_status:'NOT_SETTLED'}]});const r=await request('activity-records');expect(r.status).toBe(200);const text=await r.text();expect(text).toContain('pending_minutes_not_balance');expect(text).toContain('NOT_SETTLED');expect(mocks.query.mock.calls[1][0]).toContain('where o.family_id=$1');expect(mocks.query.mock.calls[1][1]).toEqual(['authorized-family']);});
  it('허용 부모의 배정 CSV도 서버가 확인한 가족으로만 제한한다',async()=>{mocks.getUser.mockResolvedValue(verified());mocks.query.mockResolvedValueOnce({rows:[{family_id:'authorized-family'}]}).mockResolvedValueOnce({rows:[]});const r=await request('activity-assignments');expect(r.status).toBe(200);expect(mocks.query.mock.calls[1][0]).toContain('where a.family_id=$1');expect(mocks.query.mock.calls[1][1]).toEqual(['authorized-family']);});
 });
+
+describe('데일리·Quest CSV의 접근 및 단위 보존', () => {
+ it.each(['routine-records', 'routine-rewards'])('%s는 자녀·보호자·타가족 부모를 거절한다', async dataset => {
+  mocks.getUser.mockResolvedValue(verified()); mocks.query.mockResolvedValue({rows:[]});
+  const response = await request(dataset); expect(response.status).toBe(403); expect(mocks.query).toHaveBeenCalledTimes(1);
+ });
+ it('새 수행일·부모 확인 사건 이력을 자기 가족으로만 내보낸다', async () => {
+  mocks.getUser.mockResolvedValue(verified()); mocks.query.mockResolvedValueOnce({rows:[{family_id:'authorized-family'}]}).mockResolvedValueOnce({rows:[{source_business_date:'2026-10-15',recorded_stickers:1,accounting_status:'NOT_LEDGER_BALANCE'}]});
+  const response = await request('routine-records'); expect(response.status).toBe(200); expect(await response.text()).toContain('NOT_LEDGER_BALANCE');
+  expect(mocks.query.mock.calls[1][0]).toContain('where o.family_id=$1'); expect(mocks.query.mock.calls[1][1]).toEqual(['authorized-family']);
+ });
+ it('보상별 단위·이행·재검토를 별도 행과 감사 이력으로 보존한다', async () => {
+  mocks.getUser.mockResolvedValue(verified()); mocks.query.mockResolvedValueOnce({rows:[{family_id:'authorized-family'}]}).mockResolvedValueOnce({rows:[{reward_unit:'WON',amount:10000,requires_review:true,accounting_status:'INDEPENDENT_ENTITLEMENT_NOT_BALANCE'}]});
+  const response = await request('routine-rewards'); expect(response.status).toBe(200); const text = await response.text(); expect(text).toContain('requires_review'); expect(text).toContain('INDEPENDENT_ENTITLEMENT_NOT_BALANCE');
+  expect(mocks.query.mock.calls[1][0]).toContain('where e.family_id=$1'); expect(mocks.query.mock.calls[1][0]).toContain('routine_entitlement_events'); expect(mocks.query.mock.calls[1][1]).toEqual(['authorized-family']);
+ });
+});

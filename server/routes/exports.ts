@@ -3,7 +3,7 @@ import type { Express, Request } from "express";
 import { Pool } from "pg";
 import { getSupabaseConnectionString } from "../supabaseConnection";
 
-type Dataset = "children" | "invitations" | "auth-links" | "activity-records" | "activity-assignments";
+type Dataset = "children" | "invitations" | "auth-links" | "activity-records" | "activity-assignments" | "routine-records" | "routine-rewards";
 
 let pool: Pool | null = null;
 
@@ -70,6 +70,37 @@ async function parentFamilyForAuthUser(authUserId: string, requestedFamilyId?: s
 }
 
 async function exportRows(dataset: Dataset, familyId: string) {
+  if (dataset === "routine-records") {
+    return (await getPool().query(`select o.id as occurrence_id, cp.display_name as child_name,
+      o.business_date as source_business_date, r.name as rule_name, r.version as rule_version,
+      r.flow, r.measurement, r.period, e.id as event_id, e.event_kind,
+      e.score as verified_score, e.pass as verified_pass, e.praise as verified_praise,
+      e.stickers as recorded_stickers, e.reason as child_visible_reason,
+      e.expected_revision, e.recorded_at as action_recorded_at,
+      o.current_revision, 'NOT_LEDGER_BALANCE' as accounting_status
+      from public.routine_occurrences o
+      join public.child_profiles cp on cp.id=o.child_profile_id and cp.family_id=o.family_id
+      join public.routine_rules r on r.id=o.rule_id and r.family_id=o.family_id
+      left join public.routine_occurrence_events e on e.occurrence_id=o.id and e.family_id=o.family_id
+      where o.family_id=$1 order by o.business_date,o.id,e.recorded_at,e.id`, [familyId])).rows;
+  }
+  if (dataset === "routine-rewards") {
+    return (await getPool().query(`select e.id as entitlement_id, cp.display_name as child_name,
+      r.name as rule_name,r.version as rule_version,c.label as condition_label,
+      e.source_date,e.period_start,e.period_end,ri.name_snapshot as reinforcer_name,
+      ri.unit_snapshot as reward_unit,ri.unit_label_snapshot as unit_label,
+      ri.amount,ri.text_value as promise_text,e.status,e.requires_review,
+      e.created_at as issued_at,e.fulfilled_at,
+      ev.id as audit_event_id,ev.event_kind,ev.recorded_at as action_recorded_at,
+      'INDEPENDENT_ENTITLEMENT_NOT_BALANCE' as accounting_status
+      from public.routine_entitlements e
+      join public.child_profiles cp on cp.id=e.child_profile_id and cp.family_id=e.family_id
+      join public.routine_rules r on r.id=e.rule_id and r.family_id=e.family_id
+      join public.routine_conditions c on c.id=e.condition_id and c.family_id=e.family_id
+      join public.routine_reward_items ri on ri.id=e.reward_item_id and ri.family_id=e.family_id
+      left join public.routine_entitlement_events ev on ev.entitlement_id=e.id and ev.family_id=e.family_id
+      where e.family_id=$1 order by e.created_at,e.id,ev.recorded_at,ev.id`, [familyId])).rows;
+  }
   if (dataset === "activity-records") {
     return (await getPool().query(`select o.id as occurrence_id, cp.display_name as child_name,
       o.business_date as source_business_date, av.name as activity_name, o.policy_rule_id,
@@ -167,7 +198,7 @@ export function registerExportRoutes(app: Express) {
       }
 
       const dataset = String(req.query.dataset ?? "children") as Dataset;
-      if (!["children", "invitations", "auth-links", "activity-records", "activity-assignments"].includes(dataset)) {
+      if (!["children", "invitations", "auth-links", "activity-records", "activity-assignments", "routine-records", "routine-rewards"].includes(dataset)) {
         return res.status(400).json({ error: "INVALID_DATASET" });
       }
 

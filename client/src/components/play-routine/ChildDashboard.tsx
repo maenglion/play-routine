@@ -13,13 +13,14 @@ import {
   LogOut,
   UserRound,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import AvatarCropDialog from "./AvatarCropDialog";
 import { blobToDataUrl } from "@/lib/avatar-crop";
 import { useActivityDay } from "@/hooks/useActivityDay";
 import { familyBusinessDate, summarizeActivityDay } from "@/lib/activity-flow";
 import ChildRewardList from "./ChildRewardList";
+import RoutineChildPanel from "./RoutineChildPanel";
 import ChildActivityList, { activityCategoryLabels } from "./ChildActivityList";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -73,9 +74,14 @@ export default function ChildDashboard({
   useEffect(() => {if (activeTab === 'home') setDay(today);}, [today,activeTab]);
   const activity = useActivityDay(profile?.id, day, preview);
   const stats = summarizeActivityDay(activity.rows);
+  const [routineSummary, setRoutineSummary] = useState({ loading: true, error: false, missing: 0, total: 0, confirmed: 0 });
+  const updateRoutineSummary = useCallback((value: typeof routineSummary) => setRoutineSummary(value), []);
+  const combinedTotal = stats.total + routineSummary.total;
+  const combinedConfirmed = stats.confirmed + routineSummary.confirmed;
+  const missingCount = stats.missing + (routineSummary.error ? 0 : routineSummary.missing);
   const [dismissedMissing, setDismissedMissing] = useState<string | null>(null);
   const missingKey = `${profile?.id}:${day}`;
-  const showMissing = activeTab === "home" && !activity.loading && !activity.error && stats.missing > 0 && dismissedMissing !== missingKey;
+  const showMissing = activeTab === "home" && !activity.loading && !activity.error && (!profile || !routineSummary.loading) && missingCount > 0 && dismissedMissing !== missingKey;
   const visibleRows = activity.rows.filter(row=>filter==='all'||(filter==='done'?row.child_reported||row.verification_status==='CONFIRMED':!row.child_reported&&row.verification_status!=='CONFIRMED'));
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -125,7 +131,7 @@ export default function ChildDashboard({
   return (
     <div className="min-h-dvh bg-[#f9f6ef] text-[#151515]">
       <AvatarCropDialog imageUrl={cropImage} onCancel={() => setCropImage(null)} onSave={uploadAvatar} busy={uploading} />
-      <Dialog open={showMissing} onOpenChange={open=>{if(!open)setDismissedMissing(missingKey);}}><DialogContent className="h-dvh w-screen max-w-none rounded-none border-0 bg-[#f9f6ef] p-8 sm:max-w-none"><div className="m-auto max-w-sm"><DialogHeader><DialogTitle className="text-3xl leading-tight">아직 체크가 안 되어 있어요</DialogTitle><DialogDescription className="mt-4 text-base leading-7">오늘 할 일 {stats.missing}개에 나와 부모의 확인이 아직 없어요. 했다면 알려주고, 기억나지 않으면 부모와 함께 확인해요. 미확인이라고 보상이나 패널티를 정하지 않아요.</DialogDescription></DialogHeader><Button className="mt-8 w-full rounded-xl bg-[#4d2ddc] text-white" onClick={()=>setDismissedMissing(missingKey)}>할 일 확인하기</Button></div></DialogContent></Dialog>
+      <Dialog open={showMissing} onOpenChange={open=>{if(!open)setDismissedMissing(missingKey);}}><DialogContent className="h-dvh w-screen max-w-none rounded-none border-0 bg-[#f9f6ef] p-8 sm:max-w-none"><div className="m-auto max-w-sm"><DialogHeader><DialogTitle className="text-3xl leading-tight">아직 체크가 안 되어 있어요</DialogTitle><DialogDescription className="mt-4 text-base leading-7">오늘 할 일 {missingCount}개에 나와 부모의 확인이 아직 없어요. 했다면 알려주고, 기억나지 않으면 부모와 함께 확인해요. 미확인이라고 보상이나 패널티를 정하지 않아요.</DialogDescription></DialogHeader><Button className="mt-8 w-full rounded-xl bg-[#4d2ddc] text-white" onClick={()=>setDismissedMissing(missingKey)}>할 일 확인하기</Button></div></DialogContent></Dialog>
       <main className="relative mx-auto min-h-dvh max-w-[430px] overflow-hidden px-4 pb-28 pt-7 sm:px-5">
         <header className="flex items-center justify-between">
           <div>
@@ -179,7 +185,7 @@ export default function ChildDashboard({
                   <strong className="text-[34px] leading-none tracking-[-0.05em]">{activity.loading ? "—" : stats.positiveMinutes}</strong>
                   <span className="text-sm font-semibold">min</span>
                 </div>
-                <span className="mt-2 inline-flex w-fit rounded-full bg-[#efefec] px-2.5 py-1 text-[10px] font-semibold text-[#777a7d]">부모 확인된 예정분</span>
+                <span className="mt-2 inline-flex w-fit rounded-full bg-[#efefec] px-2.5 py-1 text-[10px] font-semibold text-[#777a7d]">기존 시간 룰 예정분</span>
               </div>
               <div className="flex min-h-[132px] flex-col justify-center px-7">
                 <span className="flex items-center gap-2 text-xs font-semibold text-[#4d2ddc]"><img src="/manus-storage/artifact_amount_80f85ebe.svg" alt="" className="h-6 w-6" />현재 보유량</span>
@@ -192,9 +198,10 @@ export default function ChildDashboard({
             </div>
             </section>
 
+            {profile && <div className="mt-8"><RoutineChildPanel key={profile.id} childId={profile.id} day={day} preview={preview} onSummaryChange={updateRoutineSummary} /></div>}
             <section className="mt-9">
               <div className="grid grid-cols-3 rounded-full bg-[#333a44] p-1 text-xs font-semibold text-white">
-                {([['all','오늘의 루틴',stats.total],['done','체크 완료',activity.rows.filter(row=>row.child_reported||row.verification_status==='CONFIRMED').length],['open','미체크',stats.missing]] as const).map(([key,label,count])=><button key={key} type="button" onClick={()=>setFilter(key)} aria-pressed={filter===key} className={`rounded-full px-2 py-3 ${filter===key?'bg-[#4d2ddc]':'text-white/70'}`}>{label}<span className="ml-1">{count}</span></button>)}
+                {([['all','기존 시간 룰',stats.total],['done','체크 완료',activity.rows.filter(row=>row.child_reported||row.verification_status==='CONFIRMED').length],['open','미체크',stats.missing]] as const).map(([key,label,count])=><button key={key} type="button" onClick={()=>setFilter(key)} aria-pressed={filter===key} className={`rounded-full px-2 py-3 ${filter===key?'bg-[#4d2ddc]':'text-white/70'}`}>{label}<span className="ml-1">{count}</span></button>)}
               </div>
               <p className="my-4 text-xs leading-5 text-[#737670]">체크는 내가 했다고 알려주는 기록이에요. 부모 확인 전에는 유보되며, 체크가 없다고 시간을 빼앗지 않아요.</p>
               {stats.missing>0 && !activity.loading && <div role="status" className="mb-4 rounded-2xl border border-[#dad3bd] bg-[#f0ebdc] p-4 text-xs leading-5 text-[#625a40]">아직 체크하지 않은 할 일이 {stats.missing}개 있어요. 했다면 알려주고, 기억나지 않으면 부모에게 확인을 부탁해요. 미확인은 패널티가 아니에요.</div>}
@@ -202,7 +209,7 @@ export default function ChildDashboard({
             </section>
             {profile && <div className="mt-8"><ChildRewardList childId={profile.id} preview={preview} /></div>}
             <section className="mt-10 pb-4">
-              <div className="flex items-end gap-2"><h2 className="text-2xl font-bold tracking-[-0.05em] text-[#333a44]">부모 확인 진행률</h2><strong className="pb-0.5 text-xl text-[#4d2ddc]">{stats.total?Math.round(stats.confirmed/stats.total*100):0}%</strong></div>
+              <div className="flex items-end gap-2"><h2 className="text-2xl font-bold tracking-[-0.05em] text-[#333a44]">부모 확인 진행률</h2><strong className="pb-0.5 text-xl text-[#4d2ddc]">{combinedTotal?Math.round(combinedConfirmed/combinedTotal*100):0}%</strong></div>
               {Object.entries(activityCategoryLabels).map(([code,label])=>{
                 const items=activity.rows.filter(row=>row.category_code===code); const done=items.filter(row=>row.verification_status==='CONFIRMED').length;
                 if(!items.length)return null;
@@ -218,6 +225,7 @@ export default function ChildDashboard({
             <h2 className="text-2xl font-bold">{activeTab==='calendar'?'날짜별 할 일':'나의 확인 기록'}</h2>
             <label className="block text-sm font-semibold" htmlFor="child-activity-date">수행 날짜</label><input id="child-activity-date" type="date" value={day} max={today} onChange={e=>{if(e.target.value&&e.target.value<=today)setDay(e.target.value);}} className="w-full rounded-xl border border-black/10 bg-white px-4 py-3"/>
             <p className="text-xs leading-5 text-[#737670]">지나간 날짜의 체크도 해당 수행일로 남겨요. 부모가 확인한 예정분은 정산 전이며 사용 가능 잔액이 아니에요.</p>
+            {profile && <RoutineChildPanel key={profile.id} childId={profile.id} day={day} preview={preview} onSummaryChange={updateRoutineSummary} />}
             <ChildActivityList rows={activity.rows} loading={activity.loading} error={activity.error} reporting={activity.reporting} onReport={row=>void activity.report(row)} onRefresh={()=>void activity.refresh()}/>
           </section>
         )}

@@ -43,3 +43,11 @@ Migration은 `pnpm exec tsx scripts/apply-supabase-migrations.ts <현재-project
 ## 활동 배정·체크·부모 확인 검증 (0009)
 
 `RUN_LIVE_ACTIVITY_TESTS=1 pnpm exec vitest run server/activity-flow.live.test.ts`로 현재 DB의 활동 쓰기·읽기 권한, 중립 구간, 수행일/입력일 분리, 고정 규칙 버전·중복키·revision을 롤백 시험한다. 실DB fixture끼리는 공통 advisory lock으로 직렬화한다. 이 시험은 원장·잔액을 생성하지 않으며 새 배정 시작일은 가족 시간대 기준 다음날 이후다.
+
+## 데일리·Quest 및 조건별 복수 보상 검증 (0017~0018)
+
+`RUN_LIVE_ROUTINE_V2_TESTS=1 pnpm exec vitest run server/routine-v2.live.test.ts`는 단계별 임시저장·게시 불변·선택 보상 1~2개·스티커 기간 집계·보상권 중복 방지·부모/자녀/보호자 권한을 실제 PostgreSQL 역할로 검사한다. 모든 fixture는 공통 잠금 아래에서 생성하고 롤백한다. 실제 보상 송금이나 이메일 발송은 하지 않는다.
+
+`pnpm exec tsx scripts/verify-existing-data-preservation.ts capture <보호된-snapshot-path>`로 기존 테이블의 행 수·내용 해시만 보관한 뒤, migration 및 롤백 시험 후 `verify <동일-path>`로 비교할 수 있다. 스냅샷에는 행 원문이 없으며 비공개 폴더에 보관한다. 실제 사용자가 동시에 기록을 바꾸면 변경 감지가 정상적으로 발생하므로 그 상황은 별도 대조한다.
+
+신규 부모 CSV의 `routine-records`와 `routine-rewards`도 기존 서버의 부모 세션·가족 필터를 사용한다. Netlify에는 브라우저 공개 변수만 설정하고 서버 DB 비밀번호를 복사하지 않는다. 신규 보상권의 `AVAILABLE`·`FULFILLED` 및 재검토 표시는 일반 시간 원장·자동 송금과 다른 상태다.

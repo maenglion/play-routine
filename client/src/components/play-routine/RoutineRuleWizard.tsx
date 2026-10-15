@@ -5,6 +5,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { focusReinforcerRegistration } from "@/lib/reinforcer-navigation";
 import {
+  resumedRoutineStep,
+  selectExistingReinforcer,
+} from "@/lib/reinforcer-reuse";
+import {
   categoryLabel,
   createEmptyRoutinePayload,
   dailyAdditionalLabel,
@@ -46,6 +50,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import RoutineReinforcers from "./RoutineReinforcers";
+import ReinforcerTags from "./ReinforcerTags";
 
 export type RoutineRuleWizardProps = {
   familyId: string;
@@ -460,7 +465,12 @@ export default function RoutineRuleWizard({
       sourceRuleId: draft.source_rule_id,
       revision: draft.revision,
     });
-    setStep(draft.step >= 1 && draft.step <= 3 ? draft.step : 1);
+    setTab("reward");
+    setStep(resumedRoutineStep(draft));
+    const registration = document.getElementById(
+      "reinforcer-registration-form"
+    ) as HTMLDetailsElement | null;
+    if (registration) registration.open = false;
     window.setTimeout(
       () =>
         document
@@ -762,8 +772,8 @@ export default function RoutineRuleWizard({
         <div className="space-y-5">
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-[#cde5de]/50 p-4">
             <p className="text-sm text-[#315f4d]">
-              보상 목록에 원하는 항목이 없나요? 강화물을 등록하면 여기서 바로
-              선택할 수 있습니다.
+              아래에서 이미 등록한 강화물 태그를 선택하세요. 여러 활동에서 같은
+              항목을 재사용하며 다시 등록하지 않습니다.
             </p>
             <Button
               type="button"
@@ -771,7 +781,7 @@ export default function RoutineRuleWizard({
               disabled={actionDisabled}
               onClick={() => focusReinforcerRegistration()}
             >
-              <Gift className="h-4 w-4" /> 강화물 등록하기
+              <Gift className="h-4 w-4" /> 새 강화물만 등록
             </Button>
           </div>
           {payload.flow === "QUEST" ? (
@@ -1027,10 +1037,24 @@ export default function RoutineRuleWizard({
                       ) : null}
                     </div>
                     {tier.rewards.length === 0 ? (
-                      <p className="mt-3 text-xs text-[#777a74]">
-                        초안에는 보상을 비워 둘 수 있습니다. 게시하려면 이
-                        조건에 1개 이상을 설정해 주세요.
-                      </p>
+                      <div className="mt-3 space-y-3">
+                        <p className="text-xs text-[#777a74]">
+                          등록한 태그를 누르면 첫 번째 보상으로 연결됩니다. 두
+                          번째 보상은 선택입니다.
+                        </p>
+                        <ReinforcerTags
+                          rows={reinforcers}
+                          disabled={disabled}
+                          label={`${tier.label || "달성 조건"} 첫 보상 선택`}
+                          onSelect={item =>
+                            updateTier(tierIndex, {
+                              rewards: [
+                                { ...emptyReward(), reinforcerId: item.id },
+                              ],
+                            })
+                          }
+                        />
+                      </div>
                     ) : (
                       <div className="mt-3 space-y-3">
                         {tier.rewards.map((reward, rewardIndex) => {
@@ -1043,32 +1067,22 @@ export default function RoutineRuleWizard({
                               className="grid gap-3 rounded-xl bg-[#f9f6ef] p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
                             >
                               <div className="space-y-1">
-                                <Label
-                                  htmlFor={`reward-reinforcer-${reward.id}`}
-                                  className="text-xs"
-                                >
+                                <Label className="text-xs">
                                   보상 {rewardIndex + 1} 강화물
                                 </Label>
-                                <select
-                                  id={`reward-reinforcer-${reward.id}`}
-                                  value={reward.reinforcerId}
+                                <ReinforcerTags
+                                  rows={reinforcers}
+                                  selectedId={reward.reinforcerId}
                                   disabled={disabled}
-                                  onChange={event =>
-                                    updateReward(tierIndex, rewardIndex, {
-                                      reinforcerId: event.target.value,
-                                      amount: null,
-                                      text: "",
-                                    })
+                                  label={`보상 ${rewardIndex + 1} 강화물 선택`}
+                                  onSelect={item =>
+                                    updateReward(
+                                      tierIndex,
+                                      rewardIndex,
+                                      selectExistingReinforcer(reward, item.id)
+                                    )
                                   }
-                                  className="flex h-10 w-full rounded-md border border-input bg-white px-3 text-sm"
-                                >
-                                  <option value="">강화물을 선택하세요</option>
-                                  {reinforcers.map(item => (
-                                    <option key={item.id} value={item.id}>
-                                      {item.name} · {item.unit_label}
-                                    </option>
-                                  ))}
-                                </select>
+                                />
                               </div>
                               <div className="space-y-1">
                                 {selected?.unit === "STRING" ? (
@@ -1276,28 +1290,42 @@ export default function RoutineRuleWizard({
       >
         <div className="mb-4">
           <p className="text-xs font-semibold text-[#315f4d]">
-            보상에 사용할 항목
+            여러 활동에서 반복 사용하는 보상 목록
           </p>
           <h3
             id="reinforcer-registration-title"
             tabIndex={-1}
             className="mt-1 text-xl font-bold outline-offset-4"
           >
-            강화물 등록
+            내 강화물{" "}
+            <span className="text-sm font-normal">
+              · {reinforcers.length}개
+            </span>
           </h3>
-          <p className="mt-2 text-sm leading-6 text-[#747670]">
-            쿠페이머니·자유 시간·소원처럼 보상에 쓸 항목을 등록하세요.
-            금액·시간·소원 내용은 룰의 조건별로 입력합니다.
-          </p>
         </div>
-        <RoutineReinforcers
-          familyId={familyId}
-          preview={preview}
-          rows={reinforcers}
-          onRowsChange={setReinforcers}
-          externalBusy={saving || Boolean(publishingId) || loading}
-          onBusyChange={setReinforcerBusy}
-        />
+        <ReinforcerTags rows={reinforcers} label="가족 강화물 목록" />
+        <p className="mt-3 text-xs text-[#747670]">
+          기존 항목은 2단계 ‘조건·보상’에서 태그로 선택합니다. 금액·시간·내용은
+          활동마다 다르게 정할 수 있습니다.
+        </p>
+        <details
+          id="reinforcer-registration-form"
+          className="mt-4 rounded-xl bg-[#f9f6ef] p-3"
+        >
+          <summary className="cursor-pointer text-sm font-semibold text-[#315f4d]">
+            새 강화물 등록 · 펼치기
+          </summary>
+          <div className="mt-4">
+            <RoutineReinforcers
+              familyId={familyId}
+              preview={preview}
+              rows={reinforcers}
+              onRowsChange={setReinforcers}
+              externalBusy={saving || Boolean(publishingId) || loading}
+              onBusyChange={setReinforcerBusy}
+            />
+          </div>
+        </details>
       </section>
       <Tabs
         value={tab}

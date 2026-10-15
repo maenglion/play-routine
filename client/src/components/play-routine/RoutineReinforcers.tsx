@@ -139,11 +139,6 @@ export default function RoutineReinforcers({
     };
   }, [refresh]);
 
-  useEffect(() => {
-    // 가족 전환 때 이전 가족의 이름이 잠깐 선택지로 남지 않도록 비운다.
-    onRowsChange([]);
-  }, [familyId, onRowsChange]);
-
   const updateUnit = (unit: ReinforcerUnit) => {
     setForm(current => ({
       ...current,

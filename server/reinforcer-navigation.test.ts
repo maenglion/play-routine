@@ -54,17 +54,34 @@ describe("강화물 등록 진입", () => {
     expect(html.indexOf('href="#parent-reinforcers"')).toBeLessThan(
       html.indexOf('href="#parent-rule-registry"')
     );
+    expect(html).toMatch(/<details[^>]*id="parent-family-settings"[^>]*>/);
+    expect(html).toMatch(/<details[^>]*id="parent-record-exports"[^>]*>/);
+    expect(html).not.toMatch(
+      /<details[^>]*id="parent-family-settings"[^>]*open/
+    );
+    expect(html).not.toMatch(
+      /<details[^>]*id="parent-record-exports"[^>]*open/
+    );
+    expect(html).not.toMatch(
+      /<details[^>]*id="reinforcer-registration-form"[^>]*open/
+    );
   });
 
-  it("바로가기는 초안·탭 상태 변경 없이 등록 영역과 제목 포커스만 이동한다", () => {
+  it("바로가기는 새 등록 폼만 펼치고 초안·탭 변경 없이 제목으로 이동한다", () => {
     const scrollIntoView = vi.fn();
     const focus = vi.fn();
+    const form = { open: false };
     const root = {
       getElementById: vi.fn((id: string) =>
-        id === "parent-reinforcers" ? { scrollIntoView } : { focus }
+        id === "parent-reinforcers"
+          ? { scrollIntoView }
+          : id === "reinforcer-registration-form"
+            ? form
+            : { focus }
       ),
     };
     expect(focusReinforcerRegistration(root as unknown as Document)).toBe(true);
+    expect(form.open).toBe(true);
     expect(scrollIntoView).toHaveBeenCalledWith({
       behavior: "auto",
       block: "start",

@@ -110,10 +110,36 @@ export function createEmptyRoutinePayload(
     criteria: "",
     stickerIcon: "STAMP",
     measurement: flow === "DAILY" ? "STICKER" : "PERCENT",
-    period: "WEEKLY",
+    period: flow === "QUEST" ? "DAILY" : "WEEKLY",
     penaltyLimit: flow === "QUEST" ? null : null,
     penaltyMinutes: 0,
     tiers: [emptyTier("기본 달성")],
+  };
+}
+
+/** Quest는 건별 판정이다. 과거 UI가 숨겨서 저장한 WEEKLY 메타데이터만 복원 시 고친다. */
+export function normalizeRoutinePayload(
+  payload: RoutineDraftPayload
+): RoutineDraftPayload {
+  const flow = payload.flow === "QUEST" ? "QUEST" : "DAILY";
+  const defaults = createEmptyRoutinePayload(flow);
+  return {
+    ...defaults,
+    ...payload,
+    flow,
+    measurement:
+      flow === "DAILY"
+        ? "STICKER"
+        : payload.measurement === "QUANTITY"
+          ? "QUANTITY"
+          : "PERCENT",
+    period: flow === "QUEST" ? "DAILY" : (payload.period ?? "WEEKLY"),
+    tiers: payload.tiers?.length
+      ? payload.tiers.map(tier => ({
+          ...tier,
+          rewards: Array.isArray(tier.rewards) ? tier.rewards : [],
+        }))
+      : [emptyTier("기본 달성")],
   };
 }
 
@@ -312,6 +338,10 @@ export function validateRoutineForPublish(
   } else {
     if (payload.measurement !== "PERCENT" && payload.measurement !== "QUANTITY")
       errors.push("Quest의 수치 측정 방식을 선택해 주세요.");
+    if (payload.period !== "DAILY")
+      errors.push(
+        "예전 Quest 초안의 내부 기간값을 고쳐야 합니다. ‘이어쓰기’로 열고 임시저장한 뒤 게시해 주세요. 입력한 기준과 보상은 유지됩니다."
+      );
     if (!finiteIntegerInRange(payload.penaltyLimit, 0, 100))
       errors.push("Quest 하한은 0~100의 정수로 명시해 주세요.");
     if (!finiteIntegerInRange(payload.penaltyMinutes, 0, 240))

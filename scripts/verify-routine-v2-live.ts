@@ -1,6 +1,11 @@
 import { randomUUID } from "node:crypto";
 import { Client } from "pg";
 import { getSupabaseConnectionString } from "../server/supabaseConnection";
+import {
+  createEmptyRoutinePayload,
+  normalizeRoutinePayload,
+  stableRoutineJson,
+} from "../client/src/lib/routine-v2-form";
 
 type Fixture = {
   familyId: string;
@@ -250,6 +255,7 @@ function fullDailyPayload(name: string, wonId: string, minId: string) {
 
 function fullQuestPayload(name: string, wonId: string, minId: string) {
   return {
+    ...createEmptyRoutinePayload("QUEST"),
     schemaVersion: 1,
     flow: "QUEST",
     name,
@@ -258,7 +264,6 @@ function fullQuestPayload(name: string, wonId: string, minId: string) {
     criteria: "부모가 점수를 확인합니다.",
     stickerIcon: "STAMP",
     measurement: "PERCENT",
-    period: "DAILY",
     penaltyLimit: null,
     penaltyMinutes: 0,
     tiers: [
@@ -496,6 +501,88 @@ export async function verifyRoutineV2Live() {
       ).rows[0]?.value
     );
     await setUser(client, fixture.parentAuthId);
+
+    // UI 자체의 기본값을 그대로 저장·게시한다. 손으로 period='DAILY'를 넣으면 실제 UI 오류를 놓친다.
+    const browserQuest = createEmptyRoutinePayload("QUEST");
+    Object.assign(browserQuest, {
+      name: `UI Quest ${randomUUID().slice(0, 8)}`,
+      childLabel: "Quest 확인",
+      criteria: "부모가 수행 건의 점수를 확인합니다.",
+      measurement: "QUANTITY",
+      penaltyLimit: 60,
+      penaltyMinutes: 80,
+    });
+    browserQuest.tiers[0]!.threshold = 80;
+    browserQuest.tiers[0]!.rewards = [
+      { id: randomUUID(), reinforcerId: minId, amount: 120, text: "" },
+    ];
+    assert(
+      browserQuest.period === "DAILY",
+      "UI factory gives QUANTITY Quest a per-occurrence period without hidden weekly metadata"
+    );
+    const browserSaved = await saveDraft(
+      client,
+      fixture.familyId,
+      null,
+      browserQuest,
+      0
+    );
+    const browserPublished = await publishDraft(
+      client,
+      jsonId(browserSaved),
+      Number(browserSaved.revision)
+    );
+    assert(
+      asJson(browserPublished.payload).period === "DAILY" &&
+        asJson(browserPublished.payload).measurement === "QUANTITY",
+      "UI-created Quest with 60/80/80/120 inputs publishes through actual RPC"
+    );
+    const legacyQuest = {
+      ...browserQuest,
+      name: `Old UI Quest ${randomUUID().slice(0, 8)}`,
+      period: "WEEKLY" as const,
+    };
+    const legacySaved = await saveDraft(
+      client,
+      fixture.familyId,
+      null,
+      legacyQuest,
+      0
+    );
+    await rejected(
+      client,
+      "select public.publish_routine_draft($1,0,$2)",
+      [jsonId(legacySaved), randomUUID()],
+      "22023",
+      "legacy UI weekly Quest is rejected without weakening server invariants"
+    );
+    const repairedQuest = normalizeRoutinePayload(legacyQuest);
+    assert(
+      stableRoutineJson({ ...repairedQuest, period: legacyQuest.period }) ===
+        stableRoutineJson(legacyQuest),
+      "legacy draft normalization changes only the hidden period and preserves all inputs"
+    );
+    const repairedSaved = await saveDraft(
+      client,
+      fixture.familyId,
+      jsonId(legacySaved),
+      repairedQuest,
+      Number(legacySaved.revision)
+    );
+    assert(
+      jsonId(repairedSaved) === jsonId(legacySaved) &&
+        Number(repairedSaved.revision) === Number(legacySaved.revision) + 1,
+      "legacy repair saves the same draft with revision CAS rather than making a duplicate"
+    );
+    const repairedPublished = await publishDraft(
+      client,
+      jsonId(repairedSaved),
+      Number(repairedSaved.revision)
+    );
+    assert(
+      asJson(repairedPublished.payload).period === "DAILY",
+      "repaired old Quest publishes successfully with original reward and thresholds"
+    );
 
     const partial = partialPayload();
     const partialKey = randomUUID();

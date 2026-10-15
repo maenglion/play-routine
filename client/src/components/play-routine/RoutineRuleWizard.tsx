@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { focusReinforcerRegistration } from "@/lib/reinforcer-navigation";
+import { routineErrorMessage } from "@/lib/routine-v2-errors";
 import {
   resumedRoutineStep,
   selectExistingReinforcer,
@@ -17,6 +18,7 @@ import {
   iconLabel,
   isDraftPayloadDirty,
   newRoutineUuid,
+  normalizeRoutinePayload as normalizePayload,
   periodLabel,
   ROUTINE_CATEGORIES,
   ROUTINE_PERIODS,
@@ -113,7 +115,7 @@ const previewRules: RoutineRuleRow[] = [
 ];
 
 function errorMessage(error: unknown, fallback: string) {
-  return error instanceof Error && error.message ? error.message : fallback;
+  return routineErrorMessage(error, fallback);
 }
 
 function isNetworkFailure(error: unknown) {
@@ -130,29 +132,6 @@ function dateLabel(value: string) {
     dateStyle: "medium",
     timeZone: "UTC",
   }).format(new Date(`${value}T00:00:00Z`));
-}
-
-function normalizePayload(payload: RoutineDraftPayload): RoutineDraftPayload {
-  const flow = payload.flow === "QUEST" ? "QUEST" : "DAILY";
-  const defaults = createEmptyRoutinePayload(flow);
-  return {
-    ...defaults,
-    ...payload,
-    flow,
-    measurement:
-      flow === "DAILY"
-        ? "STICKER"
-        : payload.measurement === "QUANTITY"
-          ? "QUANTITY"
-          : "PERCENT",
-    period: payload.period ?? "WEEKLY",
-    tiers: payload.tiers?.length
-      ? payload.tiers.map(tier => ({
-          ...tier,
-          rewards: Array.isArray(tier.rewards) ? tier.rewards : [],
-        }))
-      : [emptyTier("기본 달성")],
-  };
 }
 
 /** 신규 룰 전용 등록기. 초안은 불완전하게 저장하고, 게시에서만 서버와 동일한 완성 검증을 한다. */
@@ -180,6 +159,7 @@ export default function RoutineRuleWizard({
   );
   const [loading, setLoading] = useState(!preview);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [mutationError, setMutationError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [reinforcerBusy, setReinforcerBusy] = useState(false);
@@ -209,6 +189,7 @@ export default function RoutineRuleWizard({
   const beginMutation = () => {
     if (mutationLocked.current || loading || loadError) return null;
     mutationLocked.current = true;
+    setMutationError(null);
     return contextGeneration.current;
   };
   const endMutation = (requestContext: number) => {
@@ -307,6 +288,7 @@ export default function RoutineRuleWizard({
     setReinforcers(preview ? previewReinforcers : []);
     setLoading(!preview && Boolean(familyId));
     setLoadError(null);
+    setMutationError(null);
     saveAttempts.current.clear();
     publishAttempts.current.clear();
   }, [familyId, preview]);
@@ -446,11 +428,11 @@ export default function RoutineRuleWizard({
       );
     } catch (error) {
       if (!isCurrentContext(requestContext)) return;
-      if (isNetworkFailure(error))
-        toast.error(
-          "연결 결과를 알 수 없습니다. 같은 내용으로 다시 누르면 안전하게 재시도합니다."
-        );
-      else toast.error(errorMessage(error, "임시저장하지 못했습니다."));
+      const message = isNetworkFailure(error)
+        ? "연결 결과를 알 수 없습니다. 같은 내용으로 다시 누르면 안전하게 재시도합니다."
+        : errorMessage(error, "임시저장하지 못했습니다.");
+      setMutationError(message);
+      toast.error(message);
     } finally {
       if (isCurrentContext(requestContext)) setSaving(false);
       endMutation(requestContext);
@@ -459,6 +441,7 @@ export default function RoutineRuleWizard({
 
   const resumeDraft = (draft: RoutineDraftRow) => {
     if (mutationBusy) return;
+    setMutationError(null);
     setPayload(normalizePayload(draft.payload));
     setSaved({
       id: draft.id,
@@ -485,6 +468,7 @@ export default function RoutineRuleWizard({
 
   const newDraft = () => {
     if (mutationBusy) return;
+    setMutationError(null);
     setPayload(createEmptyRoutinePayload());
     setSaved({ id: null, sourceRuleId: null, revision: 0 });
     setStep(1);
@@ -492,6 +476,7 @@ export default function RoutineRuleWizard({
 
   const newVersion = (rule: RoutineRuleRow) => {
     if (mutationBusy) return;
+    setMutationError(null);
     // 게시본 자체는 변경하지 않고, 복사본을 별도 DRAFT 원천 버전으로 저장한다.
     setPayload(normalizePayload(rule.payload));
     setSaved({ id: null, sourceRuleId: rule.id, revision: 0 });
@@ -522,6 +507,7 @@ export default function RoutineRuleWizard({
     // RPC는 draft의 저장된 payload/revision만 게시하므로, 화면의 미저장 편집본은 절대 게시하지 않는다.
     const errors = validateRoutineForPublish(draft.payload, reinforcers);
     if (errors.length) {
+      setMutationError(errors[0]);
       toast.error(errors[0]);
       endMutation(requestContext);
       return;
@@ -560,11 +546,11 @@ export default function RoutineRuleWizard({
       );
     } catch (error) {
       if (!isCurrentContext(requestContext)) return;
-      if (isNetworkFailure(error))
-        toast.error(
-          "연결 결과를 알 수 없습니다. 같은 게시 버튼을 다시 누르면 안전하게 재시도합니다."
-        );
-      else toast.error(errorMessage(error, "게시하지 못했습니다."));
+      const message = isNetworkFailure(error)
+        ? "연결 결과를 알 수 없습니다. 같은 게시 버튼을 다시 누르면 안전하게 재시도합니다."
+        : errorMessage(error, "게시하지 못했습니다.");
+      setMutationError(message);
+      toast.error(message);
     } finally {
       if (isCurrentContext(requestContext)) setPublishingId(null);
       endMutation(requestContext);
@@ -752,6 +738,10 @@ export default function RoutineRuleWizard({
                 <div className="rounded-xl bg-[#f9f6ef] p-3 text-xs leading-5 text-[#62656a]">
                   Quest는 수행 건마다 부모가 0~100 수치를 확인합니다. 정확한
                   측정 이름·단위는 위 상세 확인 기준에 적어 주세요.
+                  <p className="mt-1">
+                    기간은 수행 건별로 자동 설정됩니다. 데일리의 주간 스티커
+                    누적과 다릅니다.
+                  </p>
                 </div>
               </>
             )}
@@ -1375,6 +1365,16 @@ export default function RoutineRuleWizard({
             ))}
           </div>
           <div className="mt-5">{stepContent}</div>
+          {activeDraft?.payload.flow === "QUEST" &&
+            activeDraft.payload.period !== "DAILY" && (
+              <p
+                role="status"
+                className="mt-4 rounded-xl bg-[#f7e7d9] p-3 text-sm text-[#87472a]"
+              >
+                예전 초안의 숨겨진 기간값을 수행 건별로 수정했습니다. 입력한
+                기준·보상은 그대로입니다. 임시저장하면 수정이 반영됩니다.
+              </p>
+            )}
           <div className="mt-6 flex flex-col gap-3 border-t border-black/8 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex gap-2">
               {step > 1 && (
@@ -1414,6 +1414,14 @@ export default function RoutineRuleWizard({
           </div>
         </TabsContent>
       </Tabs>
+      {mutationError && (
+        <p
+          role="alert"
+          className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-800"
+        >
+          {mutationError}
+        </p>
+      )}
       <div className="mt-8 border-t border-black/8 pt-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -1494,6 +1502,13 @@ export default function RoutineRuleWizard({
                           timeStyle: "short",
                         }).format(new Date(draft.updated_at))}
                       </p>
+                      {draft.payload.flow === "QUEST" &&
+                        draft.payload.period !== "DAILY" && (
+                          <p className="mt-2 text-xs text-[#87472a]">
+                            내부 기간값 수정이 필요합니다. 이어쓰기로 열고
+                            임시저장해 주세요. 기준·보상은 유지됩니다.
+                          </p>
+                        )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <Button

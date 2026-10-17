@@ -68,3 +68,5 @@
 사용자 승인에 따라 운영 Supabase `dsnvohyinazotouqbzrv`에 `0020_audit_log.sql`을 실제 적용했다. 설치 전 preview 검사 37개와 설치 후 검사 38개를 통과했다. 두 실행 모두 합성 시험 행은 전체 rollback했다. 설치 전후 기존 `public` 38개 테이블의 행 수·내용 해시가 동일했다.
 
 Auth health는 HTTP 200, 공개 REST에서 익명 감사 조회는 HTTP 401 / `42501`로 차단됐다. TypeScript·기본 135개 시험·프로덕션 빌드도 통과했다. 테스트에서 만들어진 감사 행을 실제 사용자 변경 기록처럼 남기지 않았다. 이후 실제 성공 변경부터 로그가 쌓인다.
+
+소스 커밋 `68943ad`과 Netlify main 자동배포 `6ad39d927484340b3a55ccde`의 실제 공개 게시·자동빌드 활성 상태를 확인했다. 설치 SQL·검증 코드·이 안내서·WORKLOG를 모두 GitHub에 게시했다. 제공 샘플 SELECT 5개는 실제 Supabase에서 읽기 전용으로 실행해 통과했다.

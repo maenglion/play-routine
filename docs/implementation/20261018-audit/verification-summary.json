@@ -14,5 +14,9 @@
   "anonymousAuditCode": "42501",
   "routineBusinessRegression": "PASSED",
   "manualBusinessRegression": "PASSED",
-  "fixtureRolledBack": true
+  "fixtureRolledBack": true,
+  "sourceCommit": "68943adc4bedcb21a83335ebe09adfefd07fd6a8",
+  "deploymentId": "6ad39d927484340b3a55ccde",
+  "automaticMainDeployment": true,
+  "sampleSelectsPassed": 5
 }

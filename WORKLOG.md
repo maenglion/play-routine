@@ -609,3 +609,7 @@ Grok에 Supabase처리범위·보상분리·알림·승인 설계를 실제 검�
 검증에서 생성된 감사행을 실제 사용자 기록처럼 보존하지 않았다. 이후 성공한 실제 행 변경부터 기록된다. SELECT/DDL·실패한 로그인·권한 거절·rollback된 변경·관리자 우회는 이 행 트리거의 기록 범위가 아니다. 서버 보안 로그·pgAudit·외부 서명 보관·정기 내부감사는 아직 별도 구현이다. SHA-256 사본 지문은 관리자 변조 방지나 전체 payload 검증을 보증하지 않는다. audit_id는 commit 순서가 아니므로 내부 감사는 최근 기간 재조회·업무 사건 대조를 병행해야 한다.
 
 **소스:** `supabase/migrations/0020_audit_log.sql`, `scripts/verify-audit-log-live.ts`, `scripts/inspect-audit-installation.ts`, `server/audit-log.test.ts`, `docs/implementation/20261018-audit/`.
+
+### 최종 소스·공개 게시 확인
+
+감사 구현 소스 `68943adc4bedcb21a83335ebe09adfefd07fd6a8`을 GitHub main에 푸시했다. 원격의 감사 관련10개 원본 파일을 바이트 단위로 비교했다. Netlify production/main 자동배포 `6ad39d927484340b3a55ccde`가 ready·공개 게시됐고 자동빌드는 계속 활성 상태다. 양쪽 공개 홈페이지·기존 인증 API는 HTTP200이다. 제공 샘플 SELECT5개도 실제 DB에서 읽기 전용으로 전체 실행했다. 설치 후 감사행0개는 모든 합성 시험이 rollback됐다는 정상 상태이며 실제 사용자 과거 변경을 조작해 채우지 않았다.

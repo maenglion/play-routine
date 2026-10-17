@@ -1,0 +1,10 @@
+WORKLOG.md
+todo.md
+supabase/migrations/0020_audit_log.sql
+scripts/verify-audit-log-live.ts
+scripts/inspect-audit-installation.ts
+server/audit-log.test.ts
+docs/implementation/20261018-audit/Play-Routine-Audit-Log-Install-v0.1.sql
+docs/implementation/20261018-audit/Audit-Log-Sample-Queries.sql
+docs/implementation/20261018-audit/README.md
+docs/implementation/20261018-audit/verification-summary.json

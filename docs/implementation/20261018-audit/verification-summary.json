@@ -1,0 +1,18 @@
+{
+  "installed": true,
+  "triggerCount": 16,
+  "allEnabled": true,
+  "installedSqlMatches": true,
+  "auditRows": 0,
+  "inconsistentSnapshotFingerprints": 0,
+  "previewChecks": 37,
+  "installedChecks": 38,
+  "basicTests": 135,
+  "originalPublicTablesPreserved": 38,
+  "authHealth": 200,
+  "anonymousAuditHttp": 401,
+  "anonymousAuditCode": "42501",
+  "routineBusinessRegression": "PASSED",
+  "manualBusinessRegression": "PASSED",
+  "fixtureRolledBack": true
+}

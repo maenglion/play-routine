@@ -629,3 +629,7 @@ Grok에 Supabase처리범위·보상분리·알림·승인 설계를 실제 검�
 ### 설치후 전체 회귀 최종 결과
 
 실제 설치된 함수로 신규56개/감사16개를 재실행했으며 기존Auth·가족·보호자·활동·Routine v2·Netlify 연결과 함께 **34개파일/173개passed·2개skipped,267.16초**의 전체live가 성공했다. 내부SQL 검사 수와Vitest 수를 중복합산하지 않는다. 공개 staging도타입검사와158개기본시험(외부live17개skip)을통과했다. 실제seed 감사81개는DATABASE_SESSION이고 미확인 자리표시19행/권리0/이행0을조회했으며 실제성취·지급으로표시하지않는다. 상세 `docs/implementation/20261018-october/Verification-Summary.md`.
+
+### 10월 최종 공개 게시
+
+코드·migration·안내·검증요약28개변경을GitHub main `820674f54df0bc761aa211f5e3d04afae2c00d2b`로게시했다. 비밀/정확개인이메일/인증URL토큰검사통과,운영스냅샷/.env/로그와무관한과거분석파일은게시하지않았다. 원격main을빈폴더에재복제해frozen-lockfile설치·타입·158개기본시험(17개live skip)·Netlify build통과. Netlify production/main 자동배포 `6ad3b56f2c3e7c3eede460e0`의commit_ref일치·ready·published_at확인(수동배포아님). 양쪽공개홈200·새5RPC/CSV2종번들·Supabase올바른project·익명CSV401을확인했다. 마지막읽기에서19행전부UNCONFIRMED/부모확인0/자기보고0/권리0/이행0,기존public38내용보존을재확인했다. 학교자산선택/바이올린보상량과일반원장등후속은미정/미구현으로유지한다.

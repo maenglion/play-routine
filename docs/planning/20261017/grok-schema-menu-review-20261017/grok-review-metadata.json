@@ -1,0 +1,40 @@
+{
+  "model_requested": "grok-4.7",
+  "model_returned": "grok-4.7",
+  "stream_complete": true,
+  "finish_reason": "stop",
+  "source_commit": "7f008e7418bf6901c73160f5a34764cfeaf810a0",
+  "reviewed_at_utc": "2026-10-17T13:53:12.074480+00:00",
+  "inputs": [
+    {
+      "file": "database/schema.sql",
+      "sha256": "e1335de300341b05183651a0503341e37a1d9827672d26823cb224734bdc7bca"
+    },
+    {
+      "file": "database/seed.sql",
+      "sha256": "ffe03574f1613c7481940cb096bb4ad3e266267e2d1ec5a294746b17223ab48d"
+    },
+    {
+      "file": "database/entity-map.md",
+      "sha256": "43917170f4882186d59272f108e020cb7f5c7ff99372fb2ba3da8fdb03cd3103"
+    },
+    {
+      "file": "database/verify-result.json",
+      "sha256": "b2224a5b96b230b64d2961a3f73473281885ee12ccf772c92664ad7c9b32a66e"
+    },
+    {
+      "file": "prototype/src/App.tsx",
+      "sha256": "c506cdaca50396ba5926d7e750035155f06fa47f2fc621d78024d896013a9d0b"
+    },
+    {
+      "file": "prototype/src/rules.ts",
+      "sha256": "21777fdb77830a111e8bf44ca52e76194d080cd4b004b5eb00c40cab15e41bd8"
+    },
+    {
+      "file": "prototype/src/logic.ts",
+      "sha256": "df0f3c3b5e4afa90433213965e39154662ebf51ce5ee998a16d2b00d1714aca1"
+    }
+  ],
+  "input_sha256": "eb28d945239775a3ce130980d34ba35f23161404f07f5f1f373c6f5fa81f2006",
+  "response_id": "f488f2c6-88fa-9e28-8f36-79a4756428b9"
+}

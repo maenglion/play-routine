@@ -1,0 +1,1483 @@
+{
+  "method": "엔진 actual와 별도 작성 expected 및 중간 상태를 독립 비교. 엔진 계산 함수를 재사용하지 않음.",
+  "passed": 246,
+  "total": 246,
+  "checks": [
+    {
+      "name": "S01 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S01 occurrences",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S01 ledgerMIN",
+      "passed": true,
+      "expected": 60,
+      "actual": 60
+    },
+    {
+      "name": "S01 limited",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S01 quotaCount",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S02 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S02 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S02 verifications",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S02 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S02 ledgerEntries",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S02 중간 부모 확인 전 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S02 중간 부모 확인 전 holdRecords",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S02 중간 지난 정산 재실행 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S03 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S03 occurrences",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S03 ledgerMIN",
+      "passed": true,
+      "expected": 60,
+      "actual": 60
+    },
+    {
+      "name": "S03 limited",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S04 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S04 occurrences",
+      "passed": true,
+      "expected": 3,
+      "actual": 3
+    },
+    {
+      "name": "S04 ledgerMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S04 limited",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S04 quotaCount",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S05 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S05 occurrences",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S05 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S05 externalWON",
+      "passed": true,
+      "expected": 5000,
+      "actual": 5000
+    },
+    {
+      "name": "S05 limited",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S06 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S06 occurrences",
+      "passed": true,
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "S06 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S06 limited",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S06 quotaCount",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S07 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S07 occurrences",
+      "passed": true,
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "S07 ledgerMIN",
+      "passed": true,
+      "expected": 20,
+      "actual": 20
+    },
+    {
+      "name": "S07 limited",
+      "passed": true,
+      "expected": 3,
+      "actual": 3
+    },
+    {
+      "name": "S08 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S08 occurrences",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S08 ledgerMIN",
+      "passed": true,
+      "expected": 30,
+      "actual": 30
+    },
+    {
+      "name": "S08 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S09 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S09 externalPOINT",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S09 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S09 schoolStickerTotal",
+      "passed": true,
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "S10 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S10 externalPOINT",
+      "passed": true,
+      "expected": 10000,
+      "actual": 10000
+    },
+    {
+      "name": "S10 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S10 schoolStickerTotal",
+      "passed": true,
+      "expected": 5,
+      "actual": 5
+    },
+    {
+      "name": "S11 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S11 occurrences",
+      "passed": true,
+      "expected": 5,
+      "actual": 5
+    },
+    {
+      "name": "S11 verifications",
+      "passed": true,
+      "expected": 8,
+      "actual": 8
+    },
+    {
+      "name": "S11 activeGrants",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S11 externalPOINT",
+      "passed": true,
+      "expected": 15000,
+      "actual": 15000
+    },
+    {
+      "name": "S11 schoolStickerTotal",
+      "passed": true,
+      "expected": 8,
+      "actual": 8
+    },
+    {
+      "name": "S11 중간 5개 기본권리 activeGrants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S11 중간 5개 기본권리 entitledPOINT",
+      "passed": true,
+      "expected": 10000,
+      "actual": 10000
+    },
+    {
+      "name": "S11 중간 8개 추가권리 activeGrants",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S11 중간 8개 추가권리 entitledPOINT",
+      "passed": true,
+      "expected": 15000,
+      "actual": 15000
+    },
+    {
+      "name": "S12 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S12 activeGrants",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S12 holdRecords",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S12 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S12 schoolStickerTotal",
+      "passed": true,
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "S13 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S13 entitledPOINT",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S13 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S13 schoolStickerTotal",
+      "passed": true,
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "S13 studyStickerTotal",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S14 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S14 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S14 grants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S14 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S14 ledgerEntries",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S15 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S15 ledgerMIN",
+      "passed": true,
+      "expected": 80,
+      "actual": 80
+    },
+    {
+      "name": "S15 activeGrants",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S16 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S16 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S17 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S17 ledgerMIN",
+      "passed": true,
+      "expected": 60,
+      "actual": 60
+    },
+    {
+      "name": "S18 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S18 occurrences",
+      "passed": true,
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "S18 activeGrants",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S18 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S18 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S18 중간 경계-80 activeGrants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S18 중간 경계-80 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S18 중간 경계-80 entitledMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S18 중간 경계-80 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S18 중간 경계-79 activeGrants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S18 중간 경계-79 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S18 중간 경계-79 entitledMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S18 중간 경계-79 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S18 중간 경계-60 activeGrants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S18 중간 경계-60 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S18 중간 경계-60 entitledMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S18 중간 경계-60 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S18 중간 경계-59 activeGrants",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S18 중간 경계-59 pendingPenalties",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S18 중간 경계-59 entitledMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S18 중간 경계-59 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S18 중간 승인 전 보상120·차감후보80 ledgerMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S18 중간 승인 전 보상120·차감후보80 pendingPenalties",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S19 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S19 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S19 verifications",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S19 entitledMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S19 pendingPenalties",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S19 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S20 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S20 activeGrants",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S20 ledgerMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S20 externalPOINT",
+      "passed": true,
+      "expected": 30000,
+      "actual": 30000
+    },
+    {
+      "name": "S21 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S21 activeGrants",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S21 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S21 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S22 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S22 ledgerMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S22 externalPOINT",
+      "passed": true,
+      "expected": 30000,
+      "actual": 30000
+    },
+    {
+      "name": "S22 activeGrants",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S23 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S23 activeGrants",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S23 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S23 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S24 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S24 ledgerMIN",
+      "passed": true,
+      "expected": 60,
+      "actual": 60
+    },
+    {
+      "name": "S24 activeGrants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S25 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S25 ledgerMIN",
+      "passed": true,
+      "expected": 600,
+      "actual": 600
+    },
+    {
+      "name": "S25 externalWON",
+      "passed": true,
+      "expected": 30000,
+      "actual": 30000
+    },
+    {
+      "name": "S25 activeGrants",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S25 quotaCount",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S26 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S26 ledgerMIN",
+      "passed": true,
+      "expected": 630,
+      "actual": 630
+    },
+    {
+      "name": "S26 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S26 occurrences",
+      "passed": true,
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "S27 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S27 ledgerMIN",
+      "passed": true,
+      "expected": 570,
+      "actual": 570
+    },
+    {
+      "name": "S27 occurrences",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S27 limited",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S27 quotaCount",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S27 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S27 중간 차감 미승인 ledgerMIN",
+      "passed": true,
+      "expected": 600,
+      "actual": 600
+    },
+    {
+      "name": "S27 중간 차감 미승인 pendingPenalties",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S27 중간 미승인 정산 ledgerMIN",
+      "passed": true,
+      "expected": 600,
+      "actual": 600
+    },
+    {
+      "name": "S27 중간 미승인 정산 pendingPenalties",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S28 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S28 ledgerMIN",
+      "passed": true,
+      "expected": 570,
+      "actual": 570
+    },
+    {
+      "name": "S28 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S28 중간 수요일 승인 전 ledgerMIN",
+      "passed": true,
+      "expected": 600,
+      "actual": 600
+    },
+    {
+      "name": "S28 중간 수요일 승인 전 pendingPenalties",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S29 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S29 ledgerMIN",
+      "passed": true,
+      "expected": 600,
+      "actual": 600
+    },
+    {
+      "name": "S29 holdRecords",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S29 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S30 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S30 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S30 quotaCount",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S30 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S31 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S31 ledgerMIN",
+      "passed": true,
+      "expected": 420,
+      "actual": 420
+    },
+    {
+      "name": "S31 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S32 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S32 ledgerMIN",
+      "passed": true,
+      "expected": 510,
+      "actual": 510
+    },
+    {
+      "name": "S32 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S33 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S33 ledgerMIN",
+      "passed": true,
+      "expected": 600,
+      "actual": 600
+    },
+    {
+      "name": "S33 grants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S33 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S34 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S34 ledgerMIN",
+      "passed": true,
+      "expected": 550,
+      "actual": 550
+    },
+    {
+      "name": "S34 quotaCount",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S34 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S35 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S35 ledgerMIN",
+      "passed": true,
+      "expected": 360,
+      "actual": 360
+    },
+    {
+      "name": "S35 occurrences",
+      "passed": true,
+      "expected": 4,
+      "actual": 4
+    },
+    {
+      "name": "S35 limited",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S35 quotaCount",
+      "passed": true,
+      "expected": 3,
+      "actual": 3
+    },
+    {
+      "name": "S36 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S36 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S36 verifications",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S36 activeGrants",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S36 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S36 ledgerEntries",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S37 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S37 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S37 ledgerEntries",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S37 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S37 verifications",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S37 activeGrants",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S37 중간 재검토 중 원장40 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S37 중간 재검토 중 원장40 reviewRequired",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S38 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S38 externalPOINT",
+      "passed": true,
+      "expected": 10000,
+      "actual": 10000
+    },
+    {
+      "name": "S38 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S38 reviewRequired",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S39 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S39 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S39 verifications",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S39 grants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S39 ledgerEntries",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S39 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S40 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S40 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S40 verifications",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S40 ledgerMIN",
+      "passed": true,
+      "expected": 40,
+      "actual": 40
+    },
+    {
+      "name": "S40 rejected",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S41 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S41 occurrences",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S41 grants",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S41 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S41 rejected",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S42 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S42 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S42 ledgerMIN",
+      "passed": true,
+      "expected": 120,
+      "actual": 120
+    },
+    {
+      "name": "S42 grants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S43 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S43 externalWISH",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S43 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S43 grants",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S44 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S44 occurrences",
+      "passed": true,
+      "expected": 17,
+      "actual": 17
+    },
+    {
+      "name": "S44 ledgerMIN",
+      "passed": true,
+      "expected": 640,
+      "actual": 640
+    },
+    {
+      "name": "S44 externalPOINT",
+      "passed": true,
+      "expected": 45000,
+      "actual": 45000
+    },
+    {
+      "name": "S44 externalWON",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S44 schoolStickerTotal",
+      "passed": true,
+      "expected": 8,
+      "actual": 8
+    },
+    {
+      "name": "S44 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S44 중간 금요일 자정 전 ledgerMIN",
+      "passed": true,
+      "expected": 440,
+      "actual": 440
+    },
+    {
+      "name": "S44 중간 금요일 자정 전 entitledMIN",
+      "passed": true,
+      "expected": 640,
+      "actual": 640
+    },
+    {
+      "name": "S44 중간 금요일 자정 전 entitledPOINT",
+      "passed": true,
+      "expected": 45000,
+      "actual": 45000
+    },
+    {
+      "name": "S44 중간 모든 기본·추가 권리의 이행 완료 ledgerMIN",
+      "passed": true,
+      "expected": 640,
+      "actual": 640
+    },
+    {
+      "name": "S44 중간 모든 기본·추가 권리의 이행 완료 externalPOINT",
+      "passed": true,
+      "expected": 45000,
+      "actual": 45000
+    },
+    {
+      "name": "S45 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S45 occurrences",
+      "passed": true,
+      "expected": 1,
+      "actual": 1
+    },
+    {
+      "name": "S45 verifications",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "S45 activeGrants",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S45 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S45 externalWON",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S45 quotaCount",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S46 실행 결과 존재",
+      "passed": true,
+      "expected": true,
+      "actual": true
+    },
+    {
+      "name": "S46 grants",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S46 ledgerMIN",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S46 pendingPenalties",
+      "passed": true,
+      "expected": 0,
+      "actual": 0
+    },
+    {
+      "name": "S46 blocked",
+      "passed": true,
+      "expected": 2,
+      "actual": 2
+    },
+    {
+      "name": "참조 SQL 원본 무변경",
+      "passed": true,
+      "expected": "62f3b4827c1bcf12714f92f2f04cdbb9f4af4c3589b78d824aca44d90b282c4b",
+      "actual": "62f3b4827c1bcf12714f92f2f04cdbb9f4af4c3589b78d824aca44d90b282c4b"
+    }
+  ]
+}

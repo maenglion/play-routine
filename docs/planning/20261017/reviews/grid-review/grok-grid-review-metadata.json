@@ -1,0 +1,17 @@
+{
+  "model_requested": "grok-4.7",
+  "model_returned": "grok-4.7",
+  "input_sha256": "bbdbab8d294c584565a2c3ca38e3567239ed5d26963aafac4ce95ff393439fda",
+  "inputs": [
+    "supabase/migrations/0001_identity_auth.sql",
+    "supabase/migrations/0005_client_privilege_hardening.sql",
+    "supabase/migrations/0017_routine_v2.sql",
+    "supabase/migrations/0018_cross_registry_assignment_guard.sql",
+    "supabase/migrations/0019_unused_reinforcer_removal.sql",
+    "Play-Routine-Regulation-Lifecycle-v0.2.md"
+  ],
+  "stream_complete": true,
+  "finish_reason": "stop",
+  "reviewed_at_utc": "2026-10-17T12:32:52.618000+00:00",
+  "response_id": "409eceb7-6ce8-922d-9a1a-33a0e8fca744"
+}

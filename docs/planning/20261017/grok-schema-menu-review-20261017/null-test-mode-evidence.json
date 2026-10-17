@@ -1,0 +1,11 @@
+{
+  "environment": "new isolated PGlite; no claims and no test_mode setting; actual schema only",
+  "rows": [
+    {
+      "missing_test_mode": null,
+      "draft_rejection_condition": null,
+      "interim_rejection_condition": null,
+      "safe_false_default": false
+    }
+  ]
+}

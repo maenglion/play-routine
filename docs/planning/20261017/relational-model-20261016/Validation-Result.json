@@ -1,0 +1,92 @@
+{
+  "environment": "독립 인메모리 PostgreSQL(PGlite), 운영 Supabase 미접속",
+  "tables": 52,
+  "tests": [
+    {
+      "name": "다른 가족의 활동 참조 차단",
+      "passed": true
+    },
+    {
+      "name": "같은 활동 같은 날 실제 수행 4회 각각 저장",
+      "passed": true
+    },
+    {
+      "name": "같은 날짜·회차 중복 차단",
+      "passed": true
+    },
+    {
+      "name": "사건 회차 0 거절",
+      "passed": true
+    },
+    {
+      "name": "수량 150을 점수 0~100과 혼동하지 않고 저장",
+      "passed": true
+    },
+    {
+      "name": "측정값에서 boolean·number 동시 입력 차단",
+      "passed": true
+    },
+    {
+      "name": "선택 보상 세 번째 위치 차단",
+      "passed": true
+    },
+    {
+      "name": "보상 조건에 패널티 방향 효과 끼워넣기 차단",
+      "passed": true
+    },
+    {
+      "name": "NaN 효과량 차단",
+      "passed": true
+    },
+    {
+      "name": "소수 보상량을 반올림하지 않고 차단",
+      "passed": true
+    },
+    {
+      "name": "게시 버전 수정 차단",
+      "passed": true
+    },
+    {
+      "name": "같은 STAR 그림이어도 서로 다른 스티커 종류 ID",
+      "passed": true
+    },
+    {
+      "name": "20분 보상권을 40분 원장으로 과적립 차단",
+      "passed": true
+    },
+    {
+      "name": "같은 보상권 원장 중복 반영 차단",
+      "passed": true
+    },
+    {
+      "name": "원장 UPDATE 차단",
+      "passed": true
+    },
+    {
+      "name": "원장 DELETE 차단",
+      "passed": true
+    },
+    {
+      "name": "원거래와 다른 분량의 전액상쇄 차단",
+      "passed": true
+    },
+    {
+      "name": "원거래 보존하며 상쇄 거래로 순잔액 0",
+      "passed": true
+    },
+    {
+      "name": "외부 이행 자산의 내부 잔액 중복 적립 차단",
+      "passed": true
+    },
+    {
+      "name": "같은 원거래 전액상쇄 중복 차단",
+      "passed": true
+    }
+  ],
+  "not_tested": [
+    "운영 RLS/실제 인증 역할",
+    "한도 예약과 다중 세션 동시성",
+    "판정 엔진/자정 정산 RPC",
+    "기존 데이터 변환"
+  ]
+}

@@ -1,0 +1,348 @@
+{
+  "engine": "PGlite PostgreSQL",
+  "scope": "temporary SQL sample only; no Supabase or production access",
+  "checks": [
+    "격상 전 School depth=2 / Task 관할",
+    "격상 후 School depth=1 / 기본법 관할",
+    "규정 영구 ID 보존 / 버전만 v1→v2",
+    "Task·Quest·Lifestyle·School 4개 동등 위계",
+    "출결 규정 원문 버전 유지 / 전체 깊이만 3→2",
+    "School 기준 하위 출결 조회",
+    "효력 구간 [from,to) 경계에 School 한 버전만",
+    "다른 가족 조회에는 이 가족 자료 없음",
+    "개정 REVISES 관계는 위계 탐색에서 제외",
+    "미승인 관계는 위계에서 제외",
+    "CYCLE이 순환을 표시하고 재귀를 종료",
+    "ROLLBACK 뒤 임시 표가 남지 않음"
+  ],
+  "before": [
+    {
+      "depth": 0,
+      "code": "PR-BASIC",
+      "version_no": 1,
+      "parent_code": null,
+      "path": "PR-BASIC",
+      "regulation_id": "reg-basic",
+      "regulation_version_id": "basic-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 1,
+      "code": "PR-LIFESTYLE",
+      "version_no": 1,
+      "parent_code": "PR-BASIC",
+      "path": "PR-BASIC > PR-LIFESTYLE",
+      "regulation_id": "reg-life",
+      "regulation_version_id": "life-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 1,
+      "code": "PR-QUEST",
+      "version_no": 1,
+      "parent_code": "PR-BASIC",
+      "path": "PR-BASIC > PR-QUEST",
+      "regulation_id": "reg-quest",
+      "regulation_version_id": "quest-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 1,
+      "code": "PR-TASK",
+      "version_no": 1,
+      "parent_code": "PR-BASIC",
+      "path": "PR-BASIC > PR-TASK",
+      "regulation_id": "reg-task",
+      "regulation_version_id": "task-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 2,
+      "code": "PR-SCHOOL",
+      "version_no": 1,
+      "parent_code": "PR-TASK",
+      "path": "PR-BASIC > PR-TASK > PR-SCHOOL",
+      "regulation_id": "reg-school",
+      "regulation_version_id": "school-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 3,
+      "code": "PR-SCHOOL-ATTENDANCE",
+      "version_no": 1,
+      "parent_code": "PR-SCHOOL",
+      "path": "PR-BASIC > PR-TASK > PR-SCHOOL > PR-SCHOOL-ATTENDANCE",
+      "regulation_id": "reg-attend",
+      "regulation_version_id": "attend-v1",
+      "is_cycle": false
+    }
+  ],
+  "after": [
+    {
+      "depth": 0,
+      "code": "PR-BASIC",
+      "version_no": 1,
+      "parent_code": null,
+      "path": "PR-BASIC",
+      "regulation_id": "reg-basic",
+      "regulation_version_id": "basic-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 1,
+      "code": "PR-LIFESTYLE",
+      "version_no": 1,
+      "parent_code": "PR-BASIC",
+      "path": "PR-BASIC > PR-LIFESTYLE",
+      "regulation_id": "reg-life",
+      "regulation_version_id": "life-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 1,
+      "code": "PR-QUEST",
+      "version_no": 1,
+      "parent_code": "PR-BASIC",
+      "path": "PR-BASIC > PR-QUEST",
+      "regulation_id": "reg-quest",
+      "regulation_version_id": "quest-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 1,
+      "code": "PR-SCHOOL",
+      "version_no": 2,
+      "parent_code": "PR-BASIC",
+      "path": "PR-BASIC > PR-SCHOOL",
+      "regulation_id": "reg-school",
+      "regulation_version_id": "school-v2",
+      "is_cycle": false
+    },
+    {
+      "depth": 2,
+      "code": "PR-SCHOOL-ATTENDANCE",
+      "version_no": 1,
+      "parent_code": "PR-SCHOOL",
+      "path": "PR-BASIC > PR-SCHOOL > PR-SCHOOL-ATTENDANCE",
+      "regulation_id": "reg-attend",
+      "regulation_version_id": "attend-v1",
+      "is_cycle": false
+    },
+    {
+      "depth": 1,
+      "code": "PR-TASK",
+      "version_no": 1,
+      "parent_code": "PR-BASIC",
+      "path": "PR-BASIC > PR-TASK",
+      "regulation_id": "reg-task",
+      "regulation_version_id": "task-v1",
+      "is_cycle": false
+    }
+  ],
+  "school_subtree": [
+    {
+      "depth": 0,
+      "code": "PR-SCHOOL",
+      "version_no": 2,
+      "parent_code": null,
+      "path": "PR-SCHOOL",
+      "regulation_id": "reg-school",
+      "regulation_version_id": "school-v2",
+      "is_cycle": false
+    },
+    {
+      "depth": 1,
+      "code": "PR-SCHOOL-ATTENDANCE",
+      "version_no": 1,
+      "parent_code": "PR-SCHOOL",
+      "path": "PR-SCHOOL > PR-SCHOOL-ATTENDANCE",
+      "regulation_id": "reg-attend",
+      "regulation_version_id": "attend-v1",
+      "is_cycle": false
+    }
+  ],
+  "sql_select_outputs": [
+    [
+      {
+        "depth": 0,
+        "code": "PR-BASIC",
+        "version_no": 1,
+        "parent_code": null,
+        "path": "PR-BASIC",
+        "regulation_id": "reg-basic",
+        "regulation_version_id": "basic-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 1,
+        "code": "PR-LIFESTYLE",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "path": "PR-BASIC > PR-LIFESTYLE",
+        "regulation_id": "reg-life",
+        "regulation_version_id": "life-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 1,
+        "code": "PR-QUEST",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "path": "PR-BASIC > PR-QUEST",
+        "regulation_id": "reg-quest",
+        "regulation_version_id": "quest-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 1,
+        "code": "PR-TASK",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "path": "PR-BASIC > PR-TASK",
+        "regulation_id": "reg-task",
+        "regulation_version_id": "task-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 2,
+        "code": "PR-SCHOOL",
+        "version_no": 1,
+        "parent_code": "PR-TASK",
+        "path": "PR-BASIC > PR-TASK > PR-SCHOOL",
+        "regulation_id": "reg-school",
+        "regulation_version_id": "school-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 3,
+        "code": "PR-SCHOOL-ATTENDANCE",
+        "version_no": 1,
+        "parent_code": "PR-SCHOOL",
+        "path": "PR-BASIC > PR-TASK > PR-SCHOOL > PR-SCHOOL-ATTENDANCE",
+        "regulation_id": "reg-attend",
+        "regulation_version_id": "attend-v1",
+        "is_cycle": false
+      }
+    ],
+    [
+      {
+        "depth": 0,
+        "code": "PR-BASIC",
+        "version_no": 1,
+        "parent_code": null,
+        "path": "PR-BASIC",
+        "regulation_id": "reg-basic",
+        "regulation_version_id": "basic-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 1,
+        "code": "PR-LIFESTYLE",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "path": "PR-BASIC > PR-LIFESTYLE",
+        "regulation_id": "reg-life",
+        "regulation_version_id": "life-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 1,
+        "code": "PR-QUEST",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "path": "PR-BASIC > PR-QUEST",
+        "regulation_id": "reg-quest",
+        "regulation_version_id": "quest-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 1,
+        "code": "PR-SCHOOL",
+        "version_no": 2,
+        "parent_code": "PR-BASIC",
+        "path": "PR-BASIC > PR-SCHOOL",
+        "regulation_id": "reg-school",
+        "regulation_version_id": "school-v2",
+        "is_cycle": false
+      },
+      {
+        "depth": 2,
+        "code": "PR-SCHOOL-ATTENDANCE",
+        "version_no": 1,
+        "parent_code": "PR-SCHOOL",
+        "path": "PR-BASIC > PR-SCHOOL > PR-SCHOOL-ATTENDANCE",
+        "regulation_id": "reg-attend",
+        "regulation_version_id": "attend-v1",
+        "is_cycle": false
+      },
+      {
+        "depth": 1,
+        "code": "PR-TASK",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "path": "PR-BASIC > PR-TASK",
+        "regulation_id": "reg-task",
+        "regulation_version_id": "task-v1",
+        "is_cycle": false
+      }
+    ],
+    [
+      {
+        "code": "PR-LIFESTYLE",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "depth": 1
+      },
+      {
+        "code": "PR-QUEST",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "depth": 1
+      },
+      {
+        "code": "PR-SCHOOL",
+        "version_no": 2,
+        "parent_code": "PR-BASIC",
+        "depth": 1
+      },
+      {
+        "code": "PR-TASK",
+        "version_no": 1,
+        "parent_code": "PR-BASIC",
+        "depth": 1
+      }
+    ],
+    [
+      {
+        "code": "PR-SCHOOL",
+        "version_no": 2,
+        "depth": 0,
+        "path": "PR-SCHOOL"
+      },
+      {
+        "code": "PR-SCHOOL-ATTENDANCE",
+        "version_no": 1,
+        "depth": 1,
+        "path": "PR-SCHOOL > PR-SCHOOL-ATTENDANCE"
+      }
+    ],
+    [
+      {
+        "label": "격상 전",
+        "regulation_id": "reg-school",
+        "regulation_version_id": "school-v1",
+        "parent_code": "PR-TASK",
+        "depth": 2,
+        "path": "PR-BASIC > PR-TASK > PR-SCHOOL"
+      },
+      {
+        "label": "격상 후",
+        "regulation_id": "reg-school",
+        "regulation_version_id": "school-v2",
+        "parent_code": "PR-BASIC",
+        "depth": 1,
+        "path": "PR-BASIC > PR-SCHOOL"
+      }
+    ]
+  ]
+}

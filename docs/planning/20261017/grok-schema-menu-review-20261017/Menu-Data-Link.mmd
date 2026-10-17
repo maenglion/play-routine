@@ -1,0 +1,85 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#ECFDF5'
+    primaryTextColor: '#172033'
+    primaryBorderColor: '#138A72'
+    lineColor: '#55708D'
+    tertiaryColor: '#F8FAFC'
+---
+flowchart LR
+  subgraph UI["상단 메뉴 — 현재 App.tsx"]
+    direction TB
+    OP["운영표<br/>날짜별 · 학교 이번 주"]
+    REG["규정<br/>26개 목록 · 필터 · 상세"]
+    REW["보상·원장<br/>권리 · 모의 지급 확인"]
+    RIN["강화물<br/>모의 카탈로그 등록"]
+    SET["설정·기록<br/>CSV · 초기화 · 동작 로그"]
+  end
+
+  subgraph NOW["현재 브라우저 모의 구현 — Supabase/API 호출 없음"]
+    direction TB
+    RULES["rules.ts (정적 읽기 전용)<br/>rules: 26건<br/>TASK 7 · QUEST 3 · LIFESTYLE 16<br/>code=T-001/Q-001/L-001"]
+    OCC["state.occurrences[]<br/>발생·부모결과·분·사유·requestKey"]
+    SCH["state.school[]<br/>date · base 0/1/null · praise 0/1 · feedback"]
+    RGT["state.rights[]<br/>id · period 문자열 · amount · issuedAt"]
+    PAID["state.paid<br/>모의 이행 누계 number"]
+    RFS["state.reinforcers[]<br/>id · name · asset · unit"]
+    AUD["state.audit[]<br/>id · at · action · detail"]
+    LS[("localStorage<br/>play-routine-ordinance-prototype-v1<br/>State 전체 JSON 저장/복원")]
+  end
+
+  subgraph DB["설계 DB 대응 — 점선은 향후 API/RPC 연결 계획"]
+    direction TB
+    D_RULE["정책·규칙<br/>regulations / regulation_versions<br/>rule_identities / rule_versions<br/>rule_governing_versions / rule_conditions / rule_effects"]
+    D_ASSET["강화물 정의<br/>asset_identities / asset_versions"]
+    D_PLAN["월 채택·일정·사실<br/>monthly_plans / plan_rule_adoptions<br/>scheduled_occurrences / source_events<br/>parent_confirmations"]
+    D_SCHOOL["학교·스티커·기간·한도<br/>school_day_assessments / sticker_awards<br/>stable_rule_scopes / aggregation_periods<br/>recognition_limit_buckets (+ uses/results)"]
+    D_REWARD["보상권·이행<br/>reward_rights / reward_correction_events<br/>school_execution_batches<br/>actual_reward_executions"]
+    D_ONLY["현재 앱 화면/상태와 연결 없음<br/>measurements · version_compatibilities<br/>relationship/lineage · effect_applications<br/>immutable_ledger_entries (FK 없음)<br/>medication_records (민감·별도)"]
+  end
+
+  OP -->|"읽기: 활동·조건 표시"| RULES
+  OP -->|"추가·부모 확인"| OCC
+  OP -->|"읽기·토글"| SCH
+  OP -->|"학교 계산 읽기/발행"| RGT
+  OP -->|"학교 계산 읽기"| PAID
+  OP -->|"모든 동작 log()"| AUD
+  REG -->|"읽기·도메인 필터"| RULES
+  REW -->|"읽기"| RGT
+  REW -->|"읽기·모의 지급 누계 변경"| PAID
+  REW -->|"학교 계산을 위해 읽기"| SCH
+  RIN -->|"읽기·추가"| RFS
+  RIN -->|"등록 동작 log()"| AUD
+  SET -->|"CSV 읽기·전체 reset"| OCC
+  SET -->|"읽기"| AUD
+
+  OCC -->|"useEffect: State 일부"| LS
+  SCH -->|"useEffect: State 일부"| LS
+  RGT -->|"useEffect: State 일부"| LS
+  PAID -->|"useEffect: State 일부"| LS
+  RFS -->|"useEffect: State 일부"| LS
+  AUD -->|"useEffect: State 일부"| LS
+
+  RULES -. "향후 API: 영구번호·정확한 버전 resolve" .-> D_RULE
+  RULES -. "향후 API: 효과의 자산 버전" .-> D_ASSET
+  OCC -. "향후 API: 채택/예정회차 → 원사건·부모 판정" .-> D_PLAN
+  SCH -. "향후 API: 평가·칭찬 원천/부모 확인을 분리" .-> D_SCHOOL
+  RGT -. "향후 API: 기간·규칙·자산을 갖는 보상권" .-> D_REWARD
+  PAID -. "향후 API: batch 1건 + 권리별 실행행" .-> D_REWARD
+  RFS -. "향후 API: identity + immutable version" .-> D_ASSET
+  AUD -. "전용 감사 테이블은 현 설계에 없음" .-> D_ONLY
+
+  classDef menu fill:#EAF2FF,stroke:#2563A8,color:#172033,stroke-width:1.5px;
+  classDef current fill:#EDFCF6,stroke:#138A72,color:#172033,stroke-width:1.5px;
+  classDef store fill:#FFF8E7,stroke:#BE7A00,color:#3A2A00,stroke-width:1.5px;
+  classDef db fill:#F3F0FF,stroke:#7253C8,color:#20163F,stroke-width:1.5px;
+  classDef dbonly fill:#F4F6F8,stroke:#7C8795,color:#3A4654,stroke-dasharray: 5 3;
+  class OP,REG,REW,RIN,SET menu;
+  class RULES,OCC,SCH,RGT,PAID,RFS,AUD current;
+  class LS store;
+  class D_RULE,D_ASSET,D_PLAN,D_SCHOOL,D_REWARD db;
+  class D_ONLY dbonly;
+
+  %% 실선 = 현재 React in-memory/localStorage 읽기·변경. 점선 = 현재 미구현인 DB API/RPC 계획.

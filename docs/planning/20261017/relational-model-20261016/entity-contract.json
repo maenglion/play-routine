@@ -1,0 +1,2613 @@
+[
+  {
+    "name": "families",
+    "title": "가족 앵커",
+    "group": "0 앵커",
+    "columns": {
+      "name": "text NOT NULL",
+      "timezone": "text NOT NULL"
+    },
+    "refs": [],
+    "checks": [],
+    "unique": [],
+    "note": "public.families의 기존 UUID를 유지하는 설계용 축약 앵커. 실제 인증 테이블을 새로 만들지 않음.",
+    "anchor": true,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "name": "text NOT NULL",
+      "timezone": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "principals",
+    "title": "사용자 앵커",
+    "group": "0 앵커",
+    "columns": {
+      "auth_user_id": "uuid UNIQUE"
+    },
+    "refs": [],
+    "checks": [],
+    "unique": [],
+    "note": "public.principals 재사용. 이메일·비밀번호·토큰은 모델에 복제하지 않음.",
+    "anchor": true,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "auth_user_id": "uuid UNIQUE",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "child_profiles",
+    "title": "자녀 앵커",
+    "group": "0 앵커",
+    "columns": {
+      "principal_id": "uuid"
+    },
+    "refs": [
+      [
+        "principal_id",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [],
+    "unique": [],
+    "note": "public.child_profiles의 UUID와 가족 소속을 재사용.",
+    "anchor": true,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "principal_id": "uuid",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "ref_concepts",
+    "title": "활동 정본 앵커",
+    "group": "0 앵커",
+    "columns": {
+      "name": "text NOT NULL",
+      "category_code": "text NOT NULL"
+    },
+    "refs": [],
+    "checks": [],
+    "unique": [],
+    "note": "public.ref_concepts 재사용. 고양이 화장실 등은 이름 붙인 인스턴스이며 고정 종류 테이블이 아님.",
+    "anchor": true,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "name": "text NOT NULL",
+      "category_code": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "asset_types",
+    "title": "자산·이행 단위",
+    "group": "1 종류",
+    "columns": {
+      "code": "text NOT NULL",
+      "unit": "text NOT NULL",
+      "provider_code": "text NOT NULL",
+      "route": "text NOT NULL"
+    },
+    "refs": [],
+    "checks": [
+      "unit IN ('MIN','WON','POINT','COUNT','WISH')",
+      "route IN ('INTERNAL_LEDGER','EXTERNAL_FULFILLMENT')",
+      "unit <> 'WISH' OR route='EXTERNAL_FULFILLMENT'"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "code"
+      ]
+    ],
+    "note": "분/원/서비스별 포인트/소원 구분. 쿠페이 포인트와 다른 포인트는 다른 ID. 내부 원장과 외부 지급 중 하나의 경로만 선택.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "code": "text NOT NULL",
+      "unit": "text NOT NULL",
+      "provider_code": "text NOT NULL",
+      "route": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "effect_types",
+    "title": "강화물·패널티 종류",
+    "group": "1 종류",
+    "columns": {
+      "code": "text NOT NULL",
+      "name": "text NOT NULL",
+      "direction": "text NOT NULL",
+      "asset_id": "uuid NOT NULL"
+    },
+    "refs": [
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ]
+    ],
+    "checks": [
+      "direction IN ('REWARD','PENALTY')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "code"
+      ],
+      [
+        "family_id",
+        "id",
+        "direction",
+        "asset_id"
+      ]
+    ],
+    "note": "같은 카탈로그 구조, 결과 방향 분리. 현재 허용 패널티는 MIN 차감. 돈 차감 등 미승인 확장은 게시 검증에서 거절.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "code": "text NOT NULL",
+      "name": "text NOT NULL",
+      "direction": "text NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "sticker_types",
+    "title": "스티커·표식 종류",
+    "group": "1 종류",
+    "columns": {
+      "code": "text NOT NULL",
+      "name": "text NOT NULL",
+      "direction": "text NOT NULL",
+      "icon_code": "text NOT NULL",
+      "image_url": "text"
+    },
+    "refs": [],
+    "checks": [
+      "direction IN ('POSITIVE','INCIDENT_MARK')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "code"
+      ]
+    ],
+    "note": "종류 ID와 그림을 분리. STAR 그림이 같은 여러 종류라도 합산 대상을 명시해야 함. 패널티 표식 자체는 차감이 아님.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "code": "text NOT NULL",
+      "name": "text NOT NULL",
+      "direction": "text NOT NULL",
+      "icon_code": "text NOT NULL",
+      "image_url": "text",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "activity_aliases",
+    "title": "동일 활동 연결",
+    "group": "1 종류",
+    "columns": {
+      "alias_ref_id": "uuid NOT NULL",
+      "canonical_ref_id": "uuid NOT NULL",
+      "approved_by": "uuid NOT NULL",
+      "reason": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "alias_ref_id",
+        "ref_concepts",
+        "id"
+      ],
+      [
+        "canonical_ref_id",
+        "ref_concepts",
+        "id"
+      ],
+      [
+        "approved_by",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [
+      "alias_ref_id <> canonical_ref_id"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "alias_ref_id"
+      ]
+    ],
+    "note": "밀크티/밀크티 학습지를 이름으로 자동 합치지 않고 부모 승인으로 연결. 별칭 순환 금지 RPC 검증.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "alias_ref_id": "uuid NOT NULL",
+      "canonical_ref_id": "uuid NOT NULL",
+      "approved_by": "uuid NOT NULL",
+      "reason": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "rule_series",
+    "title": "규칙 안정 계보",
+    "group": "2 정책",
+    "columns": {
+      "activity_id": "uuid NOT NULL",
+      "stable_key": "uuid NOT NULL",
+      "flow": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "activity_id",
+        "ref_concepts",
+        "id"
+      ]
+    ],
+    "checks": [
+      "flow IN ('DAILY','QUEST')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "stable_key"
+      ]
+    ],
+    "note": "게시 버전이 바뀌어도 계보 ID 유지. 회차의 PERFORMANCE/INCIDENT가 사실 방향이며 DAILY/QUEST와 별개.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "activity_id": "uuid NOT NULL",
+      "stable_key": "uuid NOT NULL",
+      "flow": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "period_policies",
+    "title": "기간 경계 정책",
+    "group": "2 정책",
+    "columns": {
+      "code": "text NOT NULL",
+      "kind": "text NOT NULL",
+      "timezone": "text NOT NULL",
+      "week_start": "smallint",
+      "anchor_on": "date",
+      "custom_days": "integer"
+    },
+    "refs": [],
+    "checks": [
+      "kind IN ('OCCURRENCE','DAY','WEEK','CALENDAR_MONTH','CUSTOM_DAYS','EVENT')",
+      "week_start IS NULL OR week_start BETWEEN 1 AND 7",
+      "(kind='WEEK')=(week_start IS NOT NULL)",
+      "(kind='CUSTOM_DAYS')=(anchor_on IS NOT NULL AND custom_days IS NOT NULL)",
+      "custom_days IS NULL OR custom_days>0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "code"
+      ]
+    ],
+    "note": "행은 불변. 기록 단위·집계 기간·한도 기간·정산 실행을 한 period 열로 섞지 않음.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "code": "text NOT NULL",
+      "kind": "text NOT NULL",
+      "timezone": "text NOT NULL",
+      "week_start": "smallint",
+      "anchor_on": "date",
+      "custom_days": "integer",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "special_events",
+    "title": "특별 이벤트 범위",
+    "group": "2 정책",
+    "columns": {
+      "name": "text NOT NULL",
+      "starts_at": "timestamptz NOT NULL",
+      "ends_at": "timestamptz NOT NULL",
+      "timezone": "text NOT NULL"
+    },
+    "refs": [],
+    "checks": [
+      "ends_at>starts_at"
+    ],
+    "unique": [],
+    "note": "기간은 [start,end). 특별 이벤트는 문자열 메모가 아니라 범위 ID.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "name": "text NOT NULL",
+      "starts_at": "timestamptz NOT NULL",
+      "ends_at": "timestamptz NOT NULL",
+      "timezone": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "rule_versions",
+    "title": "불변 게시 버전",
+    "group": "2 정책",
+    "columns": {
+      "series_id": "uuid NOT NULL",
+      "version_no": "integer NOT NULL",
+      "effective_from": "date NOT NULL",
+      "previous_version_id": "uuid",
+      "published_by": "uuid NOT NULL",
+      "criteria": "text NOT NULL",
+      "schema_version": "integer NOT NULL DEFAULT 1",
+      "engine_version": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "series_id",
+        "rule_series",
+        "id"
+      ],
+      [
+        "previous_version_id",
+        "rule_versions",
+        "id"
+      ],
+      [
+        "published_by",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [
+      "version_no>0",
+      "schema_version>0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "series_id",
+        "version_no"
+      ],
+      [
+        "family_id",
+        "id",
+        "series_id"
+      ]
+    ],
+    "note": "수정 대신 새 버전. 이전 버전은 같은 계보라는 강화 FK 적용. 미승인 숫자·기준 충돌은 게시 차단.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "series_id": "uuid NOT NULL",
+      "version_no": "integer NOT NULL",
+      "effective_from": "date NOT NULL",
+      "previous_version_id": "uuid",
+      "published_by": "uuid NOT NULL",
+      "criteria": "text NOT NULL",
+      "schema_version": "integer NOT NULL DEFAULT 1",
+      "engine_version": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "metric_definitions",
+    "title": "측정 정의",
+    "group": "2 정책",
+    "columns": {
+      "rule_version_id": "uuid NOT NULL",
+      "code": "text NOT NULL",
+      "value_kind": "text NOT NULL",
+      "unit_code": "text NOT NULL",
+      "min_value": "numeric",
+      "max_value": "numeric"
+    },
+    "refs": [
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ]
+    ],
+    "checks": [
+      "value_kind IN ('NUMBER','BOOLEAN','LOCAL_TIME','INSTANT')",
+      "min_value IS NULL OR max_value IS NULL OR min_value<=max_value"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "rule_version_id",
+        "code"
+      ],
+      [
+        "family_id",
+        "id",
+        "rule_version_id"
+      ]
+    ],
+    "note": "정답 수, 총문제 수, 소요 초, 점수, 백분율 등 복수 측정. PERCENT는 게시 시 0~100; 수량에는 그 범위를 강제하지 않음.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "code": "text NOT NULL",
+      "value_kind": "text NOT NULL",
+      "unit_code": "text NOT NULL",
+      "min_value": "numeric",
+      "max_value": "numeric",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "scope_sets",
+    "title": "집계·한도 대상 묶음",
+    "group": "2 정책",
+    "columns": {
+      "name": "text NOT NULL",
+      "version_no": "integer NOT NULL"
+    },
+    "refs": [],
+    "checks": [
+      "version_no>0"
+    ],
+    "unique": [],
+    "note": "행과 구성원은 게시 후 불변. 활동/규칙/스티커를 합칠 범위를 명시하며 규칙 버전이 아니라 안정 계보로 연결.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "name": "text NOT NULL",
+      "version_no": "integer NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "scope_members",
+    "title": "묶음 구성원",
+    "group": "2 정책",
+    "columns": {
+      "scope_id": "uuid NOT NULL",
+      "activity_id": "uuid",
+      "series_id": "uuid",
+      "sticker_type_id": "uuid"
+    },
+    "refs": [
+      [
+        "scope_id",
+        "scope_sets",
+        "id"
+      ],
+      [
+        "activity_id",
+        "ref_concepts",
+        "id"
+      ],
+      [
+        "series_id",
+        "rule_series",
+        "id"
+      ],
+      [
+        "sticker_type_id",
+        "sticker_types",
+        "id"
+      ]
+    ],
+    "checks": [
+      "num_nonnulls(activity_id,series_id,sticker_type_id)=1"
+    ],
+    "unique": [],
+    "note": "세 종류 중 정확히 하나를 참조. AND 합성 대상은 별도 묶음 정의/RPC 검증. 같은 사건이 두 구성원에 맞아도 DISTINCT 출처로 한 번 계산.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "scope_id": "uuid NOT NULL",
+      "activity_id": "uuid",
+      "series_id": "uuid",
+      "sticker_type_id": "uuid",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "aggregation_specs",
+    "title": "누적·비율 집계 정의",
+    "group": "2 정책",
+    "columns": {
+      "scope_id": "uuid NOT NULL",
+      "period_policy_id": "uuid NOT NULL",
+      "special_event_id": "uuid",
+      "operation": "text NOT NULL",
+      "input_metric_code": "text",
+      "source_kind": "text NOT NULL",
+      "denominator_mode": "text",
+      "allow_version_bridge": "boolean NOT NULL DEFAULT false"
+    },
+    "refs": [
+      [
+        "scope_id",
+        "scope_sets",
+        "id"
+      ],
+      [
+        "period_policy_id",
+        "period_policies",
+        "id"
+      ],
+      [
+        "special_event_id",
+        "special_events",
+        "id"
+      ]
+    ],
+    "checks": [
+      "operation IN ('COUNT','SUM','PERCENT','STREAK')",
+      "source_kind IN ('VERIFIED_VALUE','STICKER_EVENT','VERIFIED_OCCURRENCE')",
+      "(operation='PERCENT')=(denominator_mode IS NOT NULL)",
+      "denominator_mode IS NULL OR denominator_mode IN ('CONFIRMED_ELIGIBLE','SCHEDULED_ELIGIBLE')"
+    ],
+    "unique": [],
+    "note": "백분율의 분모·면제·미확인 건수를 함께 기록. 버전 연결은 부모 승인 시에만 명시적으로 허용.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "scope_id": "uuid NOT NULL",
+      "period_policy_id": "uuid NOT NULL",
+      "special_event_id": "uuid",
+      "operation": "text NOT NULL",
+      "input_metric_code": "text",
+      "source_kind": "text NOT NULL",
+      "denominator_mode": "text",
+      "allow_version_bridge": "boolean NOT NULL DEFAULT false",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "conditions",
+    "title": "기본·추가·중립·차감 조건",
+    "group": "3 조건 효과",
+    "columns": {
+      "rule_version_id": "uuid NOT NULL",
+      "stable_key": "uuid NOT NULL",
+      "label": "text NOT NULL",
+      "direction": "text NOT NULL",
+      "mode": "text NOT NULL",
+      "aggregation_id": "uuid",
+      "conflict_group": "text",
+      "match_policy": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ],
+      [
+        "aggregation_id",
+        "aggregation_specs",
+        "id"
+      ]
+    ],
+    "checks": [
+      "direction IN ('REWARD','NEUTRAL','PENALTY')",
+      "mode IN ('PER_OCCURRENCE','PER_PERIOD')",
+      "(mode='PER_PERIOD')=(aggregation_id IS NOT NULL)",
+      "match_policy IN ('CUMULATIVE','EXCLUSIVE')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "rule_version_id",
+        "stable_key"
+      ],
+      [
+        "family_id",
+        "id",
+        "rule_version_id"
+      ],
+      [
+        "family_id",
+        "id",
+        "direction"
+      ]
+    ],
+    "note": "5개와8개는 CUMULATIVE 기본+추가. +/0/- 같은 수치축은 EXCLUSIVE 그룹. 서로 다른 축의 합산 여부는 부모 승인 정책.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "stable_key": "uuid NOT NULL",
+      "label": "text NOT NULL",
+      "direction": "text NOT NULL",
+      "mode": "text NOT NULL",
+      "aggregation_id": "uuid",
+      "conflict_group": "text",
+      "match_policy": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "predicate_groups",
+    "title": "조건 OR 그룹",
+    "group": "3 조건 효과",
+    "columns": {
+      "condition_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "group_no": "integer NOT NULL"
+    },
+    "refs": [
+      [
+        "condition_id",
+        "conditions",
+        "id"
+      ],
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ]
+    ],
+    "checks": [
+      "group_no>0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "condition_id",
+        "group_no"
+      ],
+      [
+        "family_id",
+        "id",
+        "rule_version_id"
+      ]
+    ],
+    "note": "그룹끼리 OR, 그룹 안 원자 조건은 AND. 조건 트리 무한 범용 JSON 대신 이 정규형 사용.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "condition_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "group_no": "integer NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "predicates",
+    "title": "측정 비교 원자",
+    "group": "3 조건 효과",
+    "columns": {
+      "group_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "metric_id": "uuid",
+      "aggregate_result": "boolean NOT NULL DEFAULT false",
+      "operator": "text NOT NULL",
+      "rhs_number": "numeric",
+      "rhs_boolean": "boolean",
+      "rhs_time": "time",
+      "rhs_instant": "timestamptz"
+    },
+    "refs": [
+      [
+        "group_id",
+        "predicate_groups",
+        "id"
+      ],
+      [
+        "metric_id",
+        "metric_definitions",
+        "id"
+      ],
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ]
+    ],
+    "checks": [
+      "operator IN ('EQ','NE','GT','GTE','LT','LTE')",
+      "num_nonnulls(rhs_number,rhs_boolean,rhs_time,rhs_instant)=1",
+      "(aggregate_result AND metric_id IS NULL) OR (NOT aggregate_result AND metric_id IS NOT NULL)"
+    ],
+    "unique": [],
+    "note": "예: correct_count≥15 AND elapsed_seconds≤180.그룹·측정은 같은 게시 버전 FK. 자료형·단위·참조 집계 일치는 게시 검증.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "group_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "metric_id": "uuid",
+      "aggregate_result": "boolean NOT NULL DEFAULT false",
+      "operator": "text NOT NULL",
+      "rhs_number": "numeric",
+      "rhs_boolean": "boolean",
+      "rhs_time": "time",
+      "rhs_instant": "timestamptz",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "condition_effects",
+    "title": "조건별 효과 항목",
+    "group": "3 조건 효과",
+    "columns": {
+      "condition_id": "uuid NOT NULL",
+      "stable_key": "uuid NOT NULL",
+      "position": "smallint NOT NULL",
+      "effect_type_id": "uuid NOT NULL",
+      "direction": "text NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "amount": "numeric",
+      "text_value": "text",
+      "name_snapshot": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "condition_id",
+        "conditions",
+        "id"
+      ],
+      [
+        "effect_type_id",
+        "effect_types",
+        "id"
+      ],
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ]
+    ],
+    "checks": [
+      "direction IN ('REWARD','PENALTY')",
+      "position BETWEEN 1 AND 2",
+      "num_nonnulls(amount,text_value)=1",
+      "amount IS NULL OR amount>0",
+      "text_value IS NULL OR length(btrim(text_value))>0",
+      "amount IS NULL OR (amount=trunc(amount) AND abs(amount)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "condition_id",
+        "position"
+      ],
+      [
+        "family_id",
+        "condition_id",
+        "stable_key"
+      ],
+      [
+        "family_id",
+        "id",
+        "asset_id"
+      ]
+    ],
+    "note": "REWARD는1~2개, 두 번째 선택. PENALTY는 당장1개만 허용하는 게시 검증. 값은 양수, 방향 별도. 소원은 text, 수치 자산은amount.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "condition_id": "uuid NOT NULL",
+      "stable_key": "uuid NOT NULL",
+      "position": "smallint NOT NULL",
+      "effect_type_id": "uuid NOT NULL",
+      "direction": "text NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "amount": "numeric",
+      "text_value": "text",
+      "name_snapshot": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "limit_policy_series",
+    "title": "한도 안정 계보",
+    "group": "4 인정 한도",
+    "columns": {
+      "stable_key": "uuid NOT NULL",
+      "name": "text NOT NULL"
+    },
+    "refs": [],
+    "checks": [],
+    "unique": [
+      [
+        "family_id",
+        "stable_key"
+      ]
+    ],
+    "note": "규칙 버전이 바뀌었다고 하루 횟수·주 상한을 리셋하지 않는 안정 키.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "stable_key": "uuid NOT NULL",
+      "name": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "limit_policies",
+    "title": "인정 횟수·총량 정책 버전",
+    "group": "4 인정 한도",
+    "columns": {
+      "policy_series_id": "uuid NOT NULL",
+      "version_no": "integer NOT NULL",
+      "scope_id": "uuid NOT NULL",
+      "period_policy_id": "uuid NOT NULL",
+      "direction": "text NOT NULL",
+      "limit_kind": "text NOT NULL",
+      "asset_id": "uuid",
+      "max_value": "numeric NOT NULL",
+      "allocation_mode": "text NOT NULL",
+      "effective_from": "date NOT NULL"
+    },
+    "refs": [
+      [
+        "policy_series_id",
+        "limit_policy_series",
+        "id"
+      ],
+      [
+        "scope_id",
+        "scope_sets",
+        "id"
+      ],
+      [
+        "period_policy_id",
+        "period_policies",
+        "id"
+      ],
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ]
+    ],
+    "checks": [
+      "direction IN ('REWARD','PENALTY')",
+      "limit_kind IN ('COUNT','AMOUNT')",
+      "(limit_kind='AMOUNT')=(asset_id IS NOT NULL)",
+      "max_value>=0",
+      "allocation_mode IN ('WHOLE_CONDITION','PARTIAL_ASSET')",
+      "version_no>0",
+      "max_value IS NULL OR (max_value=trunc(max_value) AND abs(max_value)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "policy_series_id",
+        "version_no"
+      ],
+      [
+        "family_id",
+        "id",
+        "policy_series_id"
+      ]
+    ],
+    "note": "한도 없으면 정책 없음; 초안 미설정은 따로 게시 완전성 검증. 한도판정 순서·부분허용은 필수. COUNT는 조건 달성1회, 효과2개여도1회.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "policy_series_id": "uuid NOT NULL",
+      "version_no": "integer NOT NULL",
+      "scope_id": "uuid NOT NULL",
+      "period_policy_id": "uuid NOT NULL",
+      "direction": "text NOT NULL",
+      "limit_kind": "text NOT NULL",
+      "asset_id": "uuid",
+      "max_value": "numeric NOT NULL",
+      "allocation_mode": "text NOT NULL",
+      "effective_from": "date NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "condition_limits",
+    "title": "조건에 붙는 한도 관계",
+    "group": "4 인정 한도",
+    "columns": {
+      "condition_id": "uuid NOT NULL",
+      "limit_policy_id": "uuid NOT NULL",
+      "priority": "integer NOT NULL"
+    },
+    "refs": [
+      [
+        "condition_id",
+        "conditions",
+        "id"
+      ],
+      [
+        "limit_policy_id",
+        "limit_policies",
+        "id"
+      ]
+    ],
+    "checks": [
+      "priority>0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "condition_id",
+        "limit_policy_id"
+      ]
+    ],
+    "note": "조건 N:M 한도. 일별·주간·월간·묶음 전체 한도를 동시에 연결할 수 있음. 방향·scope·효력 일치는 게시 검증.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "condition_id": "uuid NOT NULL",
+      "limit_policy_id": "uuid NOT NULL",
+      "priority": "integer NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "assignments",
+    "title": "자녀 배정·기록 일정",
+    "group": "5 사실 확인",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "series_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "recording_kind": "text NOT NULL",
+      "starts_on": "date NOT NULL",
+      "ends_on": "date",
+      "special_event_id": "uuid",
+      "expected_per_day": "integer",
+      "created_by": "uuid NOT NULL"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "series_id",
+        "rule_series",
+        "id"
+      ],
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ],
+      [
+        "special_event_id",
+        "special_events",
+        "id"
+      ],
+      [
+        "created_by",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [
+      "recording_kind IN ('SCHEDULED','ON_DEMAND','ONCE')",
+      "ends_on IS NULL OR ends_on>=starts_on",
+      "expected_per_day IS NULL OR expected_per_day>0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "id",
+        "child_id",
+        "series_id"
+      ],
+      [
+        "family_id",
+        "id",
+        "child_id",
+        "series_id",
+        "rule_version_id"
+      ]
+    ],
+    "note": "예정 횟수는 지급 인정 횟수가 아님. ON_DEMAND는 발생/반복 입력. 같은 자녀·canonical활동의 유효 버전 선택은 RPC/중복 배정 가드.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "series_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "recording_kind": "text NOT NULL",
+      "starts_on": "date NOT NULL",
+      "ends_on": "date",
+      "special_event_id": "uuid",
+      "expected_per_day": "integer",
+      "created_by": "uuid NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "assignment_weekdays",
+    "title": "배정 요일",
+    "group": "5 사실 확인",
+    "columns": {
+      "assignment_id": "uuid NOT NULL",
+      "weekday": "smallint NOT NULL"
+    },
+    "refs": [
+      [
+        "assignment_id",
+        "assignments",
+        "id"
+      ]
+    ],
+    "checks": [
+      "weekday BETWEEN 1 AND 7"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "assignment_id",
+        "weekday"
+      ]
+    ],
+    "note": "요일 배열 대신 관계행. ONCE·ON_DEMAND에 불필요한 요일은 게시/배정 RPC가 금지.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "assignment_id": "uuid NOT NULL",
+      "weekday": "smallint NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "occurrences",
+    "title": "실제 수행·발생 회차",
+    "group": "5 사실 확인",
+    "columns": {
+      "assignment_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "series_id": "uuid NOT NULL",
+      "business_date": "date NOT NULL",
+      "sequence_no": "integer NOT NULL",
+      "occurred_at": "timestamptz",
+      "kind": "text NOT NULL",
+      "origin_key": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL"
+    },
+    "refs": [
+      [
+        "assignment_id",
+        "assignments",
+        "id"
+      ],
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "series_id",
+        "rule_series",
+        "id"
+      ],
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ]
+    ],
+    "checks": [
+      "sequence_no>0",
+      "kind IN ('PERFORMANCE','INCIDENT')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "assignment_id",
+        "business_date",
+        "sequence_no"
+      ],
+      [
+        "family_id",
+        "origin_key"
+      ],
+      [
+        "family_id",
+        "id",
+        "child_id"
+      ],
+      [
+        "family_id",
+        "id",
+        "rule_version_id"
+      ]
+    ],
+    "note": "하루1행 제한 제거. 사실은4회, 인정2회가 가능. 같은 회차 재전송은origin_key로 중복 차단. 날짜 정정은 새 사건/무효화 이력.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "assignment_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "series_id": "uuid NOT NULL",
+      "business_date": "date NOT NULL",
+      "sequence_no": "integer NOT NULL",
+      "occurred_at": "timestamptz",
+      "kind": "text NOT NULL",
+      "origin_key": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "observations",
+    "title": "자녀·부모 원래 보고",
+    "group": "5 사실 확인",
+    "columns": {
+      "occurrence_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "actor_role": "text NOT NULL",
+      "payload": "jsonb NOT NULL",
+      "request_key": "uuid NOT NULL"
+    },
+    "refs": [
+      [
+        "occurrence_id",
+        "occurrences",
+        "id"
+      ],
+      [
+        "actor_id",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [
+      "actor_role IN ('CHILD','PARENT')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "actor_id",
+        "request_key"
+      ]
+    ],
+    "note": "원문 보고 JSON은 감사 근거; 계산 정본은 verified_values. 토큰·비밀번호·메일 인증 URL 저장 금지.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "occurrence_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "actor_role": "text NOT NULL",
+      "payload": "jsonb NOT NULL",
+      "request_key": "uuid NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "verifications",
+    "title": "부모 확인 revision",
+    "group": "5 사실 확인",
+    "columns": {
+      "occurrence_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "revision_no": "integer NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "supersedes_id": "uuid",
+      "decision": "text NOT NULL",
+      "reason": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "occurrence_id",
+        "occurrences",
+        "id"
+      ],
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ],
+      [
+        "actor_id",
+        "principals",
+        "id"
+      ],
+      [
+        "supersedes_id",
+        "verifications",
+        "id"
+      ]
+    ],
+    "checks": [
+      "revision_no>0",
+      "decision IN ('CONFIRMED','EXEMPT','VOID')",
+      "length(btrim(reason))>0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "occurrence_id",
+        "revision_no"
+      ],
+      [
+        "family_id",
+        "id",
+        "occurrence_id"
+      ],
+      [
+        "family_id",
+        "id",
+        "rule_version_id"
+      ]
+    ],
+    "note": "미확인은행없음(null),0아님. 부모 확인이 우선. EXEMPT는분모제외,VOID는잘못기록한사건 무효. 같은 회차 supersedes FK 적용.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "occurrence_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "revision_no": "integer NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "supersedes_id": "uuid",
+      "decision": "text NOT NULL",
+      "reason": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "verified_values",
+    "title": "확정 측정값",
+    "group": "5 사실 확인",
+    "columns": {
+      "verification_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "metric_id": "uuid NOT NULL",
+      "number_value": "numeric",
+      "boolean_value": "boolean",
+      "time_value": "time",
+      "instant_value": "timestamptz"
+    },
+    "refs": [
+      [
+        "verification_id",
+        "verifications",
+        "id"
+      ],
+      [
+        "metric_id",
+        "metric_definitions",
+        "id"
+      ],
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ]
+    ],
+    "checks": [
+      "num_nonnulls(number_value,boolean_value,time_value,instant_value)=1"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "verification_id",
+        "metric_id"
+      ]
+    ],
+    "note": "소요 초와 정답 수를 별도행으로 보관. 같은버전 FK. 숫자 finite·단위·범위는검증 RPC.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "verification_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "metric_id": "uuid NOT NULL",
+      "number_value": "numeric",
+      "boolean_value": "boolean",
+      "time_value": "time",
+      "instant_value": "timestamptz",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "sticker_events",
+    "title": "종류별 스티커 증감",
+    "group": "5 사실 확인",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "occurrence_id": "uuid NOT NULL",
+      "verification_id": "uuid NOT NULL",
+      "sticker_type_id": "uuid NOT NULL",
+      "delta": "integer NOT NULL",
+      "reason": "text NOT NULL",
+      "reversal_of_id": "uuid",
+      "dedupe_key": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "occurrence_id",
+        "occurrences",
+        "id"
+      ],
+      [
+        "verification_id",
+        "verifications",
+        "id"
+      ],
+      [
+        "sticker_type_id",
+        "sticker_types",
+        "id"
+      ],
+      [
+        "reversal_of_id",
+        "sticker_events",
+        "id"
+      ]
+    ],
+    "checks": [
+      "delta<>0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "dedupe_key"
+      ]
+    ],
+    "note": "PASS+칭찬의1/2개는현재게시값 보존. 새규칙에서종류별증감. 수정시원행상쇄; 패널티표식은차감원장과분리.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "occurrence_id": "uuid NOT NULL",
+      "verification_id": "uuid NOT NULL",
+      "sticker_type_id": "uuid NOT NULL",
+      "delta": "integer NOT NULL",
+      "reason": "text NOT NULL",
+      "reversal_of_id": "uuid",
+      "dedupe_key": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "evaluation_subjects",
+    "title": "판정 대상의 안정 키",
+    "group": "6 판정 권리",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "series_id": "uuid NOT NULL",
+      "kind": "text NOT NULL",
+      "occurrence_id": "uuid",
+      "aggregation_id": "uuid",
+      "period_start": "date",
+      "period_end": "date",
+      "timezone_snapshot": "text NOT NULL",
+      "special_event_id": "uuid",
+      "origin_key": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "series_id",
+        "rule_series",
+        "id"
+      ],
+      [
+        "occurrence_id",
+        "occurrences",
+        "id"
+      ],
+      [
+        "aggregation_id",
+        "aggregation_specs",
+        "id"
+      ],
+      [
+        "special_event_id",
+        "special_events",
+        "id"
+      ]
+    ],
+    "checks": [
+      "(kind='OCCURRENCE' AND occurrence_id IS NOT NULL AND aggregation_id IS NULL AND period_start IS NULL AND period_end IS NULL) OR (kind='PERIOD' AND occurrence_id IS NULL AND aggregation_id IS NOT NULL AND period_start IS NOT NULL AND period_end>period_start)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "child_id",
+        "series_id",
+        "origin_key"
+      ]
+    ],
+    "note": "기간은 날짜 [start,end). 같은주간 조건·아이콘 버전변경 시 자동새지급 아님. 월·이벤트 경계는 정책으로 고정.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "series_id": "uuid NOT NULL",
+      "kind": "text NOT NULL",
+      "occurrence_id": "uuid",
+      "aggregation_id": "uuid",
+      "period_start": "date",
+      "period_end": "date",
+      "timezone_snapshot": "text NOT NULL",
+      "special_event_id": "uuid",
+      "origin_key": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "evaluations",
+    "title": "판정 실행 revision",
+    "group": "6 판정 권리",
+    "columns": {
+      "subject_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "revision_no": "integer NOT NULL",
+      "completeness": "text NOT NULL",
+      "eligible_count": "integer NOT NULL",
+      "confirmed_count": "integer NOT NULL",
+      "hold_count": "integer NOT NULL",
+      "excluded_count": "integer NOT NULL",
+      "engine_version": "text NOT NULL",
+      "input_digest": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "subject_id",
+        "evaluation_subjects",
+        "id"
+      ],
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ]
+    ],
+    "checks": [
+      "revision_no>0",
+      "completeness IN ('PARTIAL','FINAL','HOLD')",
+      "eligible_count>=0 AND confirmed_count>=0 AND hold_count>=0 AND excluded_count>=0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "subject_id",
+        "revision_no"
+      ],
+      [
+        "family_id",
+        "id",
+        "rule_version_id"
+      ]
+    ],
+    "note": "분모·미확인 건수 고정. PARTIAL은완료로보이지않음. 안전한기본안은미확인으로최종미달차감불가, 추가인정은revision.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "subject_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "revision_no": "integer NOT NULL",
+      "completeness": "text NOT NULL",
+      "eligible_count": "integer NOT NULL",
+      "confirmed_count": "integer NOT NULL",
+      "hold_count": "integer NOT NULL",
+      "excluded_count": "integer NOT NULL",
+      "engine_version": "text NOT NULL",
+      "input_digest": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "evaluation_inputs",
+    "title": "판정 근거 연결",
+    "group": "6 판정 권리",
+    "columns": {
+      "evaluation_id": "uuid NOT NULL",
+      "verification_id": "uuid NOT NULL",
+      "included": "boolean NOT NULL",
+      "exclusion_reason": "text"
+    },
+    "refs": [
+      [
+        "evaluation_id",
+        "evaluations",
+        "id"
+      ],
+      [
+        "verification_id",
+        "verifications",
+        "id"
+      ]
+    ],
+    "checks": [
+      "included OR exclusion_reason IS NOT NULL"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "evaluation_id",
+        "verification_id"
+      ]
+    ],
+    "note": "어떤확인revision을합산/제외했는지설명. 최신값조회변경으로과거결과가바뀌지않음.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "evaluation_id": "uuid NOT NULL",
+      "verification_id": "uuid NOT NULL",
+      "included": "boolean NOT NULL",
+      "exclusion_reason": "text",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "condition_results",
+    "title": "조건 판정 결과",
+    "group": "6 판정 권리",
+    "columns": {
+      "evaluation_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "condition_id": "uuid NOT NULL",
+      "result": "text NOT NULL",
+      "measured_value": "numeric",
+      "reason": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "evaluation_id",
+        "evaluations",
+        "id"
+      ],
+      [
+        "condition_id",
+        "conditions",
+        "id"
+      ],
+      [
+        "rule_version_id",
+        "rule_versions",
+        "id"
+      ]
+    ],
+    "checks": [
+      "result IN ('MATCH','NO_MATCH','HOLD','EXEMPT')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "evaluation_id",
+        "condition_id"
+      ]
+    ],
+    "note": "MATCH와한도인정은별개. NO_MATCH는패널티발생이아님. 이행후정정시REVIEW_REQUIRED 경로.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "evaluation_id": "uuid NOT NULL",
+      "rule_version_id": "uuid NOT NULL",
+      "condition_id": "uuid NOT NULL",
+      "result": "text NOT NULL",
+      "measured_value": "numeric",
+      "reason": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "limit_buckets",
+    "title": "기간별 한도 잠금 단위",
+    "group": "4 인정 한도",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "limit_policy_id": "uuid NOT NULL",
+      "policy_series_id": "uuid NOT NULL",
+      "period_start": "date NOT NULL",
+      "period_end": "date NOT NULL",
+      "special_event_id": "uuid"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "limit_policy_id",
+        "limit_policies",
+        "id"
+      ],
+      [
+        "policy_series_id",
+        "limit_policy_series",
+        "id"
+      ],
+      [
+        "special_event_id",
+        "special_events",
+        "id"
+      ]
+    ],
+    "checks": [
+      "period_end>period_start"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "child_id",
+        "policy_series_id",
+        "period_start",
+        "period_end",
+        "special_event_id"
+      ]
+    ],
+    "note": "버전아닌policy_series로기간중중복상한을막음. 기간내한도정책변경은새기간효력/명시재검토만허용. 행잠금직렬화.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "limit_policy_id": "uuid NOT NULL",
+      "policy_series_id": "uuid NOT NULL",
+      "period_start": "date NOT NULL",
+      "period_end": "date NOT NULL",
+      "special_event_id": "uuid",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "admissions",
+    "title": "조건 인정 결정",
+    "group": "6 판정 권리",
+    "columns": {
+      "condition_result_id": "uuid NOT NULL",
+      "status": "text NOT NULL",
+      "reason": "text NOT NULL",
+      "supersedes_id": "uuid"
+    },
+    "refs": [
+      [
+        "condition_result_id",
+        "condition_results",
+        "id"
+      ],
+      [
+        "supersedes_id",
+        "admissions",
+        "id"
+      ]
+    ],
+    "checks": [
+      "status IN ('ADMITTED','LIMITED','HELD','REJECTED','REVIEW_REQUIRED')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "condition_result_id"
+      ]
+    ],
+    "note": "상한초과도결정행보존. condition_result마다한번. 재평가는기존순권리와차이만생성하는RPC필수.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "condition_result_id": "uuid NOT NULL",
+      "status": "text NOT NULL",
+      "reason": "text NOT NULL",
+      "supersedes_id": "uuid",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "admission_effects",
+    "title": "인정된 효과 배분",
+    "group": "6 판정 권리",
+    "columns": {
+      "admission_id": "uuid NOT NULL",
+      "effect_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "allowed_amount": "numeric",
+      "allowed_text": "text",
+      "status": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "admission_id",
+        "admissions",
+        "id"
+      ],
+      [
+        "effect_id",
+        "condition_effects",
+        "id"
+      ],
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ]
+    ],
+    "checks": [
+      "status IN ('ALLOWED','BLOCKED','HELD')",
+      "num_nonnulls(allowed_amount,allowed_text)=1",
+      "allowed_amount IS NULL OR allowed_amount>=0",
+      "allowed_amount IS NULL OR (allowed_amount=trunc(allowed_amount) AND abs(allowed_amount)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "admission_id",
+        "effect_id"
+      ],
+      [
+        "family_id",
+        "id",
+        "asset_id"
+      ]
+    ],
+    "note": "돈+시간 두효과 개별추적. 전부인정 또는자산별부분정책에따름.0은차단효과이며grant를만들지않음.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "admission_id": "uuid NOT NULL",
+      "effect_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "allowed_amount": "numeric",
+      "allowed_text": "text",
+      "status": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "quota_entries",
+    "title": "한도 소모·해제 원장",
+    "group": "4 인정 한도",
+    "columns": {
+      "bucket_id": "uuid NOT NULL",
+      "admission_id": "uuid NOT NULL",
+      "delta": "numeric NOT NULL",
+      "phase": "text NOT NULL",
+      "reversal_of_id": "uuid",
+      "dedupe_key": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "bucket_id",
+        "limit_buckets",
+        "id"
+      ],
+      [
+        "admission_id",
+        "admissions",
+        "id"
+      ],
+      [
+        "reversal_of_id",
+        "quota_entries",
+        "id"
+      ]
+    ],
+    "checks": [
+      "delta<>0",
+      "phase IN ('RESERVE','RELEASE','ADJUST')",
+      "delta IS NULL OR (delta=trunc(delta) AND abs(delta)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "dedupe_key"
+      ]
+    ],
+    "note": "SUM(delta)로순소모. 지급대기권리도상한예약; 실제이행까지기다리면초과발행됨. COUNT는효과2개여도1. 패널티거절시승인예약해제.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "bucket_id": "uuid NOT NULL",
+      "admission_id": "uuid NOT NULL",
+      "delta": "numeric NOT NULL",
+      "phase": "text NOT NULL",
+      "reversal_of_id": "uuid",
+      "dedupe_key": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "manual_awards",
+    "title": "특별보너스 출처",
+    "group": "6 판정 권리",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "effect_type_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "amount": "numeric",
+      "text_value": "text",
+      "reason": "text NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "request_key": "uuid NOT NULL"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "effect_type_id",
+        "effect_types",
+        "id"
+      ],
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ],
+      [
+        "actor_id",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [
+      "num_nonnulls(amount,text_value)=1",
+      "amount IS NULL OR amount>0",
+      "amount IS NULL OR (amount=trunc(amount) AND abs(amount)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "request_key"
+      ],
+      [
+        "family_id",
+        "id",
+        "child_id",
+        "asset_id"
+      ]
+    ],
+    "note": "별도자유칭찬,규칙조건없음. 현manual_bonus_coupons/manual_money_rewards는bridge로연결하며이미지급된내역재발행금지.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "effect_type_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "amount": "numeric",
+      "text_value": "text",
+      "reason": "text NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "request_key": "uuid NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "grants",
+    "title": "보상권·승인 차감 요청",
+    "group": "6 판정 권리",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "admission_effect_id": "uuid",
+      "manual_award_id": "uuid",
+      "asset_id": "uuid NOT NULL",
+      "direction": "text NOT NULL",
+      "amount": "numeric",
+      "text_value": "text",
+      "business_date": "date NOT NULL",
+      "dedupe_key": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "admission_effect_id",
+        "admission_effects",
+        "id"
+      ],
+      [
+        "manual_award_id",
+        "manual_awards",
+        "id"
+      ],
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ]
+    ],
+    "checks": [
+      "num_nonnulls(admission_effect_id,manual_award_id)=1",
+      "num_nonnulls(amount,text_value)=1",
+      "amount IS NULL OR amount>0",
+      "direction IN ('REWARD','PENALTY')",
+      "manual_award_id IS NULL OR direction='REWARD'",
+      "amount IS NULL OR (amount=trunc(amount) AND abs(amount)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "dedupe_key"
+      ],
+      [
+        "family_id",
+        "admission_effect_id"
+      ],
+      [
+        "family_id",
+        "manual_award_id"
+      ],
+      [
+        "family_id",
+        "id",
+        "asset_id"
+      ]
+    ],
+    "note": "양수량+방향. PANELTY도여기서승인상태이력,실제차감아님. 과거AVAILABLE를사용가능잔액으로변환하지않음.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "admission_effect_id": "uuid",
+      "manual_award_id": "uuid",
+      "asset_id": "uuid NOT NULL",
+      "direction": "text NOT NULL",
+      "amount": "numeric",
+      "text_value": "text",
+      "business_date": "date NOT NULL",
+      "dedupe_key": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "grant_events",
+    "title": "권리 승인·검토 이력",
+    "group": "6 판정 권리",
+    "columns": {
+      "grant_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "kind": "text NOT NULL",
+      "reason": "text NOT NULL",
+      "request_key": "uuid NOT NULL"
+    },
+    "refs": [
+      [
+        "grant_id",
+        "grants",
+        "id"
+      ],
+      [
+        "actor_id",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [
+      "kind IN ('PROPOSED','APPROVED','REJECTED','CANCELED','REVIEW_REQUIRED','REVIEW_RESOLVED','POSTED','FULFILLED')"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "request_key"
+      ]
+    ],
+    "note": "사실 확인과차감승인은별도액션. 변경상태는이력을읽는projection; 원본이벤트불변.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "grant_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "kind": "text NOT NULL",
+      "reason": "text NOT NULL",
+      "request_key": "uuid NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "settlement_runs",
+    "title": "정산 실행·cutoff",
+    "group": "7 원장 이행",
+    "columns": {
+      "run_key": "text NOT NULL",
+      "cutoff_at": "timestamptz NOT NULL",
+      "effective_at": "timestamptz NOT NULL",
+      "engine_version": "text NOT NULL",
+      "status": "text NOT NULL"
+    },
+    "refs": [],
+    "checks": [
+      "status IN ('STARTED','COMMITTED','FAILED')",
+      "effective_at>=cutoff_at"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "run_key"
+      ]
+    ],
+    "note": "자정확정분정산. [이전cutoff,이번cutoff)구간. cutoff후확인분다음실행. 재시작해도ledger dedupe유지.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "run_key": "text NOT NULL",
+      "cutoff_at": "timestamptz NOT NULL",
+      "effective_at": "timestamptz NOT NULL",
+      "engine_version": "text NOT NULL",
+      "status": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "fulfillments",
+    "title": "외부 돈·소원 이행",
+    "group": "7 원장 이행",
+    "columns": {
+      "grant_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "amount": "numeric",
+      "note": "text NOT NULL",
+      "dedupe_key": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "grant_id",
+        "grants",
+        "id"
+      ],
+      [
+        "actor_id",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [
+      "amount IS NULL OR amount>0",
+      "amount IS NULL OR (amount=trunc(amount) AND abs(amount)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "grant_id"
+      ],
+      [
+        "family_id",
+        "dedupe_key"
+      ]
+    ],
+    "note": "외부포인트충전/현금전달/소원이행기록이지자동송금아님. v0.1전액이행한번,분할이행은후속확장.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "grant_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "amount": "numeric",
+      "note": "text NOT NULL",
+      "dedupe_key": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "usage_requests",
+    "title": "시간·포인트 사용 요청",
+    "group": "7 원장 이행",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "request_key": "uuid NOT NULL",
+      "requested_for": "timestamptz NOT NULL",
+      "reason": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "actor_id",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      [
+        "family_id",
+        "request_key"
+      ]
+    ],
+    "note": "사용승인·잔액검사는거래RPC. 패널티와사용은다른거래종류. 사용자카드잔액믿지않음.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "request_key": "uuid NOT NULL",
+      "requested_for": "timestamptz NOT NULL",
+      "reason": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "usage_items",
+    "title": "사용 자산별 양",
+    "group": "7 원장 이행",
+    "columns": {
+      "usage_request_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "amount": "numeric NOT NULL"
+    },
+    "refs": [
+      [
+        "usage_request_id",
+        "usage_requests",
+        "id"
+      ],
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ]
+    ],
+    "checks": [
+      "amount>0",
+      "amount IS NULL OR (amount=trunc(amount) AND abs(amount)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "usage_request_id",
+        "asset_id"
+      ],
+      [
+        "family_id",
+        "id",
+        "asset_id"
+      ]
+    ],
+    "note": "사용한단위가시간인지특정포인트인지명확하게FK로참조.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "usage_request_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "amount": "numeric NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "ledger_entries",
+    "title": "사용 가능한 자산 원장",
+    "group": "7 원장 이행",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "grant_id": "uuid",
+      "usage_item_id": "uuid",
+      "reversal_of_id": "uuid",
+      "settlement_run_id": "uuid",
+      "kind": "text NOT NULL",
+      "delta": "numeric NOT NULL",
+      "business_date": "date NOT NULL",
+      "effective_at": "timestamptz NOT NULL",
+      "reason": "text NOT NULL",
+      "dedupe_key": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ],
+      [
+        "grant_id",
+        "grants",
+        "id"
+      ],
+      [
+        "usage_item_id",
+        "usage_items",
+        "id"
+      ],
+      [
+        "reversal_of_id",
+        "ledger_entries",
+        "id"
+      ],
+      [
+        "settlement_run_id",
+        "settlement_runs",
+        "id"
+      ]
+    ],
+    "checks": [
+      "delta<>0",
+      "num_nonnulls(grant_id,usage_item_id,reversal_of_id)=1",
+      "(kind='REWARD' AND grant_id IS NOT NULL AND delta>0) OR (kind='PENALTY' AND grant_id IS NOT NULL AND delta<0) OR (kind='USAGE' AND usage_item_id IS NOT NULL AND delta<0) OR (kind='REVERSAL' AND reversal_of_id IS NOT NULL)",
+      "delta IS NULL OR (delta=trunc(delta) AND abs(delta)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "dedupe_key"
+      ],
+      [
+        "family_id",
+        "grant_id"
+      ],
+      [
+        "family_id",
+        "usage_item_id"
+      ],
+      [
+        "family_id",
+        "reversal_of_id"
+      ],
+      [
+        "family_id",
+        "id",
+        "child_id",
+        "asset_id"
+      ]
+    ],
+    "note": "원장수정/삭제금지. 전액상쇄한번; 새정정효과는새grant. 잔액=sum(효력도래delta). 외부이행route 자산은여기중복적립금지.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "grant_id": "uuid",
+      "usage_item_id": "uuid",
+      "reversal_of_id": "uuid",
+      "settlement_run_id": "uuid",
+      "kind": "text NOT NULL",
+      "delta": "numeric NOT NULL",
+      "business_date": "date NOT NULL",
+      "effective_at": "timestamptz NOT NULL",
+      "reason": "text NOT NULL",
+      "dedupe_key": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "residuals",
+    "title": "미분류·판정 불명 잔차",
+    "group": "8 잔차 관측",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "occurrence_id": "uuid",
+      "business_date": "date NOT NULL",
+      "raw_payload": "jsonb NOT NULL",
+      "reason_code": "text NOT NULL",
+      "origin_key": "uuid NOT NULL"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "occurrence_id",
+        "occurrences",
+        "id"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      [
+        "family_id",
+        "origin_key"
+      ]
+    ],
+    "note": "unknown은ref에넣지않음. 자동보상/패널티추정금지,자정에도hold를보존.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "occurrence_id": "uuid",
+      "business_date": "date NOT NULL",
+      "raw_payload": "jsonb NOT NULL",
+      "reason_code": "text NOT NULL",
+      "origin_key": "uuid NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "residual_decisions",
+    "title": "잔차 분류 승인",
+    "group": "8 잔차 관측",
+    "columns": {
+      "residual_id": "uuid NOT NULL",
+      "revision_no": "integer NOT NULL",
+      "decision": "text NOT NULL",
+      "target_ref_id": "uuid",
+      "target_rule_version_id": "uuid",
+      "actor_id": "uuid NOT NULL",
+      "effective_from": "date NOT NULL",
+      "reason": "text NOT NULL"
+    },
+    "refs": [
+      [
+        "residual_id",
+        "residuals",
+        "id"
+      ],
+      [
+        "target_ref_id",
+        "ref_concepts",
+        "id"
+      ],
+      [
+        "target_rule_version_id",
+        "rule_versions",
+        "id"
+      ],
+      [
+        "actor_id",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [
+      "revision_no>0",
+      "decision IN ('ATTACH_EXISTING','CREATE_APPROVED_KIND','NO_EFFECT','KEEP_HOLD')",
+      "(decision IN ('ATTACH_EXISTING','CREATE_APPROVED_KIND') AND target_ref_id IS NOT NULL) OR (decision IN ('NO_EFFECT','KEEP_HOLD') AND target_ref_id IS NULL AND target_rule_version_id IS NULL)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "residual_id",
+        "revision_no"
+      ]
+    ],
+    "note": "기존정본에연결/새종류승인/무효과/유지. 승인다음날이후효력,이미쓴today불변. 소급보상은별도판정·상쇄경로.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "residual_id": "uuid NOT NULL",
+      "revision_no": "integer NOT NULL",
+      "decision": "text NOT NULL",
+      "target_ref_id": "uuid",
+      "target_rule_version_id": "uuid",
+      "actor_id": "uuid NOT NULL",
+      "effective_from": "date NOT NULL",
+      "reason": "text NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "daily_snapshots",
+    "title": "일별 사진 머리",
+    "group": "8 잔차 관측",
+    "columns": {
+      "child_id": "uuid NOT NULL",
+      "business_date": "date NOT NULL",
+      "revision_no": "integer NOT NULL",
+      "observed_at": "timestamptz NOT NULL",
+      "hold_count": "integer NOT NULL",
+      "residual_count": "integer NOT NULL",
+      "pending_penalty_count": "integer NOT NULL",
+      "settlement_run_id": "uuid"
+    },
+    "refs": [
+      [
+        "child_id",
+        "child_profiles",
+        "id"
+      ],
+      [
+        "settlement_run_id",
+        "settlement_runs",
+        "id"
+      ]
+    ],
+    "checks": [
+      "revision_no>0",
+      "hold_count>=0 AND residual_count>=0 AND pending_penalty_count>=0"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "child_id",
+        "business_date",
+        "revision_no"
+      ]
+    ],
+    "note": "잔액계산정본아닌관측. 정정후기존사진보존,revision추가.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "child_id": "uuid NOT NULL",
+      "business_date": "date NOT NULL",
+      "revision_no": "integer NOT NULL",
+      "observed_at": "timestamptz NOT NULL",
+      "hold_count": "integer NOT NULL",
+      "residual_count": "integer NOT NULL",
+      "pending_penalty_count": "integer NOT NULL",
+      "settlement_run_id": "uuid",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "snapshot_assets",
+    "title": "사진의 자산별 잔액",
+    "group": "8 잔차 관측",
+    "columns": {
+      "snapshot_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "available_amount": "numeric NOT NULL",
+      "pending_amount": "numeric NOT NULL"
+    },
+    "refs": [
+      [
+        "snapshot_id",
+        "daily_snapshots",
+        "id"
+      ],
+      [
+        "asset_id",
+        "asset_types",
+        "id"
+      ]
+    ],
+    "checks": [
+      "available_amount IS NULL OR (available_amount=trunc(available_amount) AND abs(available_amount)<=1000000000000000000)",
+      "pending_amount IS NULL OR (pending_amount=trunc(pending_amount) AND abs(pending_amount)<=1000000000000000000)"
+    ],
+    "unique": [
+      [
+        "family_id",
+        "snapshot_id",
+        "asset_id"
+      ]
+    ],
+    "note": "분/원/서비스포인트따로. 외부돈/소원은이행대기상태로표시,내부사용가능잔액과혼동금지.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "snapshot_id": "uuid NOT NULL",
+      "asset_id": "uuid NOT NULL",
+      "available_amount": "numeric NOT NULL",
+      "pending_amount": "numeric NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "source_bridges",
+    "title": "기존 행 연결·이행 경계",
+    "group": "9 전환 감사",
+    "columns": {
+      "source_system": "text NOT NULL",
+      "source_table": "text NOT NULL",
+      "source_id": "uuid NOT NULL",
+      "target_kind": "text NOT NULL",
+      "target_id": "uuid NOT NULL",
+      "already_fulfilled": "boolean NOT NULL",
+      "cutover_at": "timestamptz NOT NULL"
+    },
+    "refs": [],
+    "checks": [],
+    "unique": [
+      [
+        "family_id",
+        "source_system",
+        "source_table",
+        "source_id",
+        "target_kind"
+      ]
+    ],
+    "note": "마이그레이션내부감사. target_kind/id는예외적다형참조로전환검증필수; 업무계산에이열만믿지않고각FK로정본조회. 구Sheets데이터이관없음.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "source_system": "text NOT NULL",
+      "source_table": "text NOT NULL",
+      "source_id": "uuid NOT NULL",
+      "target_kind": "text NOT NULL",
+      "target_id": "uuid NOT NULL",
+      "already_fulfilled": "boolean NOT NULL",
+      "cutover_at": "timestamptz NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  },
+  {
+    "name": "request_events",
+    "title": "RPC 멱등 요청 기록",
+    "group": "9 전환 감사",
+    "columns": {
+      "actor_id": "uuid NOT NULL",
+      "request_key": "uuid NOT NULL",
+      "action": "text NOT NULL",
+      "payload_hash": "text NOT NULL",
+      "response_payload": "jsonb NOT NULL"
+    },
+    "refs": [
+      [
+        "actor_id",
+        "principals",
+        "id"
+      ]
+    ],
+    "checks": [],
+    "unique": [
+      [
+        "family_id",
+        "actor_id",
+        "request_key"
+      ]
+    ],
+    "note": "같은키·다른payload거절. 응답저장에는민감인증값제외. transaction성공과같이commit.",
+    "anchor": false,
+    "full_columns": {
+      "id": "uuid PRIMARY KEY DEFAULT gen_random_uuid()",
+      "family_id": "uuid NOT NULL",
+      "actor_id": "uuid NOT NULL",
+      "request_key": "uuid NOT NULL",
+      "action": "text NOT NULL",
+      "payload_hash": "text NOT NULL",
+      "response_payload": "jsonb NOT NULL",
+      "recorded_at": "timestamptz NOT NULL DEFAULT now()"
+    }
+  }
+]

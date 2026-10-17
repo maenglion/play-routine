@@ -1,0 +1,14 @@
+flowchart TB
+ A["규정·월별 채택 버전<br/>어떤 기준을 적용했는가"] --> B["원사건 source_event<br/>자녀 보고·실제 발생"]
+ B --> C["부모 확인 parent_confirmation<br/>인정 · 유보 · 정정"]
+ C --> D["조건·한도·기간 평가<br/>당시 규정으로 계산"]
+ D --> E["보상권 reward_right<br/>받을 권리 · 단위와 수량"]
+ E --> F["이행 fulfillment<br/>실제로 제공한 기록"]
+ E --> G["정산·원장 ledger_entry<br/>확정 거래 · 후속 구현"]
+ F -. "권리와 비교·대조" .-> G
+ B -. "미분류·상충" .-> R["잔차 residual_case<br/>사람 검토 · 후속 구현"]
+ R -. "승인한 결정" .-> C
+ C -. "누가·왜 변경" .-> L["감사추적 audit trail<br/>기준·확인·제공의 이력"]
+ E -. "발행 이력" .-> L
+ classDef pending fill:#fff4df,stroke:#a77619,color:#302515;
+ class R,G pending;

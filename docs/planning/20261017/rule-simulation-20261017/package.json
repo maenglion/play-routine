@@ -1,0 +1,9 @@
+{
+  "name": "play-routine-rule-simulation",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "과거·최근 Play Routine 조건을 독립 PostgreSQL에서 대입하는 테스트 전용 시뮬레이션",
+  "scripts": { "simulate": "node engine.mjs scenarios.json output" },
+  "dependencies": { "@electric-sql/pglite": "0.5.10" }
+}

@@ -1,0 +1,2820 @@
+[
+  {
+    "scenario": "S01",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R01-0"
+  },
+  {
+    "scenario": "S01",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R01",
+    "subject": "e0fc94dc-cbad-4b7c-8afe-93e2427f46e6",
+    "evaluation": "cb1e578b-cf5d-4fa0-8c59-b3ea4374d8e4"
+  },
+  {
+    "scenario": "S01",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R01-1"
+  },
+  {
+    "scenario": "S01",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R01",
+    "subject": "a0b0c5b2-1c11-4844-8904-489dd48c6ea1",
+    "evaluation": "bfbc15eb-6214-4712-86aa-2fc280118268"
+  },
+  {
+    "scenario": "S01",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "8d9e11bd-cd38-4f3a-8b50-1c58a94eb1a7",
+    "posted": 1
+  },
+  {
+    "scenario": "S02",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "home"
+  },
+  {
+    "scenario": "S02",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R02",
+    "subject": "1e74882e-0476-4311-8d06-d650fb9bfd73",
+    "evaluation": "1d4914fb-2ce5-4af1-85c8-97bb5ab3ea7e"
+  },
+  {
+    "scenario": "S02",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "8c468e13-866a-499e-8043-620c23d976cf",
+    "posted": 0
+  },
+  {
+    "scenario": "S02",
+    "step": 4,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "f7d2eb27-c4cf-4dd5-8adb-621639673b65"
+  },
+  {
+    "scenario": "S02",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "home-r2"
+  },
+  {
+    "scenario": "S02",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R02",
+    "subject": "1e74882e-0476-4311-8d06-d650fb9bfd73",
+    "evaluation": "827180d3-e833-46fa-8142-9ce27c35a052"
+  },
+  {
+    "scenario": "S02",
+    "step": 7,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "8c468e13-866a-499e-8043-620c23d976cf",
+    "posted": 0
+  },
+  {
+    "scenario": "S02",
+    "step": 8,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "31eec20d-a298-4d0a-8b65-efa2976fa50f"
+  },
+  {
+    "scenario": "S02",
+    "step": 9,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "6d11717f-4bc3-4759-8523-63412c761f84",
+    "posted": 1
+  },
+  {
+    "scenario": "S03",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R03-0"
+  },
+  {
+    "scenario": "S03",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R03",
+    "subject": "f96e433e-4196-485a-829f-3efefa09db89",
+    "evaluation": "2d035b02-9d9f-41d2-8425-5a3ae4d87fec"
+  },
+  {
+    "scenario": "S03",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R03-1"
+  },
+  {
+    "scenario": "S03",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R03",
+    "subject": "c14c5006-a695-405d-8cfb-97cce5932b71",
+    "evaluation": "50373de3-c4fd-4d3c-8814-0606413cee4d"
+  },
+  {
+    "scenario": "S03",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "e82cd30e-7d68-4d3c-890d-4e19ec9144d0",
+    "posted": 1
+  },
+  {
+    "scenario": "S04",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R07-0"
+  },
+  {
+    "scenario": "S04",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R07",
+    "subject": "af8cb76e-065e-4ba0-8b25-9b22d80d2a60",
+    "evaluation": "6f16f4df-a305-4322-8113-2975297569bc"
+  },
+  {
+    "scenario": "S04",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R07-1"
+  },
+  {
+    "scenario": "S04",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R07",
+    "subject": "2358e9a3-8172-4efd-8d66-efedcb2f5634",
+    "evaluation": "d619fe47-3615-47e0-866a-55354f0f79d2"
+  },
+  {
+    "scenario": "S04",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R07-2"
+  },
+  {
+    "scenario": "S04",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R07",
+    "subject": "1f8fd52b-5df8-497f-8961-5b7734575446",
+    "evaluation": "9c9c309d-bc9c-4d9c-8464-a6ecccc619b7"
+  },
+  {
+    "scenario": "S04",
+    "step": 7,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "e274a5f2-6764-4d60-82aa-7821ce803663",
+    "posted": 2
+  },
+  {
+    "scenario": "S05",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R08-0"
+  },
+  {
+    "scenario": "S05",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R08",
+    "subject": "a7820721-2e6b-43f6-8766-3b27c5937309",
+    "evaluation": "34d96072-2990-42e6-8239-a6bba480a738"
+  },
+  {
+    "scenario": "S05",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R08-1"
+  },
+  {
+    "scenario": "S05",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R08",
+    "subject": "ae44ab20-be7d-410f-8cdc-37a89c3c990a",
+    "evaluation": "bb0fd3a3-ef25-4d30-8d98-9100f2e5158b"
+  },
+  {
+    "scenario": "S05",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "cb9647ff-7efb-4567-8a06-3efd2758c80d",
+    "posted": 0
+  },
+  {
+    "scenario": "S05",
+    "step": 6,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 1,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S05",
+    "step": 7,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 0,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S06",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R09-0"
+  },
+  {
+    "scenario": "S06",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R09",
+    "subject": "da974ba1-abd4-4b7e-839c-f3c3c84f60b7",
+    "evaluation": "e0f3a6d1-7afd-4336-81fd-4d8e1cd48e56"
+  },
+  {
+    "scenario": "S06",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R09-1"
+  },
+  {
+    "scenario": "S06",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R09",
+    "subject": "3bcfb2ce-9a8c-464c-8101-f443f92dbffc",
+    "evaluation": "07d57a7d-d00f-40b9-819d-47bafa3cf5ad"
+  },
+  {
+    "scenario": "S06",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R09-2"
+  },
+  {
+    "scenario": "S06",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R09",
+    "subject": "93aeb2e0-b73e-48b2-8e51-5e0444dbf55f",
+    "evaluation": "e8a9622e-f8b7-42bf-8bff-8fae91aaf724"
+  },
+  {
+    "scenario": "S06",
+    "step": 7,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R09-3"
+  },
+  {
+    "scenario": "S06",
+    "step": 8,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R09",
+    "subject": "70016b29-deb4-45b7-81fd-9292712ffd3b",
+    "evaluation": "043bbf46-b4d8-4079-8d1a-7d7cf2f44928"
+  },
+  {
+    "scenario": "S06",
+    "step": 9,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "c3e1e2c0-2e8e-4191-859d-fa5aa38e238f",
+    "posted": 2
+  },
+  {
+    "scenario": "S07",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "CMP_R09_ONCE-0"
+  },
+  {
+    "scenario": "S07",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_R09_ONCE",
+    "subject": "b2b5c109-f999-4bd9-8c36-7b2959cee11a",
+    "evaluation": "19412e48-b4e1-4e48-8959-1b70866b3556"
+  },
+  {
+    "scenario": "S07",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "CMP_R09_ONCE-1"
+  },
+  {
+    "scenario": "S07",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_R09_ONCE",
+    "subject": "8ebe25aa-0e98-4b22-82a4-1e8c619a7465",
+    "evaluation": "8f8919c3-3d00-4a45-8b42-9f3cae716792"
+  },
+  {
+    "scenario": "S07",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "CMP_R09_ONCE-2"
+  },
+  {
+    "scenario": "S07",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_R09_ONCE",
+    "subject": "9b7e534a-0d6d-4e54-8595-4a3ee854d7a3",
+    "evaluation": "ddc8ce74-32ae-4905-8e5f-e908d9f8695f"
+  },
+  {
+    "scenario": "S07",
+    "step": 7,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "CMP_R09_ONCE-3"
+  },
+  {
+    "scenario": "S07",
+    "step": 8,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_R09_ONCE",
+    "subject": "f7125cb5-d611-43b9-8a89-66fabd8cd6ed",
+    "evaluation": "4825ed22-3a9e-4552-840e-220dba6ea6a0"
+  },
+  {
+    "scenario": "S07",
+    "step": 9,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "51e67f1a-ebf3-46fd-8b5d-8de0b56b6144",
+    "posted": 1
+  },
+  {
+    "scenario": "S08",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "sleep-pass"
+  },
+  {
+    "scenario": "S08",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R11",
+    "subject": "0b3ca93c-90c4-4409-857c-b163fa4abe27",
+    "evaluation": "d231518d-dc0d-486e-8650-130cddcfc448"
+  },
+  {
+    "scenario": "S08",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "sleep-no"
+  },
+  {
+    "scenario": "S08",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R11",
+    "subject": "51ff25c8-4976-4da4-8e10-cb9a8b8d23f3",
+    "evaluation": "d408b36a-3a63-414b-8b65-7767afcf08f1"
+  },
+  {
+    "scenario": "S08",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "0f85ae3a-4d32-4d6d-8d28-f57b0139dada",
+    "posted": 1
+  },
+  {
+    "scenario": "S09",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-0"
+  },
+  {
+    "scenario": "S09",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-1"
+  },
+  {
+    "scenario": "S09",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-2"
+  },
+  {
+    "scenario": "S09",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-3"
+  },
+  {
+    "scenario": "S09",
+    "step": 5,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "db1d1fcc-e2ba-4fba-8654-43dd7db38e5b",
+    "evaluation": "3d96c055-37d4-4116-8d44-fc54cb5b7da5"
+  },
+  {
+    "scenario": "S09",
+    "step": 6,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "3c7c119b-3cd7-40ab-8787-c9d0333f3b5b",
+    "posted": 0
+  },
+  {
+    "scenario": "S09",
+    "step": 7,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 0,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S10",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-0"
+  },
+  {
+    "scenario": "S10",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-1"
+  },
+  {
+    "scenario": "S10",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-2"
+  },
+  {
+    "scenario": "S10",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-3"
+  },
+  {
+    "scenario": "S10",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-4"
+  },
+  {
+    "scenario": "S10",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "3cd697a8-cfb4-4089-80a2-fe94e73d802e",
+    "evaluation": "968dfc09-a19a-49de-8a17-eb5e495dccb2"
+  },
+  {
+    "scenario": "S10",
+    "step": 7,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "225d5faf-eedc-45a7-810b-df0ed5c8c092",
+    "posted": 0
+  },
+  {
+    "scenario": "S10",
+    "step": 8,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 1,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S11",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-0"
+  },
+  {
+    "scenario": "S11",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-1"
+  },
+  {
+    "scenario": "S11",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-2"
+  },
+  {
+    "scenario": "S11",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-3"
+  },
+  {
+    "scenario": "S11",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-4"
+  },
+  {
+    "scenario": "S11",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "f3144760-9353-4746-8f8f-713e86163577",
+    "evaluation": "78b22ee0-c81e-4ed2-84b2-1aae0a462447"
+  },
+  {
+    "scenario": "S11",
+    "step": 7,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "4cde3a64-f6af-4582-8687-31f4bd2f0db9"
+  },
+  {
+    "scenario": "S11",
+    "step": 8,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-r0"
+  },
+  {
+    "scenario": "S11",
+    "step": 9,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-r1"
+  },
+  {
+    "scenario": "S11",
+    "step": 10,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-r2"
+  },
+  {
+    "scenario": "S11",
+    "step": 11,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "school_base",
+    "grant": "2095f566-1cca-43fb-8ae5-d9d055cafd41"
+  },
+  {
+    "scenario": "S11",
+    "step": 11,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "f3144760-9353-4746-8f8f-713e86163577",
+    "evaluation": "b28d720c-3d91-4ca1-8d5f-2f30ddec0c5c"
+  },
+  {
+    "scenario": "S11",
+    "step": 12,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "3cd3c53a-33d2-4a80-837e-b677a8ce017e"
+  },
+  {
+    "scenario": "S11",
+    "step": 13,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "school_base",
+    "grant": "2095f566-1cca-43fb-8ae5-d9d055cafd41"
+  },
+  {
+    "scenario": "S11",
+    "step": 13,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "school_extra",
+    "grant": "9131f58b-a67e-4b98-8edd-cb989c4c9551"
+  },
+  {
+    "scenario": "S11",
+    "step": 13,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "f3144760-9353-4746-8f8f-713e86163577",
+    "evaluation": "ac6140f2-5348-42b8-8bc1-a504ced89d06"
+  },
+  {
+    "scenario": "S11",
+    "step": 14,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 2,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S11",
+    "step": 15,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 0,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S12",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s0"
+  },
+  {
+    "scenario": "S12",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s1"
+  },
+  {
+    "scenario": "S12",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s2"
+  },
+  {
+    "scenario": "S12",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s3"
+  },
+  {
+    "scenario": "S12",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s-hold"
+  },
+  {
+    "scenario": "S12",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "40142878-2567-4d29-8715-7f7acb784589",
+    "evaluation": "4cf3f80b-3341-43be-8e07-2763ab881ba1"
+  },
+  {
+    "scenario": "S12",
+    "step": 7,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "4a486683-7e17-4011-8d58-30b11436c5f0",
+    "posted": 0
+  },
+  {
+    "scenario": "S13",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s0"
+  },
+  {
+    "scenario": "S13",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s1"
+  },
+  {
+    "scenario": "S13",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s2"
+  },
+  {
+    "scenario": "S13",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s3"
+  },
+  {
+    "scenario": "S13",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "study"
+  },
+  {
+    "scenario": "S13",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_SCHOOL_STAR",
+    "subject": "e6aacee9-898b-46e3-8446-6bb1c0bae5f2",
+    "evaluation": "a1b5fdfa-1c5d-4ff4-8cf5-02917305cde4"
+  },
+  {
+    "scenario": "S13",
+    "step": 7,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_GITAN",
+    "subject": "6788b778-6627-4c89-8ee6-f8abdb84d1d7",
+    "evaluation": "4fb3fe91-496c-4f2e-831f-34c31126e30c"
+  },
+  {
+    "scenario": "S13",
+    "step": 8,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "710e945c-60b6-4410-85b4-df4c70cd1e51",
+    "posted": 1
+  },
+  {
+    "scenario": "S14",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "milk"
+  },
+  {
+    "scenario": "S14",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "1002f08e-8bfd-486a-8890-1bfec76b9bd2",
+    "evaluation": "7a3f24d8-d704-4f29-8959-12e3ee06bd9a"
+  },
+  {
+    "scenario": "S14",
+    "step": 3,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "NEW_MILK_base",
+    "grant": "151fe5e3-6bc6-4e5f-8883-3b29990c58f8"
+  },
+  {
+    "scenario": "S14",
+    "step": 3,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "1002f08e-8bfd-486a-8890-1bfec76b9bd2",
+    "evaluation": "ceea545f-be1a-4d1a-8d32-db863d25bebc"
+  },
+  {
+    "scenario": "S14",
+    "step": 4,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "ef0c51f7-f7ef-41c5-8abf-2d2549d7e769",
+    "posted": 1
+  },
+  {
+    "scenario": "S14",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "ef0c51f7-f7ef-41c5-8abf-2d2549d7e769",
+    "posted": 0
+  },
+  {
+    "scenario": "S15",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "m"
+  },
+  {
+    "scenario": "S15",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "g"
+  },
+  {
+    "scenario": "S15",
+    "step": 3,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "15b9b4a9-fa02-41f0-86fe-26e89215ea4c",
+    "evaluation": "c7e40b04-f93a-48c7-8c9e-f5dce9efb839"
+  },
+  {
+    "scenario": "S15",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_GITAN",
+    "subject": "54215643-e9b9-44b9-8daa-2ebce558558b",
+    "evaluation": "851a85b0-4ba3-4c2c-82dc-1606ffcde0ba"
+  },
+  {
+    "scenario": "S15",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "22dae55e-150e-4482-82e9-7cc66a308a53",
+    "posted": 2
+  },
+  {
+    "scenario": "S16",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "m"
+  },
+  {
+    "scenario": "S16",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "g"
+  },
+  {
+    "scenario": "S16",
+    "step": 3,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "e141f3e0-ae42-45ba-8a05-56083f3438b6",
+    "evaluation": "8c66024c-ee3d-444d-8b38-702120e6df0b"
+  },
+  {
+    "scenario": "S16",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_CAP_WHOLE",
+    "subject": "5b24d863-39de-4981-85e5-416d616cf2ea",
+    "evaluation": "5c0a70a5-719f-4650-8370-bd49d0df4783"
+  },
+  {
+    "scenario": "S16",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "e50dcf6c-03b5-42bc-8f1c-d8ec853d06d0",
+    "posted": 1
+  },
+  {
+    "scenario": "S17",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "m"
+  },
+  {
+    "scenario": "S17",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "g"
+  },
+  {
+    "scenario": "S17",
+    "step": 3,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "77533b5a-ef85-4754-8126-c983250033f4",
+    "evaluation": "cf8181d7-a060-4549-83bf-00953bb8bb1d"
+  },
+  {
+    "scenario": "S17",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_CAP_PARTIAL",
+    "subject": "a4a98807-b261-4ccd-86e5-e0bde10d226b",
+    "evaluation": "64f0e115-421f-4f2a-843f-08fd153c1f07"
+  },
+  {
+    "scenario": "S17",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "6201ff54-5be3-4de9-8eeb-9864099efdc4",
+    "posted": 2
+  },
+  {
+    "scenario": "S18",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "q80"
+  },
+  {
+    "scenario": "S18",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_ARITH",
+    "subject": "a30148c9-4c8a-48cd-8768-909212ca93d6",
+    "evaluation": "69a39a0e-9208-4fb8-83a5-a470732ee306"
+  },
+  {
+    "scenario": "S18",
+    "step": 3,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "cf4cd77d-719e-4115-810d-c26342d120f6"
+  },
+  {
+    "scenario": "S18",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "q79"
+  },
+  {
+    "scenario": "S18",
+    "step": 5,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_ARITH",
+    "subject": "799daa22-52af-44c6-86f3-941aecb27f55",
+    "evaluation": "10d2ca27-6ade-4028-8ff9-e4990f1c1d8f"
+  },
+  {
+    "scenario": "S18",
+    "step": 6,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "41e41886-4036-4345-86ef-bd447e20bf26"
+  },
+  {
+    "scenario": "S18",
+    "step": 7,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "q60"
+  },
+  {
+    "scenario": "S18",
+    "step": 8,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_ARITH",
+    "subject": "e89de1e3-7b56-42f0-8f01-0983d41d97c6",
+    "evaluation": "3eae276a-5880-4484-89e4-28a11028b31e"
+  },
+  {
+    "scenario": "S18",
+    "step": 9,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "4200e188-d0cb-49e7-8f69-ad6e4437fd25"
+  },
+  {
+    "scenario": "S18",
+    "step": 10,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "q59"
+  },
+  {
+    "scenario": "S18",
+    "step": 11,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_ARITH",
+    "subject": "f1a85db1-0592-4365-8383-57dc56390252",
+    "evaluation": "f772f16a-2136-4219-8b09-05969ce3861b"
+  },
+  {
+    "scenario": "S18",
+    "step": 12,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "5716e855-1a1e-4810-859d-d043c28ec242"
+  },
+  {
+    "scenario": "S18",
+    "step": 13,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "a428e3d7-2682-45cd-8178-850a49201c53",
+    "posted": 1
+  },
+  {
+    "scenario": "S18",
+    "step": 14,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "6712554e-9e6e-46bb-8bdc-3c01b34f45a6"
+  },
+  {
+    "scenario": "S18",
+    "step": 15,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 1
+  },
+  {
+    "scenario": "S18",
+    "step": 16,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "34f9bc17-6195-45db-8ca6-ecbd4ba1c433",
+    "posted": 1
+  },
+  {
+    "scenario": "S19",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "child"
+  },
+  {
+    "scenario": "S19",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_ARITH",
+    "subject": "8ecf2739-5c97-448b-8a41-3b519ffe7a56",
+    "evaluation": "b6039ac5-3ad3-4a5c-81da-e2e31502dc94"
+  },
+  {
+    "scenario": "S19",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "parent"
+  },
+  {
+    "scenario": "S19",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_ARITH",
+    "subject": "8ecf2739-5c97-448b-8a41-3b519ffe7a56",
+    "evaluation": "3bd4adf9-7b44-412a-80ab-8a69324facc6"
+  },
+  {
+    "scenario": "S19",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "b27c11ce-f9f7-415d-83ee-c43450c4a667",
+    "posted": 0
+  },
+  {
+    "scenario": "S20",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "test"
+  },
+  {
+    "scenario": "S20",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_TEST",
+    "subject": "57a4d570-7e4a-40db-80c9-b38d71439cc9",
+    "evaluation": "b693eed3-96ab-4ce0-8103-6aeee579bc1d"
+  },
+  {
+    "scenario": "S20",
+    "step": 3,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "NEW_TEST_reward",
+    "grant": "66f68615-a0d0-4014-8c4b-bb8b39f1bf41"
+  },
+  {
+    "scenario": "S20",
+    "step": 3,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_TEST",
+    "subject": "57a4d570-7e4a-40db-80c9-b38d71439cc9",
+    "evaluation": "d7541463-8745-4d4a-8ece-0e88ad563d9f"
+  },
+  {
+    "scenario": "S20",
+    "step": 4,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "bad45645-6b7e-4c12-8abd-f056a79bb43a",
+    "posted": 1
+  },
+  {
+    "scenario": "S20",
+    "step": 5,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 1,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S21",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "test"
+  },
+  {
+    "scenario": "S21",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_TEST",
+    "subject": "2c46b077-d8aa-4ad5-86b8-be597f4469b7",
+    "evaluation": "44cbee5b-c726-44eb-8ec1-5d439a9a3530"
+  },
+  {
+    "scenario": "S21",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "58f67220-54ed-4d94-8fa7-26bd28ea9e3d",
+    "posted": 0
+  },
+  {
+    "scenario": "S22",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "test"
+  },
+  {
+    "scenario": "S22",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_COMPOUND",
+    "subject": "85b50b82-e625-4bf0-8360-f88729abf697",
+    "evaluation": "bd198d34-666c-47ff-8687-b06acdaa968c"
+  },
+  {
+    "scenario": "S22",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "80e7e5f8-2a52-464b-8b41-15ba6b367de1",
+    "posted": 1
+  },
+  {
+    "scenario": "S22",
+    "step": 4,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 1,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S23",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "test"
+  },
+  {
+    "scenario": "S23",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_COMPOUND",
+    "subject": "260dc83c-675c-44ea-8fac-412379c4b516",
+    "evaluation": "3ff33c8e-f33a-4363-8da4-fb65f7123a5d"
+  },
+  {
+    "scenario": "S23",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "fc2cbadb-ab48-4cb9-893b-d7e8fb7fba97",
+    "posted": 0
+  },
+  {
+    "scenario": "S24",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "n99"
+  },
+  {
+    "scenario": "S24",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R04",
+    "subject": "7fb830c4-ffa2-4bba-89c2-843d7c41a3dc",
+    "evaluation": "bc24e762-da24-42e5-8bec-704627e9998b"
+  },
+  {
+    "scenario": "S24",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "n100"
+  },
+  {
+    "scenario": "S24",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R04",
+    "subject": "c7f1c5f4-a24a-4343-85bd-c8ed62bbd90c",
+    "evaluation": "9e608b36-757c-44e0-8e86-b585112b1789"
+  },
+  {
+    "scenario": "S24",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "41b28682-b8b7-4094-8f8f-14732f2390f2",
+    "posted": 1
+  },
+  {
+    "scenario": "S25",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "gg"
+  },
+  {
+    "scenario": "S25",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R06",
+    "subject": "a4f9779f-f4bd-4cc7-85b4-679b7ae16ea8",
+    "evaluation": "b7b0957e-1be6-4c76-816f-c63b871dae79"
+  },
+  {
+    "scenario": "S25",
+    "step": 3,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "COND_R06_TIME",
+    "grant": "7b510dd8-0e4b-4e96-80e4-00c5f108071a"
+  },
+  {
+    "scenario": "S25",
+    "step": 3,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R06",
+    "subject": "a4f9779f-f4bd-4cc7-85b4-679b7ae16ea8",
+    "evaluation": "4f6103eb-d14d-493a-88d0-1ae0219409be"
+  },
+  {
+    "scenario": "S25",
+    "step": 4,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "cac9e2bb-97de-46be-8d85-d1cc010f5fdd",
+    "posted": 1
+  },
+  {
+    "scenario": "S25",
+    "step": 5,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 1,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S26",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S26",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "5f8300d1-315a-4a78-869b-4258bfa8b3c1",
+    "posted": 1
+  },
+  {
+    "scenario": "S26",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "r80"
+  },
+  {
+    "scenario": "S26",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_ADVANCED_COMBINED",
+    "subject": "133793bb-530d-498b-8824-63858c125fc0",
+    "evaluation": "99f028a1-1bf5-47b3-8017-e1d6ed70ab89"
+  },
+  {
+    "scenario": "S26",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "r79"
+  },
+  {
+    "scenario": "S26",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_ADVANCED_COMBINED",
+    "subject": "de353970-268e-4786-824c-115b7432b37f",
+    "evaluation": "b085c158-9a7a-44dd-810a-95fee691b61c"
+  },
+  {
+    "scenario": "S26",
+    "step": 7,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "r50"
+  },
+  {
+    "scenario": "S26",
+    "step": 8,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_ADVANCED_COMBINED",
+    "subject": "33e7c8fa-18fa-4b96-8b70-b3e2b8d552e2",
+    "evaluation": "99284019-e5cc-47aa-8030-9baba4f2c816"
+  },
+  {
+    "scenario": "S26",
+    "step": 9,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "r49"
+  },
+  {
+    "scenario": "S26",
+    "step": 10,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_ADVANCED_COMBINED",
+    "subject": "0ec74321-1eb3-4b48-8e50-bcc85c992d69",
+    "evaluation": "240fab77-c00f-42fe-8b73-869afc979f4f"
+  },
+  {
+    "scenario": "S26",
+    "step": 11,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 1
+  },
+  {
+    "scenario": "S26",
+    "step": 12,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "50a1f81f-8d73-4bc1-893d-35e5e0baec82",
+    "posted": 2
+  },
+  {
+    "scenario": "S27",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S27",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "8517c9c2-d8d7-42f6-8df2-3eb392145b20",
+    "posted": 1
+  },
+  {
+    "scenario": "S27",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "p1"
+  },
+  {
+    "scenario": "S27",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_P01",
+    "subject": "f0d36677-90a1-4641-8b10-e7d512787bf4",
+    "evaluation": "4d706b2a-7bbc-4eaa-8f0c-f9dc06ce84ce"
+  },
+  {
+    "scenario": "S27",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "p2"
+  },
+  {
+    "scenario": "S27",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_P01",
+    "subject": "fd92c12d-3cca-41c7-81ee-e5ad0f4fe36d",
+    "evaluation": "cf629575-b2b1-4bfa-8f02-31aa5b911778"
+  },
+  {
+    "scenario": "S27",
+    "step": 7,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "857567ab-587d-460d-8c3c-691e4d0adbf7"
+  },
+  {
+    "scenario": "S27",
+    "step": 8,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "d5e5f3a4-9fd0-4462-877e-d798791e1df0",
+    "posted": 0
+  },
+  {
+    "scenario": "S27",
+    "step": 9,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "28cbdbf9-2ed0-4371-89de-81ff90b71293"
+  },
+  {
+    "scenario": "S27",
+    "step": 10,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 1
+  },
+  {
+    "scenario": "S27",
+    "step": 11,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "87b0484e-b541-4d7c-8db3-d956af67792c",
+    "posted": 1
+  },
+  {
+    "scenario": "S28",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S28",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "b3334588-6a77-4684-840c-397a151572ae",
+    "posted": 1
+  },
+  {
+    "scenario": "S28",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "late"
+  },
+  {
+    "scenario": "S28",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_P11",
+    "subject": "649fb34e-9a7a-4b0e-8ce1-fdc5155fc745",
+    "evaluation": "5c8678d0-ca93-4850-8047-25e26983b9c6"
+  },
+  {
+    "scenario": "S28",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "a4569bfa-6570-4a3d-8396-5e2c1c44d38c",
+    "posted": 0
+  },
+  {
+    "scenario": "S28",
+    "step": 6,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "b295e544-c083-43c9-81e9-375913f8c972"
+  },
+  {
+    "scenario": "S28",
+    "step": 7,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 1
+  },
+  {
+    "scenario": "S28",
+    "step": 8,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "1b8b61d6-1585-4851-8cbf-bf5466dbef1a",
+    "posted": 1
+  },
+  {
+    "scenario": "S29",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S29",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "52a33fce-ee64-4d8e-8ede-fecfee65ddf3",
+    "posted": 1
+  },
+  {
+    "scenario": "S29",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "goal"
+  },
+  {
+    "scenario": "S29",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_P03",
+    "subject": "324c8212-33b0-4c2b-8a6c-abf1cfd24b37",
+    "evaluation": "103ce587-dd0d-4f1d-8f7d-fc0761c5f79e"
+  },
+  {
+    "scenario": "S29",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "ceb2fac8-caa1-429e-8090-e797e688e4ec",
+    "posted": 0
+  },
+  {
+    "scenario": "S30",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S30",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "df5b8d07-d6a4-4fa0-860a-1798af595cc4",
+    "posted": 1
+  },
+  {
+    "scenario": "S30",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "goal"
+  },
+  {
+    "scenario": "S30",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_P03",
+    "subject": "3018d95a-2f71-4bb0-85aa-9d7f756fd1ba",
+    "evaluation": "3f4d6c4c-ff1e-4403-8862-2dcbb6ac0fc7"
+  },
+  {
+    "scenario": "S30",
+    "step": 5,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "COND_P03",
+    "grant": "eba4da76-77e5-4e50-845c-ce6529c2dca1"
+  },
+  {
+    "scenario": "S30",
+    "step": 5,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_P03",
+    "subject": "3018d95a-2f71-4bb0-85aa-9d7f756fd1ba",
+    "evaluation": "287645eb-7656-40a7-8200-8460d9292e1e"
+  },
+  {
+    "scenario": "S30",
+    "step": 6,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "10e90985-0bac-4ad5-86be-aef7138e7e0c"
+  },
+  {
+    "scenario": "S30",
+    "step": 7,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 1
+  },
+  {
+    "scenario": "S30",
+    "step": 8,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "3540a819-4ae1-4ef6-8a3e-591bfe8d7699",
+    "posted": 1
+  },
+  {
+    "scenario": "S31",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S31",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "c7ad7b8d-2b5a-421d-8400-1e39b011a431",
+    "posted": 1
+  },
+  {
+    "scenario": "S31",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "p"
+  },
+  {
+    "scenario": "S31",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_P08",
+    "subject": "442f68c9-49e8-4aa0-87b8-4bea03757c5f",
+    "evaluation": "165a2101-f44b-4b0a-8e50-85eb3f6239da"
+  },
+  {
+    "scenario": "S31",
+    "step": 5,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 1
+  },
+  {
+    "scenario": "S31",
+    "step": 6,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "110415b1-b29a-4f8d-8130-b08b6095de6d",
+    "posted": 1
+  },
+  {
+    "scenario": "S32",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S32",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "c822d40d-818a-46db-82e1-525661ebf791",
+    "posted": 1
+  },
+  {
+    "scenario": "S32",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "p"
+  },
+  {
+    "scenario": "S32",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_P09",
+    "subject": "73ed7eb2-2f89-457b-8e8f-7196428fb232",
+    "evaluation": "55050c2b-2fa0-4b1a-8e12-971c5c98c6da"
+  },
+  {
+    "scenario": "S32",
+    "step": 5,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 1
+  },
+  {
+    "scenario": "S32",
+    "step": 6,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "73ad7654-3975-4b8e-8ce9-89a587a18e6d",
+    "posted": 1
+  },
+  {
+    "scenario": "S33",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S33",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "6abfae33-9646-49f3-8c05-83e470470f83",
+    "posted": 1
+  },
+  {
+    "scenario": "S33",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_R10"
+  },
+  {
+    "scenario": "S33",
+    "step": 4,
+    "status": "UNRESOLVED",
+    "op": "evaluate",
+    "rule": "OLD_R10"
+  },
+  {
+    "scenario": "S33",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_P02"
+  },
+  {
+    "scenario": "S33",
+    "step": 6,
+    "status": "INACTIVE",
+    "op": "evaluate",
+    "rule": "OLD_P02"
+  },
+  {
+    "scenario": "S33",
+    "step": 7,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_P04"
+  },
+  {
+    "scenario": "S33",
+    "step": 8,
+    "status": "EXCLUDED",
+    "op": "evaluate",
+    "rule": "OLD_P04"
+  },
+  {
+    "scenario": "S33",
+    "step": 9,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_P05"
+  },
+  {
+    "scenario": "S33",
+    "step": 10,
+    "status": "EXCLUDED",
+    "op": "evaluate",
+    "rule": "OLD_P05"
+  },
+  {
+    "scenario": "S33",
+    "step": 11,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_P07"
+  },
+  {
+    "scenario": "S33",
+    "step": 12,
+    "status": "INACTIVE",
+    "op": "evaluate",
+    "rule": "OLD_P07"
+  },
+  {
+    "scenario": "S33",
+    "step": 13,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_P10"
+  },
+  {
+    "scenario": "S33",
+    "step": 14,
+    "status": "EXCLUDED",
+    "op": "evaluate",
+    "rule": "OLD_P10"
+  },
+  {
+    "scenario": "S33",
+    "step": 15,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_P12"
+  },
+  {
+    "scenario": "S33",
+    "step": 16,
+    "status": "EXCLUDED",
+    "op": "evaluate",
+    "rule": "OLD_P12"
+  },
+  {
+    "scenario": "S33",
+    "step": 17,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_P13"
+  },
+  {
+    "scenario": "S33",
+    "step": 18,
+    "status": "INACTIVE",
+    "op": "evaluate",
+    "rule": "OLD_P13"
+  },
+  {
+    "scenario": "S33",
+    "step": 19,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "OLD_P14"
+  },
+  {
+    "scenario": "S33",
+    "step": 20,
+    "status": "INACTIVE",
+    "op": "evaluate",
+    "rule": "OLD_P14"
+  },
+  {
+    "scenario": "S33",
+    "step": 21,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 0
+  },
+  {
+    "scenario": "S33",
+    "step": 22,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "861a48ae-f180-49b2-82c2-b87ba7503acf",
+    "posted": 0
+  },
+  {
+    "scenario": "S34",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S34",
+    "step": 2,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "bd64e29c-0ce6-4cb5-8996-d3d66f7cedea",
+    "posted": 1
+  },
+  {
+    "scenario": "S34",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "p"
+  },
+  {
+    "scenario": "S34",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_MITIGATION",
+    "subject": "93e98a0c-05f6-4f92-86d5-b34fbc3b1206",
+    "evaluation": "434d7a2c-5dfa-4a82-8524-4778ab6c77cf"
+  },
+  {
+    "scenario": "S34",
+    "step": 5,
+    "status": "APPROVED",
+    "op": "approve",
+    "count": 1
+  },
+  {
+    "scenario": "S34",
+    "step": 6,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "5e94e9a7-27e2-432b-8769-bedda9d57d92",
+    "posted": 1
+  },
+  {
+    "scenario": "S35",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "q0"
+  },
+  {
+    "scenario": "S35",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_MONTH_CAP",
+    "subject": "aa6f47b3-1905-4311-8f16-91a8d4efe12c",
+    "evaluation": "370f0917-3e78-4ab0-8f0f-f25f8bdbccc0"
+  },
+  {
+    "scenario": "S35",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "q1"
+  },
+  {
+    "scenario": "S35",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_MONTH_CAP",
+    "subject": "5828fef4-737c-4782-8ac8-41fa03bf5c0e",
+    "evaluation": "06aa9e16-df64-460d-8f1e-cc134a535e99"
+  },
+  {
+    "scenario": "S35",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "q2"
+  },
+  {
+    "scenario": "S35",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_MONTH_CAP",
+    "subject": "7c606284-f8a3-4fe0-8d93-3871c489df1f",
+    "evaluation": "13b9ddc0-a36c-4815-8e6e-b31bdd3b25c1"
+  },
+  {
+    "scenario": "S35",
+    "step": 7,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "q3"
+  },
+  {
+    "scenario": "S35",
+    "step": 8,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_MONTH_CAP",
+    "subject": "d8ec7e84-8147-4b25-864e-65fd9466ab12",
+    "evaluation": "7243ca88-165a-4d2e-81d1-0a83f3432f96"
+  },
+  {
+    "scenario": "S35",
+    "step": 9,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "60bc646f-3b2e-492e-8b30-121e035c8a6d",
+    "posted": 3
+  },
+  {
+    "scenario": "S36",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "m"
+  },
+  {
+    "scenario": "S36",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "699fb84b-aaa1-4c5e-8ec6-712e9677a751",
+    "evaluation": "7c99922b-539d-4e6d-8f6a-b370a09cb5ae"
+  },
+  {
+    "scenario": "S36",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "m-r2"
+  },
+  {
+    "scenario": "S36",
+    "step": 4,
+    "status": "REPAIRED",
+    "op": "repair",
+    "count": 1
+  },
+  {
+    "scenario": "S36",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "235e3d76-490a-4a23-8acc-5582fd06995a",
+    "posted": 0
+  },
+  {
+    "scenario": "S37",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "m"
+  },
+  {
+    "scenario": "S37",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "e48e0481-1889-47f1-8237-2f97fd9f5e5b",
+    "evaluation": "c1ba8ea5-6f34-444d-89c9-66e9f216803e"
+  },
+  {
+    "scenario": "S37",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "827554e0-3858-4879-81ef-24705aa3156c",
+    "posted": 1
+  },
+  {
+    "scenario": "S37",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "m-r2"
+  },
+  {
+    "scenario": "S37",
+    "step": 5,
+    "status": "REVIEW_REQUIRED",
+    "op": "repair",
+    "count": 1
+  },
+  {
+    "scenario": "S37",
+    "step": 6,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "2d77ddf6-6f65-4e9b-8787-97b53a3abe2b"
+  },
+  {
+    "scenario": "S37",
+    "step": 7,
+    "status": "REPAIRED",
+    "op": "repair",
+    "count": 1
+  },
+  {
+    "scenario": "S37",
+    "step": 8,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "03c2c2fe-1c68-4e9c-8a91-8dcc9164f44e",
+    "posted": 0
+  },
+  {
+    "scenario": "S38",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s0"
+  },
+  {
+    "scenario": "S38",
+    "step": 2,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s1"
+  },
+  {
+    "scenario": "S38",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s2"
+  },
+  {
+    "scenario": "S38",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s3"
+  },
+  {
+    "scenario": "S38",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "s4"
+  },
+  {
+    "scenario": "S38",
+    "step": 6,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "9dbf1765-adbb-428d-866b-44d1ef373b7f",
+    "evaluation": "3434f28c-876f-4b54-8dfe-b74ef8ec9a72"
+  },
+  {
+    "scenario": "S38",
+    "step": 7,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 1,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S38",
+    "step": 8,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "r"
+  },
+  {
+    "scenario": "S38",
+    "step": 9,
+    "status": "REVIEW_REQUIRED",
+    "op": "repair",
+    "count": 1
+  },
+  {
+    "scenario": "S39",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "once"
+  },
+  {
+    "scenario": "S39",
+    "step": 2,
+    "status": "IDEMPOTENT_REPLAY",
+    "op": "record",
+    "key": "once"
+  },
+  {
+    "scenario": "S39",
+    "step": 3,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "c7e52a9a-7474-4c83-8e4b-4d39f842d40a",
+    "evaluation": "d8220139-c9b8-41c1-8d80-a08bbb1a5792"
+  },
+  {
+    "scenario": "S39",
+    "step": 4,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "NEW_MILK_base",
+    "grant": "7362718c-84ae-4abe-84c4-1083d489d4de"
+  },
+  {
+    "scenario": "S39",
+    "step": 4,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "c7e52a9a-7474-4c83-8e4b-4d39f842d40a",
+    "evaluation": "f6aab88e-070f-4a4b-884a-8a952d2048e3"
+  },
+  {
+    "scenario": "S39",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "f5a4ebb1-5d8e-412e-8592-45cb4223aeee",
+    "posted": 1
+  },
+  {
+    "scenario": "S39",
+    "step": 6,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "f5a4ebb1-5d8e-412e-8592-45cb4223aeee",
+    "posted": 0
+  },
+  {
+    "scenario": "S40",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "same"
+  },
+  {
+    "scenario": "S40",
+    "step": 2,
+    "status": "REJECTED",
+    "op": "record",
+    "key": "same",
+    "reason": "같은 key의 다른 payload 재전송"
+  },
+  {
+    "scenario": "S40",
+    "step": 3,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "4e98f4c3-248f-42b2-8145-58fa8a11b2e0",
+    "evaluation": "bada3e1d-b219-4ee1-8d3a-3f2777df631e"
+  },
+  {
+    "scenario": "S40",
+    "step": 4,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "4ee13825-1d22-400e-8efe-d288d84df084",
+    "posted": 1
+  },
+  {
+    "scenario": "S41",
+    "step": 1,
+    "status": "REJECTED",
+    "op": "record",
+    "reason": "score: 범위 0~100 위반"
+  },
+  {
+    "scenario": "S41",
+    "step": 2,
+    "status": "NO_OCCURRENCE",
+    "op": "evaluate",
+    "rule": "NEW_TEST",
+    "reason": "거절되거나 아직 기록되지 않은 회차는 판정·지급하지 않음"
+  },
+  {
+    "scenario": "S41",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "dc68aa22-83ef-4985-866d-56fa9abd8c32",
+    "posted": 0
+  },
+  {
+    "scenario": "S42",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "many"
+  },
+  {
+    "scenario": "S42",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_ARITH",
+    "subject": "7df71697-a208-42f3-80a5-2da1e8ac2ed3",
+    "evaluation": "874a11d3-2283-48f9-8452-1e1d7e7d0874"
+  },
+  {
+    "scenario": "S42",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "02993c1c-32c2-4537-8320-92034aecb84f",
+    "posted": 1
+  },
+  {
+    "scenario": "S43",
+    "step": 1,
+    "status": "BONUS",
+    "op": "bonus"
+  },
+  {
+    "scenario": "S43",
+    "step": 2,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 1,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S43",
+    "step": 3,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 0,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S44",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "arithmetic-event"
+  },
+  {
+    "scenario": "S44",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_ARITH",
+    "subject": "37b7f5a6-0d2f-49f7-8599-24a1b3cc9157",
+    "evaluation": "f4e27698-627c-43bd-8304-9ef87e4424b1"
+  },
+  {
+    "scenario": "S44",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "e6b6c5ac-06d4-486b-8431-5b1b094ecda6",
+    "posted": 1
+  },
+  {
+    "scenario": "S44",
+    "step": 4,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-school0"
+  },
+  {
+    "scenario": "S44",
+    "step": 5,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-milk0"
+  },
+  {
+    "scenario": "S44",
+    "step": 6,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-gitan0"
+  },
+  {
+    "scenario": "S44",
+    "step": 7,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "80af736d-4603-42e4-83f7-667964c99665",
+    "evaluation": "7850aae8-28a5-4411-805a-53fd0584fb05"
+  },
+  {
+    "scenario": "S44",
+    "step": 8,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "bfbb5f6a-2c50-4657-8fc5-c938b3574af6",
+    "evaluation": "418591db-69e7-4ad2-82fa-85dad5be71a1"
+  },
+  {
+    "scenario": "S44",
+    "step": 9,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_GITAN",
+    "subject": "bf6a18b6-24ae-4953-8fe2-e2aa2cb430e8",
+    "evaluation": "7525b4d1-ba20-4f42-89e5-3acd0eb78e88"
+  },
+  {
+    "scenario": "S44",
+    "step": 10,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "a7255e21-18c4-44f0-832e-8fad97be64fa",
+    "posted": 2
+  },
+  {
+    "scenario": "S44",
+    "step": 11,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-school1"
+  },
+  {
+    "scenario": "S44",
+    "step": 12,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-milk1"
+  },
+  {
+    "scenario": "S44",
+    "step": 13,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-gitan1"
+  },
+  {
+    "scenario": "S44",
+    "step": 14,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "80af736d-4603-42e4-83f7-667964c99665",
+    "evaluation": "6495ec78-fb54-4a45-8665-f95ac6097783"
+  },
+  {
+    "scenario": "S44",
+    "step": 15,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "b7a14fa8-aab4-4733-8bda-8ed2d7df03fe",
+    "evaluation": "08dfa194-f18e-4dc1-8fd9-b771c2057282"
+  },
+  {
+    "scenario": "S44",
+    "step": 16,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_GITAN",
+    "subject": "b6c9f84d-3c7b-473c-8f80-ab2a056e0d3e",
+    "evaluation": "061b1d0f-addc-4f66-8dd6-9c0aedc34e25"
+  },
+  {
+    "scenario": "S44",
+    "step": 17,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "224f6482-b42c-4f75-8bb2-cb876eb40624",
+    "posted": 2
+  },
+  {
+    "scenario": "S44",
+    "step": 18,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-school2"
+  },
+  {
+    "scenario": "S44",
+    "step": 19,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-milk2"
+  },
+  {
+    "scenario": "S44",
+    "step": 20,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-gitan2"
+  },
+  {
+    "scenario": "S44",
+    "step": 21,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "80af736d-4603-42e4-83f7-667964c99665",
+    "evaluation": "5f1d0276-49c1-4f02-8809-d992e7280672"
+  },
+  {
+    "scenario": "S44",
+    "step": 22,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "919d7e85-43f7-4f80-8ce0-26ea4930ecfe",
+    "evaluation": "9a2025d7-6d94-4973-80cd-a469530de161"
+  },
+  {
+    "scenario": "S44",
+    "step": 23,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_GITAN",
+    "subject": "83465b61-0f51-4e09-8d09-70fc7ad6c7ce",
+    "evaluation": "7c3df6c3-2487-45b2-8e07-34be0e699418"
+  },
+  {
+    "scenario": "S44",
+    "step": 24,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "3ed3b2be-170a-45b3-8197-51af5d186a62",
+    "posted": 2
+  },
+  {
+    "scenario": "S44",
+    "step": 25,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-school3"
+  },
+  {
+    "scenario": "S44",
+    "step": 26,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-milk3"
+  },
+  {
+    "scenario": "S44",
+    "step": 27,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-gitan3"
+  },
+  {
+    "scenario": "S44",
+    "step": 28,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "80af736d-4603-42e4-83f7-667964c99665",
+    "evaluation": "0cb8dc94-6fa3-4c36-8a87-833998546ad3"
+  },
+  {
+    "scenario": "S44",
+    "step": 29,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "e5051226-8556-4cea-8d23-34860e3e7609",
+    "evaluation": "fe9ced8d-052a-4ca2-88ab-04363e7c0cf0"
+  },
+  {
+    "scenario": "S44",
+    "step": 30,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_GITAN",
+    "subject": "872b0491-b794-4049-8109-0d89b103f224",
+    "evaluation": "e38d4dbe-1208-492b-8664-f6e0c4439fce"
+  },
+  {
+    "scenario": "S44",
+    "step": 31,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "98a58fb8-3581-4fb5-84be-cddc0572139a",
+    "posted": 2
+  },
+  {
+    "scenario": "S44",
+    "step": 32,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-school4"
+  },
+  {
+    "scenario": "S44",
+    "step": 33,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-milk4"
+  },
+  {
+    "scenario": "S44",
+    "step": 34,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-gitan4"
+  },
+  {
+    "scenario": "S44",
+    "step": 35,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "school_base",
+    "grant": "1ad2b861-75af-427c-88ad-9a2324dec3b8"
+  },
+  {
+    "scenario": "S44",
+    "step": 35,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "80af736d-4603-42e4-83f7-667964c99665",
+    "evaluation": "b898a142-39d3-43ff-8f4e-cd39696f6398"
+  },
+  {
+    "scenario": "S44",
+    "step": 36,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_MILK",
+    "subject": "88c2960e-981a-468b-8625-5a8cfbed67dc",
+    "evaluation": "329d44c5-bf91-4b0e-8bb1-97795650ab3e"
+  },
+  {
+    "scenario": "S44",
+    "step": 37,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_GITAN",
+    "subject": "6d32087e-b087-42b2-8894-7b1b44e95eee",
+    "evaluation": "90feea08-e7f6-4145-80e3-5d98a5d18d8d"
+  },
+  {
+    "scenario": "S44",
+    "step": 38,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "all-test"
+  },
+  {
+    "scenario": "S44",
+    "step": 39,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_TEST",
+    "subject": "ef8f6a35-0146-49df-8a6a-599230e38383",
+    "evaluation": "81fc06da-e50e-4df4-85a7-4d57c93c391b"
+  },
+  {
+    "scenario": "S44",
+    "step": 40,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "908e61cf-846d-4e23-8fbf-935f5f3bd42b"
+  },
+  {
+    "scenario": "S44",
+    "step": 41,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "c6c84445-4fbf-4ebe-8229-debc32169101",
+    "posted": 3
+  },
+  {
+    "scenario": "S44",
+    "step": 42,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "school_base",
+    "grant": "1ad2b861-75af-427c-88ad-9a2324dec3b8"
+  },
+  {
+    "scenario": "S44",
+    "step": 42,
+    "status": "DUPLICATE_RIGHT_SUPPRESSED",
+    "condition": "school_extra",
+    "grant": "3d7987fc-66f5-443c-81cf-2b0cf12bbe65"
+  },
+  {
+    "scenario": "S44",
+    "step": 42,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "NEW_SCHOOL",
+    "subject": "80af736d-4603-42e4-83f7-667964c99665",
+    "evaluation": "657e1130-565b-4bcc-84b7-171e224fbb0f"
+  },
+  {
+    "scenario": "S44",
+    "step": 43,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 3,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S44",
+    "step": 44,
+    "status": "SNAPSHOT",
+    "op": "snapshot",
+    "snapshot": "fd36845e-d7f3-4704-86bb-0c7f477b9b8c"
+  },
+  {
+    "scenario": "S45",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "once"
+  },
+  {
+    "scenario": "S45",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "OLD_R06",
+    "subject": "443dc60b-cee1-4d0a-8267-72ba8182bcbe",
+    "evaluation": "fb382fa8-792f-450f-867f-066b6303e60c"
+  },
+  {
+    "scenario": "S45",
+    "step": 3,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "corrected"
+  },
+  {
+    "scenario": "S45",
+    "step": 4,
+    "status": "REPAIRED",
+    "op": "repair",
+    "count": 2
+  },
+  {
+    "scenario": "S45",
+    "step": 5,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "bb2007e4-2593-4d24-879f-1c20c7328d8c",
+    "posted": 0
+  },
+  {
+    "scenario": "S45",
+    "step": 6,
+    "status": "FULFILLED",
+    "op": "fulfill",
+    "count": 0,
+    "ruleVersion": null
+  },
+  {
+    "scenario": "S46",
+    "step": 1,
+    "status": "RECORDED",
+    "op": "record",
+    "key": "conflict"
+  },
+  {
+    "scenario": "S46",
+    "step": 2,
+    "status": "EVALUATED",
+    "op": "evaluate",
+    "rule": "CMP_CONFLICT",
+    "subject": "3e4ff75a-aec5-4766-8b0f-0702696a7105",
+    "evaluation": "27124546-d77d-4c0f-8170-25ae4c022d82"
+  },
+  {
+    "scenario": "S46",
+    "step": 3,
+    "status": "SETTLED",
+    "op": "settle",
+    "run": "7a07a6c9-842d-4a90-8c69-1984c4b2aa02",
+    "posted": 0
+  }
+]

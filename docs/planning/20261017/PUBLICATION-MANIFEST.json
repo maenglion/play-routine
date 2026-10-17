@@ -1,0 +1,455 @@
+{
+  "scope": "기획·설계·검토·합성 시험 자료; 운영 원자료·인증값 제외",
+  "files": [
+    {
+      "path": "docs/governance/20261017/Play-Routine-October-Enforcement-Rules-v0.1.md",
+      "sha256": "f303ad9397fe363ee4d9465f5d007e5e02001c4a4ff9ffa6eaf4208003bc5305",
+      "bytes": 15370
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-October-Enforcement-Rules-v0.2.md",
+      "sha256": "a9b953e8f4d4483b258403d21460b035ee1de0c3acf0880a573403c4666476c0",
+      "bytes": 18232
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-October-Enforcement-Rules-v0.3.md",
+      "sha256": "e349420c74da181a99fd9df6bb0fc4aaec8ec4197affc9f804b579ca1ec558dc",
+      "bytes": 19305
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-October-Enforcement-Rules-v0.4.md",
+      "sha256": "74f6560c74fb160af8b8b51322cb7d44247b39d9031b269d8d2a80801e720bb2",
+      "bytes": 20754
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-October-Enforcement-Rules-v0.5.md",
+      "sha256": "e2b80e8d4b2151168e51bbd7378536f7037bba2e8974f48431f8394bba497d9a",
+      "bytes": 21935
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-Operating-Constitution-and-Three-Regulations-v0.1.md",
+      "sha256": "3ae4455db35c16dd9c6866686f219f51a8e3caadc6e33a5a5661153d10d8b761",
+      "bytes": 27348
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-Operating-Constitution-and-Three-Regulations-v0.2.md",
+      "sha256": "ca9f1dd4a883c3e806e4d2176e3236b5607c52a6bdaf30ae9f5cbdbf7a64430d",
+      "bytes": 28676
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-Operating-Constitution-and-Three-Regulations-v0.3.md",
+      "sha256": "b9ec80c2a15328519b61f20f0b696996b6d4ca91702976803a775896c2201c73",
+      "bytes": 29579
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-Operating-Constitution-and-Three-Regulations-v0.4.md",
+      "sha256": "1a705741c53c09628c6d252dfdf071d0a30d1532299c74fa2b1111f936976200",
+      "bytes": 29999
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-Operating-Constitution-and-Three-Regulations-v0.5.md",
+      "sha256": "5b91754674c0d11f09447bde49257c21d1232862db1b4c00e1a7bb4f5d1dc246",
+      "bytes": 32315
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-Operating-Constitution-and-Three-Regulations-v0.6.md",
+      "sha256": "3315ff3ccc03020239201f174b514b2da594b412a1e599f7dc0ba88f7bb9ac3e",
+      "bytes": 33364
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-Regulation-Lifecycle-v0.1.md",
+      "sha256": "8bda79a9e6be36e836a4834dbe8b7e30e1a599988bfe8ebf1736fb2b21dbaacb",
+      "bytes": 16480
+    },
+    {
+      "path": "docs/governance/20261017/Play-Routine-Regulation-Lifecycle-v0.2.md",
+      "sha256": "822ef39ef47ff50722696d86c6a30b60cf68a84748615b2bb98d168f32207078",
+      "bytes": 22726
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/Play-Routine-Data-Planning-Proposal-v0.1.md",
+      "sha256": "634f67f53c3a83eb8ff5bb2e521b2035a185123ef2f09ca47eb013235e6960c1",
+      "bytes": 35502
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/audit-evidence.md",
+      "sha256": "dda53b76a31a03c5c6050a5f9220f59d374baf3185c2dbdf3ded05ceb47d4b9f",
+      "bytes": 7677
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/diagrams/Data-Lifecycle.mmd",
+      "sha256": "85e2d5d7e6fe84119d87bf0922e8a7fd3d0a00cd8609e8c191c394ed90b1979f",
+      "bytes": 878
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/diagrams/Data-Lifecycle.png",
+      "sha256": "260f45d1fc84ccd54cd4a620fb01958ed684554f99ab43afef92d5401c98e68f",
+      "bytes": 262154
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/diagrams/Internal-Audit.mmd",
+      "sha256": "0d46657a212137012f88b7833d041417b9e146f27feb5b0d6e6b2d7815ba10ee",
+      "bytes": 627
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/diagrams/Internal-Audit.png",
+      "sha256": "7412d07937903bd040b9dea4be6f237fd4fec92f5842fdf2b80eb129c5caa132",
+      "bytes": 148518
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/diagrams/Regulation-and-Reward.mmd",
+      "sha256": "362d5594b2de5d7276aa5cd33083f302fbb821fad8515f508c42351ab88fe53a",
+      "bytes": 637
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/diagrams/Regulation-and-Reward.png",
+      "sha256": "23cc46463f51e9a6aae438b2b368626fa4de80a96e604d9c59fdf967f051f67e",
+      "bytes": 207158
+    },
+    {
+      "path": "docs/planning/20261017/data-planning-20261017/privacy-sources.md",
+      "sha256": "89da9f5f050b0a98ae71229f8036df8f6f904b2cffac4e371d148ef425ce497c",
+      "bytes": 5392
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/Core-ERD.mmd",
+      "sha256": "b22a8baf192f56c10bf408385a08fff49f568ebee17929332690ee2751fbd32d",
+      "bytes": 6550
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/Core-ERD.png",
+      "sha256": "852285c2a9c7a067a095b8b3372ac065f92edaf559f3293380d16daa4847cfa2",
+      "bytes": 589659
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/Grok-Schema-Multiuser-Review-20261017.md",
+      "sha256": "1272d2f87d8a3ffc4072fd2c86780bbcf84355cba08334353f9399cbe38c342a",
+      "bytes": 11627
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/Menu-Data-Link.mmd",
+      "sha256": "e16bfe9eb00761bf21521abff53b229c139cdfc26c7a854a5d10c31a3c5c058a",
+      "bytes": 4404
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/Menu-Data-Link.png",
+      "sha256": "38518915d717b4a7344a66714410f54c6f3eab7b8e1976f61f2ae0af6d22f64b",
+      "bytes": 936927
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/Play-Routine-Grok-Schema-and-Menu-ERD-Review-20261017.md",
+      "sha256": "493fce9b2a8fae03e8a132e2e98e26654ad22ac1db7b1e0cf58f0310135e9658",
+      "bytes": 14788
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/Play-Routine-Regulation-Hierarchy-and-Promotion-v0.1.md",
+      "sha256": "150369cd86575e5206360ade17527c1525b78ec60ca6b3b1a28b248d441cb774",
+      "bytes": 6815
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/School-Hierarchy-Recursive-Queries-Guide.md",
+      "sha256": "400e57badc7a89f19930ef273a3108be8b5f50e79870a12b476fe472bf90ac30",
+      "bytes": 4274
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/School-Hierarchy-Recursive-Queries.sql",
+      "sha256": "637ee8ee5edb800821b0426a28e270978f2ee03e629d188cc4f60e4d8ee490bc",
+      "bytes": 9684
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/grok-review-metadata.json",
+      "sha256": "2006fa22bcac8e3995288ac0e0aeb38fe1217168b61141ec52d1d3ae4de2c44d",
+      "bytes": 1351
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/menu-erd-notes.md",
+      "sha256": "5b85859c565a73adaecfa491b53c1fddaec76042eb8819cec8d8e712ee09ef71",
+      "bytes": 6715
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/null-test-mode-evidence.json",
+      "sha256": "28369a59378512b98fd79cc34228ae64bfdbdb12a17207cc53edca84f0b7dd46",
+      "bytes": 279
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/school-verification/package.json",
+      "sha256": "e9e2c09c12e0d1498b2bfa48c4fa831cb8d0b60d67f5df672ceac8bf8534304c",
+      "bytes": 156
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/school-verification/result.json",
+      "sha256": "4e5c9f2f23c620054c1ec37eb0decfc287a1160276154b6ac813520b37de774e",
+      "bytes": 9144
+    },
+    {
+      "path": "docs/planning/20261017/grok-schema-menu-review-20261017/school-verification/verify.mjs",
+      "sha256": "0b85b07724c405e2346d8835bf85dcda1a8aa203fe0591192f79cad7d96d27bc",
+      "bytes": 4400
+    },
+    {
+      "path": "docs/planning/20261017/hierarchy-notification-review-20261017/Grok-Hierarchy-Reward-Notification-Review-20261017.md",
+      "sha256": "99097ac1161e152321514dbdcd002912125684dfa5d86cd75b45072d8dda518b",
+      "bytes": 9225
+    },
+    {
+      "path": "docs/planning/20261017/hierarchy-notification-review-20261017/Manus-First-Pass.md",
+      "sha256": "afd8a33cda75b8d68c12a3682f7a9041439f6809a140c7ad85a42e219b41bae1",
+      "bytes": 11172
+    },
+    {
+      "path": "docs/planning/20261017/hierarchy-notification-review-20261017/Play-Routine-Hierarchy-Reward-Notification-Design-v0.2.md",
+      "sha256": "549bb59e856ed84e8a21c929e337cd43bc3fbf75ee6da21c046fa52dd4a9078a",
+      "bytes": 16524
+    },
+    {
+      "path": "docs/planning/20261017/hierarchy-notification-review-20261017/grok-review-metadata.json",
+      "sha256": "35d937ecfe091c3adb0aad903713d9c850943f42fdccda4191d6735fbbe67b86",
+      "bytes": 976
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/ERD-Core.mmd",
+      "sha256": "3a31c23dcc44185c05bd9fe7d25ae123b873080df473926211e1b03123fdfaa7",
+      "bytes": 1914
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/ERD-Core.png",
+      "sha256": "dbb5d7c537bb2ec17b2ad9508062f66148c1078c0975eb35ee066b01112533e1",
+      "bytes": 307951
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/ERD-Full.mmd",
+      "sha256": "778e52e105fc0733f0b8182439b79e8f859b777037bba68e0c59a514ae6d67bf",
+      "bytes": 16850
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/Model-Overview.mmd",
+      "sha256": "6c6feff81431c566fbb31d91ae3742b23cc139ba52352f89a8ccafb5bbdd61d9",
+      "bytes": 1578
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/Model-Overview.png",
+      "sha256": "7285242180000e256645bd387a46a612d381d13c4b6e0f9478369fe5927cf0f7",
+      "bytes": 390029
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/Play-Routine-Relational-Model-v0.1.docx",
+      "sha256": "79ccedbde356ca5b6c248b79bb134ef638a04ab9373f6f8d98f2e205e4020869",
+      "bytes": 410630
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/Play-Routine-Relational-Model-v0.1.md",
+      "sha256": "7f8fcd2a26e786ebb1f44b7d7e2b7481db7b8833554ac993707267d92f157904",
+      "bytes": 65905
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/Play-Routine-Relational-Reference-v0.1.sql",
+      "sha256": "62f3b4827c1bcf12714f92f2f04cdbb9f4af4c3589b78d824aca44d90b282c4b",
+      "bytes": 77562
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/README.md",
+      "sha256": "16ffa61029fc0a7d6c138117a21009e1aa0d2453ff139e838b4864940b900d92",
+      "bytes": 3587
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/Validation-Result.json",
+      "sha256": "f2c0c6e395195e89360a429b39d3cf55792b21730dc9d9c14432ebfe80af9623",
+      "bytes": 2194
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/entity-contract.json",
+      "sha256": "10af7d56d81256b08b4a8e50d153584a84e062962d2edaa21b346479aba95239",
+      "bytes": 69984
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/entity-dictionary.md",
+      "sha256": "20f7819eb864602605b71777a021f927020ae74bf15ff830387868e3b15881a2",
+      "bytes": 25040
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/package-lock.json",
+      "sha256": "fc419309dff836507e7bef01461abbbc564ab3b4b529be091de98d4f7b66c84f",
+      "bytes": 637
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/package.json",
+      "sha256": "4f7399816e42d43bc783715960000dc52c3f04869d35e43b1d258d6a6d42c333",
+      "bytes": 360
+    },
+    {
+      "path": "docs/planning/20261017/relational-model-20261016/scripts/verify-model.mjs",
+      "sha256": "6024f645f114531b85b34d15f25e90decd17ca9be4f826cfc6356a320ef30e35",
+      "bytes": 9597
+    },
+    {
+      "path": "docs/planning/20261017/reviews/Play-Routine-Current-Ledger-and-Rules-Review-20261016.md",
+      "sha256": "c3ae7c3e4ea2d8243488874412cc25599c5aec3c57586707d761547ee8b7c13d",
+      "bytes": 25706
+    },
+    {
+      "path": "docs/planning/20261017/reviews/Play-Routine-Grid-Admin-and-DB-Scalability-Review-20261017.md",
+      "sha256": "725a0c4b075f7520458ae8b84615bc7fbdaca9b3b7a4dcc69f8cfb2608530580",
+      "bytes": 17817
+    },
+    {
+      "path": "docs/planning/20261017/reviews/Play-Routine-Parent-Management-Process-Review-20261017.md",
+      "sha256": "163ce84f0d5cba0d6bd8ecabcf2e45bf6e050fe0febc0fab0ff46c5111682ba4",
+      "bytes": 15211
+    },
+    {
+      "path": "docs/planning/20261017/reviews/grid-review/Grok-Grid-DB-Scalability-Review-20261017.md",
+      "sha256": "aaa661ac2a6abfc1486c471c6083d02537f2667d97fbe92662efff2d30b4634b",
+      "bytes": 11813
+    },
+    {
+      "path": "docs/planning/20261017/reviews/grid-review/Manus-First-Pass-Grid-and-DB.md",
+      "sha256": "419e726487606c2a14ee557655a534f12847185539d42f91bfd6959774934154",
+      "bytes": 7055
+    },
+    {
+      "path": "docs/planning/20261017/reviews/grid-review/current-db-evidence.md",
+      "sha256": "948c06d3f16d783231854338a05274caf6ff315d477a8382d0658946837a546c",
+      "bytes": 16733
+    },
+    {
+      "path": "docs/planning/20261017/reviews/grid-review/grok-grid-review-metadata.json",
+      "sha256": "579b51975032b4d2bbc19f4703b938a1fe67b99bac685d807a376694c30d19bd",
+      "bytes": 679
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/MANIFEST.json",
+      "sha256": "8c899d3e1367f76d962cef517f47fadd499d817c3f390a6abdfe61461b45f8dd",
+      "bytes": 1868
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/Play-Routine-Rule-Simulation-20261017.md",
+      "sha256": "90b1c084bd01b347dfaa0a3f13fe18b017b6af6f6d1f2dc3eca704945559747a",
+      "bytes": 20306
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/README.md",
+      "sha256": "230107263e900a4869790509b3d15b99deb33f9344d1fc58da3e12d1bf5c018a",
+      "bytes": 4902
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/Simulation-Results.csv",
+      "sha256": "adf3ad6f5db6839b9e9490879032b41ddd663ffc02e16088d0846143393e80eb",
+      "bytes": 34312
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/condition-mapping.csv",
+      "sha256": "cc6de44b252dcf96661170534f598cfc118835e71e4830d8ebf3e24098641347",
+      "bytes": 20531
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/engine.mjs",
+      "sha256": "2edbe2e49a05dac5eb97f892aa61e9e00a4a5bcc385e8c9b8801e9ded8b70976",
+      "bytes": 65586
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/output/DB-dump.sql",
+      "sha256": "6c36b1d19c08029321671f1df699a6e8e0273bc89c612c7b70aaac0923f1197a",
+      "bytes": 1366770
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/output/DB-state.json",
+      "sha256": "4ce48004e325b4f88239b960db2d5280972d735688872adb4057123893cc75e5",
+      "bytes": 1549723
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/output/Table-Counts.csv",
+      "sha256": "7a1c40e0df93b4ba9dff7c2d2dd061aa5a4d84417dbb0419289cd231314b2db1",
+      "bytes": 31205
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/output/independent-checks.json",
+      "sha256": "1d23e623c3533905483f2fe0a7e00bc9d0ce9ad95f9234e13bf22fbac1886d5e",
+      "bytes": 28571
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/output/ledger.csv",
+      "sha256": "586dff5ddfa2ee36b5f77f02d9061db4bfca7414dd3dc56f53a50eca24fdb283",
+      "bytes": 19277
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/output/relations.csv",
+      "sha256": "28090210d83fea70f5d8d127d6ef4c297e62ae38d455ba0f9e6107adad17c900",
+      "bytes": 198783
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/output/results.json",
+      "sha256": "9c6728d47384ba9a5154dda496eb39e0ecb9d9c058e72f9ac313e030a671ae68",
+      "bytes": 175363
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/output/trace.json",
+      "sha256": "a775970c9092744dd67487918000c52ea2c6b7b417fb78cc5088301f4cdd1f8d",
+      "bytes": 57309
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/package-lock.json",
+      "sha256": "3794c068ba5f56586e13d7ee6a18e868e49477f152214cadbdafcaaf6d499dfe",
+      "bytes": 607
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/package.json",
+      "sha256": "2d1fcf61f43bcc85628417d653290f395fef7e322d6168e217f04d563153d270",
+      "bytes": 360
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/reference-model.sql",
+      "sha256": "62f3b4827c1bcf12714f92f2f04cdbb9f4af4c3589b78d824aca44d90b282c4b",
+      "bytes": 77562
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/scenarios.json",
+      "sha256": "4a6f89c60428943ae86481bae2f59be4bd33409386e1ab5794fae84719106a55",
+      "bytes": 158718
+    },
+    {
+      "path": "docs/planning/20261017/rule-simulation-20261017/source-old-conditions.json",
+      "sha256": "728b02d7113215272d1dc516d6aae550731f42e3d6d64ebddd9dff06ab48bc68",
+      "bytes": 13136
+    },
+    {
+      "path": "docs/planning/20261017/rule-structure-20261016/Play-Routine-Rule-Structure-Review-v0.1-20261016.docx",
+      "sha256": "f534960ff2c60bad3af979e97b3c5f2b20cebf174ea6718d02c6ef99bc9e6faf",
+      "bytes": 51946
+    },
+    {
+      "path": "docs/skills/family-rule-governance/SKILL.md",
+      "sha256": "a90563684e035209d68746f4eab7ed8d81fe31cd3f7a62dfcfacf86cd45159c1",
+      "bytes": 11515
+    },
+    {
+      "path": "docs/skills/family-rule-governance/references/hierarchy-change-review.md",
+      "sha256": "108634f7c0c1f9fb8a47ae35a81dc6f49ed762c9d366a528d1861b451d52cd8b",
+      "bytes": 10365
+    },
+    {
+      "path": "docs/skills/family-rule-governance/references/play-routine-policy.md",
+      "sha256": "1c73a3653a8e1c08d7a7e5a38a38cdaca115421869f7d033970cc6cd9eb763d6",
+      "bytes": 4802
+    },
+    {
+      "path": "docs/skills/family-rule-governance/references/verification-contract.md",
+      "sha256": "4d004548cbfe386526e616b553d685954dafcd2596bb633bf31d8785769bc11f",
+      "bytes": 5832
+    },
+    {
+      "path": "docs/skills/family-rule-governance/scripts/check_policy_math.py",
+      "sha256": "dd85a4aa57c877eeead88fcb240f2169651292f0f3f394527d62ad08f4d6551e",
+      "bytes": 3068
+    },
+    {
+      "path": "docs/skills/family-rule-governance/templates/grok-hierarchy-review-prompt.md",
+      "sha256": "10e2ddcc5786d6a80715f0df52ad1272b86b70f0a2f9976c7520d86d254348fe",
+      "bytes": 2499
+    },
+    {
+      "path": "docs/skills/family-rule-governance/templates/school-hierarchy-example.sql",
+      "sha256": "637ee8ee5edb800821b0426a28e270978f2ee03e629d188cc4f60e4d8ee490bc",
+      "bytes": 9684
+    }
+  ]
+}

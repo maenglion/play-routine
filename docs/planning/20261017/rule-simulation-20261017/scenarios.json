@@ -1,0 +1,6164 @@
+{
+  "metadata": {
+    "basis": "2026-10-16 운영표/최근입력 보존 조회 및 관계형 설계 v0.1. 2026-10-17 운영DB 재조회/수정 없음.",
+    "environment": "독립 PGlite. 테스트용 판정·인정·정산 어댑터. 운영RPC 구현/배포 아님.",
+    "commonAssumptions": [
+      "가족시간대 Asia/Seoul, 주간 월요일~다음월요일 [start,end), 월간 달력월. 운영주기 확정으로 간주하지 않음.",
+      "조건기록은 가정사실이며 실제아이의 수행이 아님. 모든 룰은 새 테스트가족에 임시 배정. 기존자녀 배정0/11월1일배정과 별개.",
+      "예시 시작량이 필요한 패널티시험에만 자유보너스600분을 먼저 정산. 실제사용가능잔액 변경 없음.",
+      "확정순 한도 예약 우선, 미확인패널티 금지, 기본조건 전체인정. 추가부분인정/60분상한/월2회는 PROPOSAL 분리.",
+      "MIN 내부원장, WON·COUPAY_POINT·WISH 외부이행. 실제송금/서비스전송 없음.",
+      "과거시트active는 과거자료상태. 새운영정책으로 자동활성화하지 않음.",
+      "학교 칭찬2스티커는 기존버전 보존. 과거3일연속시작/중복구간정의 불명확하여 자동계산차단.",
+      "EVENT 시험범위는 2026-11-01~11-04, 부모확인 늦은건도 사실귀속 기준."
+    ],
+    "rawConditionCount": 27,
+    "catalogRuleCount": 39,
+    "scenarioCount": 46
+  },
+  "rules": [
+    {
+      "id": "OLD_R01",
+      "name": "매일 공부",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "all_required_learning_checked",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R01",
+          "label": "COND_R01",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "all_required_learning_checked",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 60
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_R01_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R01",
+          "rule_id": "RULE_R01",
+          "rule_type": "reward",
+          "source_ref": "R01",
+          "condition_group": "daily_study",
+          "condition_field": "all_required_learning_checked",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "60",
+          "priority": "10",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "매일 공부 완료"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R02",
+      "name": "숙제·유인물 챙기기",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "homework_prep_checked",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R02",
+          "label": "COND_R02",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "homework_prep_checked",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 40
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_R02_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R02",
+          "rule_id": "RULE_R02",
+          "rule_type": "reward",
+          "source_ref": "R02",
+          "condition_group": "daily_homework",
+          "condition_field": "homework_prep_checked",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "40",
+          "priority": "10",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "숙제/유인물 챙기기 (필수)"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R03",
+      "name": "독서 토론",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "discussion_completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R03",
+          "label": "COND_R03",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "discussion_completed",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 60
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_R03_WEEK",
+              "kind": "COUNT",
+              "period": "WEEK",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R03",
+          "rule_id": "RULE_R03",
+          "rule_type": "reward",
+          "source_ref": "R03",
+          "condition_group": "weekly_discussion",
+          "condition_field": "discussion_completed",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "60",
+          "priority": "10",
+          "evaluation_scope": "weekly",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "주말 1시간씩"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R04",
+      "name": "학교 수학 만점",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "school_math_score",
+          "unit": "SCORE",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R04",
+          "label": "COND_R04",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "school_math_score",
+                "op": "EQ",
+                "value": 100
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 60
+            }
+          ],
+          "limits": []
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R04",
+          "rule_id": "RULE_R04",
+          "rule_type": "reward",
+          "source_ref": "R04",
+          "condition_group": "school_math",
+          "condition_field": "school_math_score",
+          "operator": "eq",
+          "condition_value": "100",
+          "effect_type": "reward_time",
+          "effect_value": "60",
+          "priority": "10",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "학교 수학 만점"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R05",
+      "name": "응용 수학 시험",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "score_advanced_math",
+          "unit": "SCORE",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R05",
+          "label": "COND_R05",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "score_advanced_math",
+                "op": "GTE",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 90
+            }
+          ],
+          "limits": []
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R05",
+          "rule_id": "RULE_R05",
+          "rule_type": "reward",
+          "source_ref": "R05",
+          "condition_group": "advanced_math_score",
+          "condition_field": "score_advanced_math",
+          "operator": "gte",
+          "condition_value": "80",
+          "effect_type": "reward_time",
+          "effect_value": "90",
+          "priority": "40",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "점수 기반 자동 트리거"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R06",
+      "name": "구구단 통과",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "gugudan_test_passed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R06_TIME",
+          "label": "COND_R06_TIME",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "gugudan_test_passed",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 600
+            },
+            {
+              "asset": "WON",
+              "amount": 30000
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_R06_ONCE",
+              "kind": "COUNT",
+              "period": "EVENT",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R06_TIME",
+          "rule_id": "RULE_R06",
+          "rule_type": "reward",
+          "source_ref": "R06",
+          "condition_group": "gugudan_pass",
+          "condition_field": "gugudan_test_passed",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "600",
+          "priority": "50",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "구구단 통과 시간 보상 (1회성)"
+        },
+        {
+          "condition_id": "COND_R06_MONEY",
+          "rule_id": "RULE_R06",
+          "rule_type": "reward",
+          "source_ref": "R06",
+          "condition_group": "gugudan_pass",
+          "condition_field": "gugudan_test_passed",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_money",
+          "effect_value": "30000",
+          "priority": "50",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "구구단 통과 현금 보상 (같은 rule_id 다른 effect_type 둘 다 적용)"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R07",
+      "name": "방정리",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "room_clean_checked",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R07",
+          "label": "COND_R07",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "room_clean_checked",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 60
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_R07_WEEK",
+              "kind": "COUNT",
+              "period": "WEEK",
+              "max": 2,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R07",
+          "rule_id": "RULE_R07",
+          "rule_type": "reward",
+          "source_ref": "R07",
+          "condition_group": "weekly_room",
+          "condition_field": "room_clean_checked",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "60",
+          "priority": "10",
+          "evaluation_scope": "weekly",
+          "evaluation_limit": "2",
+          "status": "active",
+          "memo": "방정리 "
+        }
+      ]
+    },
+    {
+      "id": "OLD_R08",
+      "name": "남자화장실 청소",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "toilet_clean_checked",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R08",
+          "label": "COND_R08",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "toilet_clean_checked",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "WON",
+              "amount": 5000
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_R08_WEEK",
+              "kind": "COUNT",
+              "period": "WEEK",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R08",
+          "rule_id": "RULE_R08",
+          "rule_type": "reward",
+          "source_ref": "R08",
+          "condition_group": "chore",
+          "condition_field": "toilet_clean_checked",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_money",
+          "effect_value": "5000",
+          "priority": "10",
+          "evaluation_scope": "weekly",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "남자화장실 청소 (금액보상)"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R09",
+      "name": "고양이 화장실 청소(과거 개별 활동 예시)",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "cat_litter_checked",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R09",
+          "label": "COND_R09",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "cat_litter_checked",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 20
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_R09_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 2,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R09",
+          "rule_id": "RULE_R09",
+          "rule_type": "reward",
+          "source_ref": "R09",
+          "condition_group": "chore",
+          "condition_field": "cat_litter_checked",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "20",
+          "priority": "10",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "2",
+          "status": "active",
+          "memo": "고양이 화장실 2개 청소"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R10",
+      "name": "3일 연속 보너스",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "UNRESOLVED",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "streak_3day_completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R10",
+          "label": "COND_R10",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "streak_3day_completed",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 60
+            }
+          ],
+          "limits": []
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R10",
+          "rule_id": "RULE_R10",
+          "rule_type": "reward",
+          "source_ref": "R10",
+          "condition_group": "streak_bonus",
+          "condition_field": "streak_3day_completed",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "60",
+          "priority": "50",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "3일 연속 이행시 1회당 60분"
+        }
+      ]
+    },
+    {
+      "id": "OLD_R11",
+      "name": "9시 반 이전 취침",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "sleep_before_2130",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R11",
+          "label": "COND_R11",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "sleep_before_2130",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 30
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_R11_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R11",
+          "rule_id": "RULE_R11",
+          "rule_type": "reward",
+          "source_ref": "R11",
+          "condition_group": "bedtime",
+          "condition_field": "sleep_before_2130",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "30",
+          "priority": "30",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "9시반 이전 취침 (시간 준수)"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P01",
+      "name": "유인물 이틀 뒤 발견",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "homework_found_after_2days",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P01",
+          "label": "COND_P01",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "homework_found_after_2days",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 30
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P01_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P01",
+          "rule_id": "RULE_P01",
+          "rule_type": "penalty",
+          "source_ref": "P01",
+          "condition_group": "Change lifestyle habits",
+          "condition_field": "homework_found_after_2days",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "penalty_time",
+          "effect_value": "-30",
+          "priority": "10",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "유인물 이틀 지나 발견"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P02",
+      "name": "공부 미달·기탄 미완료/완화",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "INACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "daily_study_failed_without_gitan",
+          "unit": "BOOLEAN"
+        },
+        {
+          "code": "daily_study_failed_with_gitan",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P02",
+          "label": "COND_P02",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "daily_study_failed_without_gitan",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 80
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P02_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        },
+        {
+          "key": "COND_P02_MITIGATED",
+          "label": "COND_P02_MITIGATED",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "daily_study_failed_with_gitan",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 50
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P02_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P02",
+          "rule_id": "RULE_P02",
+          "rule_type": "penalty",
+          "source_ref": "P02",
+          "condition_group": "daily_study",
+          "condition_field": "daily_study_failed_without_gitan",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "penalty_time",
+          "effect_value": "-80",
+          "priority": "10",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "inactive",
+          "memo": "일일 공부 미달 + 기탄 미완료"
+        },
+        {
+          "condition_id": "COND_P02_MITIGATED",
+          "rule_id": "RULE_P02",
+          "rule_type": "penalty",
+          "source_ref": "P02",
+          "condition_group": "daily_study",
+          "condition_field": "daily_study_failed_with_gitan",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "penalty_time",
+          "effect_value": "-50",
+          "priority": "11",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "inactive",
+          "memo": "일일 공부 미달이지만 기탄 완료 시 완화 (P02의 condition variant - 별도 rule 아님)"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P03",
+      "name": "월 목표 미달",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님. 기간 마감·부모 명시 확인·기간1회라는 시험가정. P03 원표 event/null와 월1회 메모의 충돌은 정책확정 전 유지.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "MONTH",
+      "metricDefs": [
+        {
+          "code": "month_goal_failed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P03",
+          "label": "COND_P03",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 1
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 600
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P03_PERIOD",
+              "kind": "COUNT",
+              "period": "MONTH",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P03",
+          "rule_id": "RULE_P03",
+          "rule_type": "penalty",
+          "source_ref": "P03",
+          "condition_group": "monthly_goal",
+          "condition_field": "month_goal_failed",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "penalty_time",
+          "effect_value": "-600",
+          "priority": "40",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "월 목표 미달성 (월 1회)"
+        }
+      ],
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "month_goal_failed"
+      }
+    },
+    {
+      "id": "OLD_P04",
+      "name": "쿠폰 사용 초과 ×3",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "EXCLUDED",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [],
+      "conditions": [],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P04",
+          "rule_id": "RULE_P04",
+          "rule_type": "penalty",
+          "source_ref": "P04",
+          "condition_group": "coupon_overuse",
+          "condition_field": "coupon_overuse_minutes",
+          "operator": "gt",
+          "condition_value": "0",
+          "effect_type": "penalty_usage_multiplier",
+          "effect_value": "3",
+          "priority": "90",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "초과분 x3 (10분 단위)"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P05",
+      "name": "아침약",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "EXCLUDED",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "morning_med_checked",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P05",
+          "label": "COND_P05",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "morning_med_checked",
+                "op": "EQ",
+                "value": false
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 180
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P05_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P05",
+          "rule_id": "RULE_P05",
+          "rule_type": "penalty",
+          "source_ref": "P05",
+          "condition_group": "medication",
+          "condition_field": "morning_med_checked",
+          "operator": "eq",
+          "condition_value": "FALSE",
+          "effect_type": "penalty_time",
+          "effect_value": "-180",
+          "priority": "20",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "inactive",
+          "memo": "아침약 미복용"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P06",
+      "name": "응용 시험 50점 미만",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "score_advanced_math",
+          "unit": "SCORE",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P06",
+          "label": "COND_P06",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "score_advanced_math",
+                "op": "LT",
+                "value": 50
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 60
+            }
+          ],
+          "limits": []
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P06",
+          "rule_id": "RULE_P06",
+          "rule_type": "penalty",
+          "source_ref": "P06",
+          "condition_group": "advanced_math_score",
+          "condition_field": "score_advanced_math",
+          "operator": "lt",
+          "condition_value": "50",
+          "effect_type": "penalty_time",
+          "effect_value": "-60",
+          "priority": "40",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "점수 기반 자동 트리거"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P07",
+      "name": "10시 미취침",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "INACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "bedtime_before_2200",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P07",
+          "label": "COND_P07",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "bedtime_before_2200",
+                "op": "EQ",
+                "value": false
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 90
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P07_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P07",
+          "rule_id": "RULE_P07",
+          "rule_type": "penalty",
+          "source_ref": "P07",
+          "condition_group": "bedtime",
+          "condition_field": "bedtime_before_2200",
+          "operator": "eq",
+          "condition_value": "FALSE",
+          "effect_type": "penalty_time",
+          "effect_value": "-90",
+          "priority": "30",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "inactive",
+          "memo": "밤 10시까지 미취침"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P08",
+      "name": "주간 방정리 미이행",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님. 기간 마감·부모 명시 확인·기간1회라는 시험가정. P03 원표 event/null와 월1회 메모의 충돌은 정책확정 전 유지.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "WEEK",
+      "metricDefs": [
+        {
+          "code": "weekly_room_clean_completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P08",
+          "label": "COND_P08",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "EQ",
+                "value": 0
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 180
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P08_PERIOD",
+              "kind": "COUNT",
+              "period": "WEEK",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P08",
+          "rule_id": "RULE_P08",
+          "rule_type": "penalty",
+          "source_ref": "P08",
+          "condition_group": "weekly_room",
+          "condition_field": "weekly_room_clean_completed",
+          "operator": "eq",
+          "condition_value": "FALSE",
+          "effect_type": "penalty_time",
+          "effect_value": "-180",
+          "priority": "10",
+          "evaluation_scope": "weekly",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "주 1회 방정리 미이행"
+        }
+      ],
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "weekly_room_clean_completed"
+      }
+    },
+    {
+      "id": "OLD_P09",
+      "name": "독서 토론 준비 미흡",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님. 기간 마감·부모 명시 확인·기간1회라는 시험가정. P03 원표 event/null와 월1회 메모의 충돌은 정책확정 전 유지.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "WEEK",
+      "metricDefs": [
+        {
+          "code": "discussion_prep_adequate",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P09",
+          "label": "COND_P09",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "EQ",
+                "value": 0
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 90
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P09_PERIOD",
+              "kind": "COUNT",
+              "period": "WEEK",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P09",
+          "rule_id": "RULE_P09",
+          "rule_type": "penalty",
+          "source_ref": "P09",
+          "condition_group": "weekly_discussion",
+          "condition_field": "discussion_prep_adequate",
+          "operator": "eq",
+          "condition_value": "FALSE",
+          "effect_type": "penalty_time",
+          "effect_value": "-90",
+          "priority": "10",
+          "evaluation_scope": "weekly",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "독서 토론 준비 미흡"
+        }
+      ],
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "discussion_prep_adequate"
+      }
+    },
+    {
+      "id": "OLD_P10",
+      "name": "약속 위반 전액 몰수",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "EXCLUDED",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [],
+      "conditions": [],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P10",
+          "rule_id": "RULE_P10",
+          "rule_type": "penalty",
+          "source_ref": "P10",
+          "condition_group": "trust",
+          "condition_field": "promise_broken",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "penalty_all",
+          "effect_value": "ALL",
+          "priority": "100",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "거짓말/약속 위반 - 1회성 스냅샷 (ledger forfeit_all)"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P11",
+      "name": "학교·학원 출발 지각",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "school_hagwon_punctual",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P11",
+          "label": "COND_P11",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "school_hagwon_punctual",
+                "op": "EQ",
+                "value": false
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 30
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P11_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P11",
+          "rule_id": "RULE_P11",
+          "rule_type": "penalty",
+          "source_ref": "P11",
+          "condition_group": "punctuality",
+          "condition_field": "school_hagwon_punctual",
+          "operator": "eq",
+          "condition_value": "FALSE",
+          "effect_type": "penalty_time",
+          "effect_value": "-30",
+          "priority": "30",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "active",
+          "memo": "학교/학원 시간 안 지키기"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P12",
+      "name": "저녁약",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "EXCLUDED",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "evening_med_before_2000",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P12",
+          "label": "COND_P12",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "evening_med_before_2000",
+                "op": "EQ",
+                "value": false
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 60
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P12_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P12",
+          "rule_id": "RULE_P12",
+          "rule_type": "penalty",
+          "source_ref": "P12",
+          "condition_group": "medication",
+          "condition_field": "evening_med_before_2000",
+          "operator": "eq",
+          "condition_value": "FALSE",
+          "effect_type": "penalty_time",
+          "effect_value": "-60",
+          "priority": "20",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "inactive",
+          "memo": "저녁약 8시 이전 미복용"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P13",
+      "name": "옷 방치",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "INACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "messy_dirty_clothes",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P13",
+          "label": "COND_P13",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "messy_dirty_clothes",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 30
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P13_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P13",
+          "rule_id": "RULE_P01",
+          "rule_type": "penalty",
+          "source_ref": "P01",
+          "condition_group": "Change lifestyle habits",
+          "condition_field": "messy_dirty_clothes",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "penalty_time",
+          "effect_value": "-30",
+          "priority": "10",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "inactive",
+          "memo": "샤워 후 화장실 바닥에 옷,속옷 쌓아두거나 방바닥에 쌓아둘 시"
+        }
+      ]
+    },
+    {
+      "id": "OLD_P14",
+      "name": "바닥 쓰레기",
+      "source": "OLD",
+      "source_note": "2026-10-16 조회한 05_rule_conditions. 과거값의 테스트 대입이며 운영 재활성화 아님.",
+      "status": "INACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "cat_proofed_room",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_P14",
+          "label": "COND_P14",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "cat_proofed_room",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 30
+            }
+          ],
+          "limits": [
+            {
+              "key": "OLD_P14_DAY",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_P14",
+          "rule_id": "RULE_P01",
+          "rule_type": "penalty",
+          "source_ref": "P01",
+          "condition_group": "Change lifestyle habits",
+          "condition_field": "cat_proofed_room",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "penalty_time",
+          "effect_value": "-30",
+          "priority": "10",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "1",
+          "status": "inactive",
+          "memo": "저녁 취침 전 바닥에 쓰레기 및 이물질 발견시"
+        }
+      ]
+    },
+    {
+      "id": "NEW_SCHOOL",
+      "name": "학교생활",
+      "source": "NEW",
+      "source_note": "2026-10-16 보존 조회: 주간5개 +10,000POINT, 누적8개 추가+5,000POINT.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "WEEK",
+      "metricDefs": [
+        {
+          "code": "completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "sticker": {
+        "code": "SCHOOL",
+        "icon": "STAMP"
+      },
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "stickers"
+      },
+      "conditions": [
+        {
+          "key": "school_base",
+          "label": "school_base",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 5
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "COUPAY_POINT",
+              "amount": 10000
+            }
+          ],
+          "limits": []
+        },
+        {
+          "key": "school_extra",
+          "label": "school_extra",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 8
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "COUPAY_POINT",
+              "amount": 5000
+            }
+          ],
+          "limits": []
+        }
+      ]
+    },
+    {
+      "id": "NEW_MILK",
+      "name": "밀크티 학습지",
+      "source": "NEW",
+      "source_note": "2026-10-16 보존 조회: 하루 스티커>=1이면40MIN.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "DAY",
+      "metricDefs": [
+        {
+          "code": "completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "sticker": {
+        "code": "NEW_MILK",
+        "icon": "SMILE"
+      },
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "stickers"
+      },
+      "conditions": [
+        {
+          "key": "NEW_MILK_base",
+          "label": "NEW_MILK_base",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 1
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 40
+            }
+          ],
+          "limits": []
+        }
+      ]
+    },
+    {
+      "id": "NEW_GITAN",
+      "name": "기탄수학 G5 하루 3장, 나눗셈",
+      "source": "NEW",
+      "source_note": "2026-10-16 보존 조회: 하루 스티커>=1이면40MIN.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "DAY",
+      "metricDefs": [
+        {
+          "code": "completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "sticker": {
+        "code": "NEW_GITAN",
+        "icon": "STAR"
+      },
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "stickers"
+      },
+      "conditions": [
+        {
+          "key": "NEW_GITAN_base",
+          "label": "NEW_GITAN_base",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 1
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 40
+            }
+          ],
+          "limits": []
+        }
+      ]
+    },
+    {
+      "id": "NEW_ARITH",
+      "name": "기초연산 2000",
+      "source": "NEW",
+      "source_note": "2026-10-16 실제 저장값. 설명과 수치 충돌은 자동수정 안 함. 기존 자녀 배정 여부와 별개로 격리 시험 배정.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "score",
+          "unit": "COUNT",
+          "min": 0,
+          "max": 1000000
+        }
+      ],
+      "conditions": [
+        {
+          "key": "NEW_ARITH_reward",
+          "label": "NEW_ARITH_reward",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "GTE",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 120
+            }
+          ],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        },
+        {
+          "key": "NEW_ARITH_neutral",
+          "label": "중립",
+          "direction": "NEUTRAL",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "GTE",
+                "value": 60
+              },
+              {
+                "metric": "score",
+                "op": "LT",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        },
+        {
+          "key": "NEW_ARITH_penalty",
+          "label": "NEW_ARITH_penalty",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "LT",
+                "value": 60
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 80
+            }
+          ],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        }
+      ]
+    },
+    {
+      "id": "NEW_TEST",
+      "name": "기탄수학 G5 나눗셈 20문제 3분 시험",
+      "source": "NEW",
+      "source_note": "2026-10-16 실제 저장값. 설명과 수치 충돌은 자동수정 안 함. 기존 자녀 배정 여부와 별개로 격리 시험 배정.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "score",
+          "unit": "PERCENT",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "conditions": [
+        {
+          "key": "NEW_TEST_reward",
+          "label": "NEW_TEST_reward",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "GTE",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "COUPAY_POINT",
+              "amount": 30000
+            },
+            {
+              "asset": "MIN",
+              "amount": 120
+            }
+          ],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        },
+        {
+          "key": "NEW_TEST_neutral",
+          "label": "중립",
+          "direction": "NEUTRAL",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "GTE",
+                "value": 60
+              },
+              {
+                "metric": "score",
+                "op": "LT",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        },
+        {
+          "key": "NEW_TEST_penalty",
+          "label": "NEW_TEST_penalty",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "LT",
+                "value": 60
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 120
+            }
+          ],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        }
+      ]
+    },
+    {
+      "id": "CMP_COMPOUND",
+      "name": "기탄 시험 — 설명기준 비교안",
+      "source": "PROPOSAL",
+      "source_note": "기존 설명 3분 내15문제 이상을 AND로 표현하는 테스트 비교안. 저장80%를 변경하지 않음.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "correct",
+          "unit": "COUNT",
+          "min": 0,
+          "max": 20
+        },
+        {
+          "code": "elapsed",
+          "unit": "SECOND",
+          "min": 0
+        }
+      ],
+      "conditions": [
+        {
+          "key": "compound",
+          "label": "정답>=15 AND 소요<=180초",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "correct",
+                "op": "GTE",
+                "value": 15
+              },
+              {
+                "metric": "elapsed",
+                "op": "LTE",
+                "value": 180
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "COUPAY_POINT",
+              "amount": 30000
+            },
+            {
+              "asset": "MIN",
+              "amount": 120
+            }
+          ],
+          "limits": []
+        }
+      ]
+    },
+    {
+      "id": "CMP_R09_ONCE",
+      "name": "청소 하루1회 메모 비교안",
+      "source": "PROPOSAL",
+      "source_note": "노드 메모 하루1회 vs 조건표2회의 차이 비교.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "cat_litter_checked",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R09",
+          "label": "COND_R09",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "cat_litter_checked",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 20
+            }
+          ],
+          "limits": [
+            {
+              "key": "CMP_R09_ONCE",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R09",
+          "rule_id": "RULE_R09",
+          "rule_type": "reward",
+          "source_ref": "R09",
+          "condition_group": "chore",
+          "condition_field": "cat_litter_checked",
+          "operator": "eq",
+          "condition_value": "TRUE",
+          "effect_type": "reward_time",
+          "effect_value": "20",
+          "priority": "10",
+          "evaluation_scope": "daily",
+          "evaluation_limit": "2",
+          "status": "active",
+          "memo": "고양이 화장실 2개 청소"
+        }
+      ]
+    },
+    {
+      "id": "CMP_SCHOOL_STAR",
+      "name": "학교생활 — 같은 STAR 그림 비교",
+      "source": "PROPOSAL",
+      "source_note": "2026-10-16 보존 조회: 주간5개 +10,000POINT, 누적8개 추가+5,000POINT.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "WEEK",
+      "metricDefs": [
+        {
+          "code": "completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "sticker": {
+        "code": "SCHOOL_DIFFERENT",
+        "icon": "STAR"
+      },
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "stickers"
+      },
+      "conditions": [
+        {
+          "key": "school_base",
+          "label": "school_base",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 5
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "COUPAY_POINT",
+              "amount": 10000
+            }
+          ],
+          "limits": []
+        },
+        {
+          "key": "school_extra",
+          "label": "school_extra",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 8
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "COUPAY_POINT",
+              "amount": 5000
+            }
+          ],
+          "limits": []
+        }
+      ]
+    },
+    {
+      "id": "CMP_CAP_WHOLE",
+      "name": "두 학습 합산 하루60분 — WHOLE_CONDITION",
+      "source": "PROPOSAL",
+      "source_note": "40분+40분에 전체60분 상한을 붙인 시험가정. 실제 기본값이 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "DAY",
+      "metricDefs": [
+        {
+          "code": "completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "sticker": {
+        "code": "NEW_GITAN",
+        "icon": "STAR"
+      },
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "stickers"
+      },
+      "conditions": [
+        {
+          "key": "NEW_GITAN_base",
+          "label": "NEW_GITAN_base",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 1
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 40
+            }
+          ],
+          "limits": [
+            {
+              "key": "CMP_CAP_WHOLE_60",
+              "kind": "AMOUNT",
+              "period": "DAY",
+              "max": 60,
+              "allocation": "WHOLE_CONDITION",
+              "asset": "MIN",
+              "sharedRules": [
+                "NEW_MILK",
+                "CMP_CAP_WHOLE"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CMP_CAP_PARTIAL",
+      "name": "두 학습 합산 하루60분 — PARTIAL_ASSET",
+      "source": "PROPOSAL",
+      "source_note": "40분+40분에 전체60분 상한을 붙인 시험가정. 실제 기본값이 아님.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "DAY",
+      "metricDefs": [
+        {
+          "code": "completed",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "sticker": {
+        "code": "NEW_GITAN",
+        "icon": "STAR"
+      },
+      "aggregate": {
+        "operation": "SUM",
+        "metric": "stickers"
+      },
+      "conditions": [
+        {
+          "key": "NEW_GITAN_base",
+          "label": "NEW_GITAN_base",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "aggregate",
+                "op": "GTE",
+                "value": 1
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 40
+            }
+          ],
+          "limits": [
+            {
+              "key": "CMP_CAP_PARTIAL_60",
+              "kind": "AMOUNT",
+              "period": "DAY",
+              "max": 60,
+              "allocation": "PARTIAL_ASSET",
+              "asset": "MIN",
+              "sharedRules": [
+                "NEW_MILK",
+                "CMP_CAP_PARTIAL"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "CMP_MONTH_CAP",
+      "name": "수행건 시험 보상 — 월2회 상한 비교",
+      "source": "PROPOSAL",
+      "source_note": "측정과 월간인정 제한 분리를 시험하는 가정. 실제 등록 상한 아님.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "score",
+          "unit": "COUNT",
+          "min": 0,
+          "max": 1000000
+        }
+      ],
+      "conditions": [
+        {
+          "key": "NEW_ARITH_reward",
+          "label": "NEW_ARITH_reward",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "GTE",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 120
+            }
+          ],
+          "limits": [
+            {
+              "key": "CMP_MONTH_CAP",
+              "kind": "COUNT",
+              "period": "MONTH",
+              "max": 2,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        },
+        {
+          "key": "NEW_ARITH_neutral",
+          "label": "중립",
+          "direction": "NEUTRAL",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "GTE",
+                "value": 60
+              },
+              {
+                "metric": "score",
+                "op": "LT",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [],
+          "limits": []
+        },
+        {
+          "key": "NEW_ARITH_penalty",
+          "label": "NEW_ARITH_penalty",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "LT",
+                "value": 60
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 80
+            }
+          ],
+          "limits": []
+        }
+      ]
+    },
+    {
+      "id": "CMP_MITIGATION",
+      "name": "과거 비활성 완화 조건 — 구조 비교만",
+      "source": "PROPOSAL",
+      "source_note": "과거 -80/-50을 테스트에서만 대조. 현재 비활성 정책을 재활성화하지 않음.",
+      "status": "ACTIVE",
+      "flow": "DAILY",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "failed",
+          "unit": "BOOLEAN"
+        },
+        {
+          "code": "mitigated",
+          "unit": "BOOLEAN"
+        }
+      ],
+      "conditions": [
+        {
+          "key": "unmitigated",
+          "label": "unmitigated",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "failed",
+                "op": "EQ",
+                "value": true
+              },
+              {
+                "metric": "mitigated",
+                "op": "EQ",
+                "value": false
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 80
+            }
+          ],
+          "limits": [
+            {
+              "key": "CMP_MITIGATION",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        },
+        {
+          "key": "mitigated",
+          "label": "mitigated",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "failed",
+                "op": "EQ",
+                "value": true
+              },
+              {
+                "metric": "mitigated",
+                "op": "EQ",
+                "value": true
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 50
+            }
+          ],
+          "limits": [
+            {
+              "key": "CMP_MITIGATION",
+              "kind": "COUNT",
+              "period": "DAY",
+              "max": 1,
+              "allocation": "WHOLE_CONDITION"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "OLD_ADVANCED_COMBINED",
+      "name": "과거 응용 수학 시험 — 보상·중립·패널티 공통 사실",
+      "source": "OLD",
+      "source_note": "과거 R05와 P06을 같은 score_advanced_math의 한 회차에 연결. 원표를 수정하지 않고 공통 사실 기반 관계로 대입.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "score_advanced_math",
+          "unit": "SCORE",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "conditions": [
+        {
+          "key": "COND_R05",
+          "label": "COND_R05",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "score_advanced_math",
+                "op": "GTE",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 90
+            }
+          ],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        },
+        {
+          "key": "COND_P06",
+          "label": "COND_P06",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "score_advanced_math",
+                "op": "LT",
+                "value": 50
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 60
+            }
+          ],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        },
+        {
+          "key": "advanced_neutral",
+          "label": "50이상80미만 중립",
+          "direction": "NEUTRAL",
+          "groups": [
+            [
+              {
+                "metric": "score_advanced_math",
+                "op": "GTE",
+                "value": 50
+              },
+              {
+                "metric": "score_advanced_math",
+                "op": "LT",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        }
+      ],
+      "sourceRows": [
+        {
+          "condition_id": "COND_R05",
+          "rule_id": "RULE_R05",
+          "rule_type": "reward",
+          "source_ref": "R05",
+          "condition_group": "advanced_math_score",
+          "condition_field": "score_advanced_math",
+          "operator": "gte",
+          "condition_value": "80",
+          "effect_type": "reward_time",
+          "effect_value": "90",
+          "priority": "40",
+          "evaluation_scope": "event",
+          "evaluation_limit": "null",
+          "status": "active",
+          "memo": "점수 기반 자동 트리거"
+        }
+      ]
+    },
+    {
+      "id": "CMP_CONFLICT",
+      "name": "겹친 보상/패널티의 정책 충돌 반례",
+      "source": "PROPOSAL",
+      "source_note": "의도적으로 겹친 범위를 만든 부정시험. 새 운영정책 아님.",
+      "status": "ACTIVE",
+      "flow": "QUEST",
+      "period": "OCCURRENCE",
+      "metricDefs": [
+        {
+          "code": "score",
+          "unit": "PERCENT",
+          "min": 0,
+          "max": 100
+        }
+      ],
+      "conditions": [
+        {
+          "key": "r",
+          "label": "80이상 보상",
+          "direction": "REWARD",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "GTE",
+                "value": 80
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 120
+            }
+          ],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        },
+        {
+          "key": "p",
+          "label": "90미만 차감후보",
+          "direction": "PENALTY",
+          "groups": [
+            [
+              {
+                "metric": "score",
+                "op": "LT",
+                "value": 90
+              }
+            ]
+          ],
+          "effects": [
+            {
+              "asset": "MIN",
+              "amount": 80
+            }
+          ],
+          "limits": [],
+          "match_policy": "EXCLUSIVE",
+          "conflict_group": "SCORE"
+        }
+      ]
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "S01",
+      "title": "예전 매일 공부: 2회 기록·하루1회 인정",
+      "ruleIds": [
+        "OLD_R01"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "OLD_R01-0",
+          "rule": "OLD_R01",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "all_required_learning_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R01",
+          "date": "2026-10-19",
+          "key": "OLD_R01-e0"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R01-1",
+          "rule": "OLD_R01",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "all_required_learning_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R01",
+          "date": "2026-10-19",
+          "key": "OLD_R01-e1"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 2,
+        "ledgerMIN": 60,
+        "limited": 1,
+        "quotaCount": 1
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S02",
+      "title": "예전 숙제: 자녀만 보고 → 부모 늦은 확인",
+      "ruleIds": [
+        "OLD_R02"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "home",
+          "rule": "OLD_R02",
+          "date": "2026-10-19",
+          "decision": "HOLD",
+          "values": {
+            "homework_prep_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R02",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_R02-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "부모 확인 전",
+          "at": "2026-10-20T00:00:00+09:00",
+          "date": "2026-10-20"
+        },
+        {
+          "op": "record",
+          "key": "home-r2",
+          "rule": "OLD_R02",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "homework_prep_checked": true
+          },
+          "revisionOf": "home",
+          "at": "2026-10-20T18:00:00+09:00"
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R02",
+          "date": "2026-10-19",
+          "key": "after-parent",
+          "at": "2026-10-20T18:10:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "지난 정산 재실행",
+          "at": "2026-10-20T00:00:00+09:00",
+          "date": "2026-10-20"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-21T00:00:00+09:00",
+          "effective": "2026-10-21T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 1,
+        "verifications": 1,
+        "ledgerMIN": 40,
+        "ledgerEntries": 1
+      },
+      "assumptions": [],
+      "purpose": "월요일 한도·귀속 유지, 화요일 승인→수요일 효력",
+      "expectedSnapshots": {
+        "부모 확인 전": {
+          "ledgerMIN": 0,
+          "holdRecords": 1
+        },
+        "지난 정산 재실행": {
+          "ledgerMIN": 0
+        }
+      }
+    },
+    {
+      "id": "S03",
+      "title": "예전 독서 토론: 주2회 수행·주1회 인정",
+      "ruleIds": [
+        "OLD_R03"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "OLD_R03-0",
+          "rule": "OLD_R03",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "discussion_completed": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R03",
+          "date": "2026-10-19",
+          "key": "OLD_R03-e0"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R03-1",
+          "rule": "OLD_R03",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "discussion_completed": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R03",
+          "date": "2026-10-21",
+          "key": "OLD_R03-e1"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-22T00:00:00+09:00",
+          "effective": "2026-10-22T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 2,
+        "ledgerMIN": 60,
+        "limited": 1
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S04",
+      "title": "예전 방정리: 주3회 수행·주2회 인정",
+      "ruleIds": [
+        "OLD_R07"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "OLD_R07-0",
+          "rule": "OLD_R07",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "room_clean_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R07",
+          "date": "2026-10-19",
+          "key": "OLD_R07-e0"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R07-1",
+          "rule": "OLD_R07",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "room_clean_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R07",
+          "date": "2026-10-21",
+          "key": "OLD_R07-e1"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R07-2",
+          "rule": "OLD_R07",
+          "date": "2026-10-23",
+          "decision": "CONFIRMED",
+          "values": {
+            "room_clean_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R07",
+          "date": "2026-10-23",
+          "key": "OLD_R07-e2"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-24T00:00:00+09:00",
+          "effective": "2026-10-24T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 3,
+        "ledgerMIN": 120,
+        "limited": 1,
+        "quotaCount": 2
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S05",
+      "title": "예전 청소 용돈: 주2회·현금1회",
+      "ruleIds": [
+        "OLD_R08"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "OLD_R08-0",
+          "rule": "OLD_R08",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "toilet_clean_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R08",
+          "date": "2026-10-19",
+          "key": "OLD_R08-e0"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R08-1",
+          "rule": "OLD_R08",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "toilet_clean_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R08",
+          "date": "2026-10-21",
+          "key": "OLD_R08-e1"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-22T00:00:00+09:00",
+          "effective": "2026-10-22T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-22T12:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-22T12:01:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 2,
+        "ledgerMIN": 0,
+        "externalWON": 5000,
+        "limited": 1
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S06",
+      "title": "예전 하루4회 청소·조건표의2회 제한",
+      "ruleIds": [
+        "OLD_R09"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "OLD_R09-0",
+          "rule": "OLD_R09",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_litter_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R09",
+          "date": "2026-10-19",
+          "key": "OLD_R09-e0"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R09-1",
+          "rule": "OLD_R09",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_litter_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R09",
+          "date": "2026-10-19",
+          "key": "OLD_R09-e1"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R09-2",
+          "rule": "OLD_R09",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_litter_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R09",
+          "date": "2026-10-19",
+          "key": "OLD_R09-e2"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R09-3",
+          "rule": "OLD_R09",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_litter_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R09",
+          "date": "2026-10-19",
+          "key": "OLD_R09-e3"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 4,
+        "ledgerMIN": 40,
+        "limited": 2,
+        "quotaCount": 2
+      },
+      "assumptions": [
+        "개별 활동은 자유 이름 예시. 청소를 고정 유형으로 추가하지 않음. 조건표2회를 시험."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S07",
+      "title": "동일 청소·노드 메모의1회 제한 비교",
+      "ruleIds": [
+        "CMP_R09_ONCE"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "CMP_R09_ONCE-0",
+          "rule": "CMP_R09_ONCE",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_litter_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_R09_ONCE",
+          "date": "2026-10-19",
+          "key": "CMP_R09_ONCE-e0"
+        },
+        {
+          "op": "record",
+          "key": "CMP_R09_ONCE-1",
+          "rule": "CMP_R09_ONCE",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_litter_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_R09_ONCE",
+          "date": "2026-10-19",
+          "key": "CMP_R09_ONCE-e1"
+        },
+        {
+          "op": "record",
+          "key": "CMP_R09_ONCE-2",
+          "rule": "CMP_R09_ONCE",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_litter_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_R09_ONCE",
+          "date": "2026-10-19",
+          "key": "CMP_R09_ONCE-e2"
+        },
+        {
+          "op": "record",
+          "key": "CMP_R09_ONCE-3",
+          "rule": "CMP_R09_ONCE",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_litter_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_R09_ONCE",
+          "date": "2026-10-19",
+          "key": "CMP_R09_ONCE-e3"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 4,
+        "ledgerMIN": 20,
+        "limited": 3
+      },
+      "assumptions": [
+        "원표 내부 충돌을 비교하기 위한 별도 가정. S06 정책을 수정하지 않음."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S08",
+      "title": "예전 취침 시간: 부모 준수 확인/미준수",
+      "ruleIds": [
+        "OLD_R11"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "sleep-pass",
+          "rule": "OLD_R11",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "sleep_before_2130": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R11",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_R11-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "sleep-no",
+          "rule": "OLD_R11",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "sleep_before_2130": false
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R11",
+          "date": "2026-10-20",
+          "key": "evaluate-OLD_R11-2026-10-20"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-21T00:00:00+09:00",
+          "effective": "2026-10-21T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 2,
+        "ledgerMIN": 30,
+        "pendingPenalties": 0
+      },
+      "assumptions": [],
+      "purpose": "불준수는 이 보상조건의 NO_MATCH이지 자동패널티 아님; 실제시각 파생 판정은 별도"
+    },
+    {
+      "id": "S09",
+      "title": "새 학교생활: 주간 스티커4개",
+      "ruleIds": [
+        "NEW_SCHOOL"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "s-0",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-1",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-2",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-3",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-22",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "key": "evaluate-NEW_SCHOOL-2026-10-23",
+          "at": "2026-10-26T00:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-27T00:00:00+09:00",
+          "effective": "2026-10-27T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-27T12:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "externalPOINT": 0,
+        "ledgerMIN": 0,
+        "schoolStickerTotal": 4
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S10",
+      "title": "새 학교생활: 주간 스티커5개",
+      "ruleIds": [
+        "NEW_SCHOOL"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "s-0",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-1",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-2",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-3",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-22",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-4",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "key": "evaluate-NEW_SCHOOL-2026-10-23",
+          "at": "2026-10-26T00:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-27T00:00:00+09:00",
+          "effective": "2026-10-27T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-27T12:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "externalPOINT": 10000,
+        "ledgerMIN": 0,
+        "schoolStickerTotal": 5
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S11",
+      "title": "새 학교생활: 5개→8개·재평가·중복지급 방지",
+      "ruleIds": [
+        "NEW_SCHOOL"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "s-0",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-1",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-2",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-3",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-22",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-4",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "key": "evaluate-NEW_SCHOOL-2026-10-23",
+          "at": "2026-10-23T20:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "5개 기본권리",
+          "at": "2026-10-23T20:00:00+09:00",
+          "date": "2026-10-23"
+        },
+        {
+          "op": "record",
+          "key": "s-r0",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 2,
+          "revisionOf": "s-0",
+          "at": "2026-10-24T18:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "s-r1",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 2,
+          "revisionOf": "s-1",
+          "at": "2026-10-24T18:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "s-r2",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 2,
+          "revisionOf": "s-2",
+          "at": "2026-10-24T18:00:00+09:00"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "key": "eight",
+          "at": "2026-10-24T19:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "8개 추가권리",
+          "at": "2026-10-24T19:00:00+09:00",
+          "date": "2026-10-24"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "key": "repeat",
+          "at": "2026-10-24T19:01:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-27T12:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-27T12:01:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 5,
+        "verifications": 8,
+        "activeGrants": 2,
+        "externalPOINT": 15000,
+        "schoolStickerTotal": 8
+      },
+      "assumptions": [
+        "현행 PASS1/칭찬2를 보존. 칭찬 자유보너스와 별개."
+      ],
+      "purpose": "",
+      "expectedSnapshots": {
+        "5개 기본권리": {
+          "activeGrants": 1,
+          "entitledPOINT": 10000
+        },
+        "8개 추가권리": {
+          "activeGrants": 2,
+          "entitledPOINT": 15000
+        }
+      }
+    },
+    {
+      "id": "S12",
+      "title": "새 학교생활: 4개+부모 미확인1개",
+      "ruleIds": [
+        "NEW_SCHOOL"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "s0",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s1",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s2",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s3",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-22",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s-hold",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "decision": "HOLD",
+          "values": {
+            "completed": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "key": "evaluate-NEW_SCHOOL-2026-10-23",
+          "at": "2026-10-26T00:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-27T00:00:00+09:00",
+          "effective": "2026-10-27T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "activeGrants": 0,
+        "holdRecords": 1,
+        "pendingPenalties": 0,
+        "schoolStickerTotal": 4
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S13",
+      "title": "학교·공부가 같은 STAR 그림이어도 종류별 집계",
+      "ruleIds": [
+        "CMP_SCHOOL_STAR",
+        "NEW_GITAN"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "s0",
+          "rule": "CMP_SCHOOL_STAR",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s1",
+          "rule": "CMP_SCHOOL_STAR",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s2",
+          "rule": "CMP_SCHOOL_STAR",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s3",
+          "rule": "CMP_SCHOOL_STAR",
+          "date": "2026-10-22",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "study",
+          "rule": "NEW_GITAN",
+          "date": "2026-10-23",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_SCHOOL_STAR",
+          "date": "2026-10-23",
+          "key": "evaluate-CMP_SCHOOL_STAR-2026-10-23",
+          "at": "2026-10-26T00:00:00+09:00"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_GITAN",
+          "date": "2026-10-23",
+          "key": "evaluate-NEW_GITAN-2026-10-23"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-27T00:00:00+09:00",
+          "effective": "2026-10-27T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "entitledPOINT": 0,
+        "ledgerMIN": 40,
+        "schoolStickerTotal": 4,
+        "studyStickerTotal": 1
+      },
+      "assumptions": [
+        "학교 그림을 시험에서만 STAR로 두어 다른 종류ID의 분리를 검증."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S14",
+      "title": "새 밀크티: 칭찬2개라도 하루 보상40분1번",
+      "ruleIds": [
+        "NEW_MILK"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "milk",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 2
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_MILK-2026-10-19"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "repeat"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 1,
+        "grants": 1,
+        "ledgerMIN": 40,
+        "ledgerEntries": 1
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S15",
+      "title": "새 밀크티40분+기탄40분: 다른 활동 보상",
+      "ruleIds": [
+        "NEW_MILK",
+        "NEW_GITAN"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "m",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "g",
+          "rule": "NEW_GITAN",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_MILK-2026-10-19"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_GITAN",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_GITAN-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 80,
+        "activeGrants": 2
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S16",
+      "title": "하루 합산60분 한도: 조건 전체 인정",
+      "ruleIds": [
+        "NEW_MILK",
+        "CMP_CAP_WHOLE"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "m",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "g",
+          "rule": "CMP_CAP_WHOLE",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_MILK-2026-10-19"
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_CAP_WHOLE",
+          "date": "2026-10-19",
+          "key": "evaluate-CMP_CAP_WHOLE-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 40
+      },
+      "assumptions": [
+        "상한60분은 비교시험용 가정. 실제 사용자 예산을 등록하지 않음."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S17",
+      "title": "하루 합산60분 한도: 자산별 부분 인정",
+      "ruleIds": [
+        "NEW_MILK",
+        "CMP_CAP_PARTIAL"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "m",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "g",
+          "rule": "CMP_CAP_PARTIAL",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_MILK-2026-10-19"
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_CAP_PARTIAL",
+          "date": "2026-10-19",
+          "key": "evaluate-CMP_CAP_PARTIAL-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 60
+      },
+      "assumptions": [
+        "상한60분은 비교시험용 가정. 실제 사용자 예산을 등록하지 않음."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S18",
+      "title": "새 기초연산: 59/60/79/80 경계·별도 차감승인",
+      "ruleIds": [
+        "NEW_ARITH"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "q80",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-01",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-01",
+          "key": "e80"
+        },
+        {
+          "op": "snapshot",
+          "name": "경계-80",
+          "at": "2026-11-01T18:00:00+09:00",
+          "date": "2026-11-01"
+        },
+        {
+          "op": "record",
+          "key": "q79",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-02",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 79
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-02",
+          "key": "e79"
+        },
+        {
+          "op": "snapshot",
+          "name": "경계-79",
+          "at": "2026-11-02T18:00:00+09:00",
+          "date": "2026-11-02"
+        },
+        {
+          "op": "record",
+          "key": "q60",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-03",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 60
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-03",
+          "key": "e60"
+        },
+        {
+          "op": "snapshot",
+          "name": "경계-60",
+          "at": "2026-11-03T18:00:00+09:00",
+          "date": "2026-11-03"
+        },
+        {
+          "op": "record",
+          "key": "q59",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-04",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 59
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-04",
+          "key": "e59"
+        },
+        {
+          "op": "snapshot",
+          "name": "경계-59",
+          "at": "2026-11-04T18:00:00+09:00",
+          "date": "2026-11-04"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-05T00:00:00+09:00",
+          "effective": "2026-11-05T00:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "승인 전 보상120·차감후보80",
+          "at": "2026-11-05T00:00:00+09:00",
+          "date": "2026-11-05"
+        },
+        {
+          "op": "approve",
+          "rule": "NEW_ARITH",
+          "at": "2026-11-05T10:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-06T00:00:00+09:00",
+          "effective": "2026-11-06T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 4,
+        "activeGrants": 2,
+        "ledgerMIN": 40,
+        "pendingPenalties": 0
+      },
+      "assumptions": [
+        "실제 저장된 수량80/하한60미만/80분 후보를 보존. 경계시험을 위한 임시 수행건4개."
+      ],
+      "purpose": "",
+      "expectedSnapshots": {
+        "경계-80": {
+          "activeGrants": 1,
+          "pendingPenalties": 0,
+          "entitledMIN": 120,
+          "ledgerMIN": 0
+        },
+        "경계-79": {
+          "activeGrants": 1,
+          "pendingPenalties": 0,
+          "entitledMIN": 120,
+          "ledgerMIN": 0
+        },
+        "경계-60": {
+          "activeGrants": 1,
+          "pendingPenalties": 0,
+          "entitledMIN": 120,
+          "ledgerMIN": 0
+        },
+        "경계-59": {
+          "activeGrants": 2,
+          "pendingPenalties": 1,
+          "entitledMIN": 120,
+          "ledgerMIN": 0
+        },
+        "승인 전 보상120·차감후보80": {
+          "ledgerMIN": 120,
+          "pendingPenalties": 1
+        }
+      }
+    },
+    {
+      "id": "S19",
+      "title": "자녀80 주장·부모59 확인: 부모값으로 판정",
+      "ruleIds": [
+        "NEW_ARITH"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "child",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-01",
+          "decision": "HOLD",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-01",
+          "key": "evaluate-NEW_ARITH-2026-11-01"
+        },
+        {
+          "op": "record",
+          "key": "parent",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-01",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 59
+          },
+          "revisionOf": "child",
+          "childValues": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-01",
+          "key": "parent-confirm"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-02T00:00:00+09:00",
+          "effective": "2026-11-02T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 1,
+        "verifications": 1,
+        "entitledMIN": 0,
+        "pendingPenalties": 1,
+        "ledgerMIN": 0
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S20",
+      "title": "새 기탄 시험: 저장80% 조건·두 보상·재시도",
+      "ruleIds": [
+        "NEW_TEST"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "test",
+          "rule": "NEW_TEST",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_TEST",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_TEST-2026-10-19"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_TEST",
+          "date": "2026-10-19",
+          "key": "repeat"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-20T12:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "activeGrants": 2,
+        "ledgerMIN": 120,
+        "externalPOINT": 30000
+      },
+      "assumptions": [],
+      "purpose": "한 조건에 두 효과, 둘 중 하나 선택이 아니고 조건인정은1번"
+    },
+    {
+      "id": "S21",
+      "title": "15/20=75%: 저장80% 기준에서는 무보상",
+      "ruleIds": [
+        "NEW_TEST"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "test",
+          "rule": "NEW_TEST",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 75
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_TEST",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_TEST-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "activeGrants": 0,
+        "ledgerMIN": 0,
+        "pendingPenalties": 0
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S22",
+      "title": "설명 비교안: 정답15·175초이면 두 보상",
+      "ruleIds": [
+        "CMP_COMPOUND"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "test",
+          "rule": "CMP_COMPOUND",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "correct": 15,
+            "elapsed": 175
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_COMPOUND",
+          "date": "2026-10-19",
+          "key": "evaluate-CMP_COMPOUND-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-20T12:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 120,
+        "externalPOINT": 30000,
+        "activeGrants": 2
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S23",
+      "title": "설명 비교안: 정답16·181초이면 무보상",
+      "ruleIds": [
+        "CMP_COMPOUND"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "test",
+          "rule": "CMP_COMPOUND",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "correct": 16,
+            "elapsed": 181
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_COMPOUND",
+          "date": "2026-10-19",
+          "key": "evaluate-CMP_COMPOUND-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "activeGrants": 0,
+        "ledgerMIN": 0,
+        "pendingPenalties": 0
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S24",
+      "title": "예전 수학 만점 조건: 99와100 구별",
+      "ruleIds": [
+        "OLD_R04"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "n99",
+          "rule": "OLD_R04",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "school_math_score": 99
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R04",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_R04-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "n100",
+          "rule": "OLD_R04",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "school_math_score": 100
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R04",
+          "date": "2026-10-20",
+          "key": "evaluate-OLD_R04-2026-10-20"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-21T00:00:00+09:00",
+          "effective": "2026-10-21T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 60,
+        "activeGrants": 1
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S25",
+      "title": "예전 구구단: 시간600분+현금3만원·이벤트1회",
+      "ruleIds": [
+        "OLD_R06"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "gg",
+          "rule": "OLD_R06",
+          "date": "2026-11-01",
+          "decision": "CONFIRMED",
+          "values": {
+            "gugudan_test_passed": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R06",
+          "date": "2026-11-01",
+          "key": "evaluate-OLD_R06-2026-11-01"
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R06",
+          "date": "2026-11-01",
+          "key": "repeat"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-02T00:00:00+09:00",
+          "effective": "2026-11-02T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-11-02T12:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 600,
+        "externalWON": 30000,
+        "activeGrants": 2,
+        "quotaCount": 1
+      },
+      "assumptions": [
+        "원표 limit=null이나1회성 메모를 이벤트1회로 시험. 보상 항목240분 UI제한을 전체관계모델에 몰래 강제하지 않음."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S26",
+      "title": "예전 응용시험: 80 보상·50~79 중립·49 차감후보",
+      "ruleIds": [
+        "OLD_ADVANCED_COMBINED"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "r80",
+          "rule": "OLD_ADVANCED_COMBINED",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "score_advanced_math": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_ADVANCED_COMBINED",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_ADVANCED_COMBINED-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "r79",
+          "rule": "OLD_ADVANCED_COMBINED",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "score_advanced_math": 79
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_ADVANCED_COMBINED",
+          "date": "2026-10-20",
+          "key": "evaluate-OLD_ADVANCED_COMBINED-2026-10-20"
+        },
+        {
+          "op": "record",
+          "key": "r50",
+          "rule": "OLD_ADVANCED_COMBINED",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "score_advanced_math": 50
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_ADVANCED_COMBINED",
+          "date": "2026-10-21",
+          "key": "evaluate-OLD_ADVANCED_COMBINED-2026-10-21"
+        },
+        {
+          "op": "record",
+          "key": "r49",
+          "rule": "OLD_ADVANCED_COMBINED",
+          "date": "2026-10-22",
+          "decision": "CONFIRMED",
+          "values": {
+            "score_advanced_math": 49
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_ADVANCED_COMBINED",
+          "date": "2026-10-22",
+          "key": "evaluate-OLD_ADVANCED_COMBINED-2026-10-22"
+        },
+        {
+          "op": "approve",
+          "at": "2026-10-22T21:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-23T00:00:00+09:00",
+          "effective": "2026-10-23T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 630,
+        "pendingPenalties": 0,
+        "occurrences": 4
+      },
+      "assumptions": [
+        "원표의 보상/패널티 조건을 공통 사실 한 회차와 같은 수치축 관계로 연결. 테스트 시작량600분만 사용."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S27",
+      "title": "예전 유인물 위반: 2건 기록·하루1건 승인",
+      "ruleIds": [
+        "OLD_P01"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "p1",
+          "rule": "OLD_P01",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "homework_found_after_2days": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P01",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P01-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "p2",
+          "rule": "OLD_P01",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "homework_found_after_2days": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P01",
+          "date": "2026-10-19",
+          "key": "second"
+        },
+        {
+          "op": "snapshot",
+          "name": "차감 미승인",
+          "at": "2026-10-19T18:00:00+09:00",
+          "date": "2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "미승인 정산",
+          "at": "2026-10-20T00:00:00+09:00",
+          "date": "2026-10-20"
+        },
+        {
+          "op": "approve",
+          "at": "2026-10-20T10:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-21T00:00:00+09:00",
+          "effective": "2026-10-21T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 570,
+        "occurrences": 2,
+        "limited": 1,
+        "quotaCount": 1,
+        "pendingPenalties": 0
+      },
+      "assumptions": [],
+      "purpose": "",
+      "expectedSnapshots": {
+        "차감 미승인": {
+          "ledgerMIN": 600,
+          "pendingPenalties": 1
+        },
+        "미승인 정산": {
+          "ledgerMIN": 600,
+          "pendingPenalties": 1
+        }
+      }
+    },
+    {
+      "id": "S28",
+      "title": "예전 지각: 월요일 사실을 화요일 입력·수요일 승인",
+      "ruleIds": [
+        "OLD_P11"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "late",
+          "rule": "OLD_P11",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "school_hagwon_punctual": false
+          },
+          "at": "2026-10-20T18:00:00+09:00"
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P11",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P11-2026-10-19",
+          "at": "2026-10-20T18:10:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-21T00:00:00+09:00",
+          "effective": "2026-10-21T00:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "수요일 승인 전",
+          "at": "2026-10-21T09:00:00+09:00",
+          "date": "2026-10-21"
+        },
+        {
+          "op": "approve",
+          "at": "2026-10-21T10:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-22T00:00:00+09:00",
+          "effective": "2026-10-22T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 570,
+        "pendingPenalties": 0
+      },
+      "assumptions": [],
+      "purpose": "차감귀속10/19,효력10/22; 입력·승인일 하루한도와 섞지 않음",
+      "expectedSnapshots": {
+        "수요일 승인 전": {
+          "ledgerMIN": 600,
+          "pendingPenalties": 1
+        }
+      }
+    },
+    {
+      "id": "S29",
+      "title": "예전 월 목표: 미확인이면 월말에도 차감0",
+      "ruleIds": [
+        "OLD_P03"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "goal",
+          "rule": "OLD_P03",
+          "date": "2026-10-31",
+          "decision": "HOLD",
+          "values": {
+            "month_goal_failed": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P03",
+          "date": "2026-10-31",
+          "key": "evaluate-OLD_P03-2026-10-31",
+          "at": "2026-11-01T00:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-02T00:00:00+09:00",
+          "effective": "2026-11-02T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 600,
+        "holdRecords": 1,
+        "pendingPenalties": 0
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S30",
+      "title": "예전 월 목표: 부모 명시 실패 확인·월1회·별도 승인",
+      "ruleIds": [
+        "OLD_P03"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "goal",
+          "rule": "OLD_P03",
+          "date": "2026-10-31",
+          "decision": "CONFIRMED",
+          "values": {
+            "month_goal_failed": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P03",
+          "date": "2026-10-31",
+          "key": "evaluate-OLD_P03-2026-10-31",
+          "at": "2026-11-01T00:00:00+09:00"
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P03",
+          "date": "2026-10-31",
+          "key": "repeat",
+          "at": "2026-11-01T00:01:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "월 실패 후보",
+          "at": "2026-11-01T00:01:00+09:00",
+          "date": "2026-11-01"
+        },
+        {
+          "op": "approve",
+          "at": "2026-11-01T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-02T00:00:00+09:00",
+          "effective": "2026-11-02T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 0,
+        "quotaCount": 1,
+        "pendingPenalties": 0
+      },
+      "assumptions": [
+        "부모가 목표미달을 명시한 사실만 사용. 목표70% 등의 새 분모·하한을 추정하지 않음. 원표월1회메모의 시험해석."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S31",
+      "title": "예전 주간 방정리 미이행: 주 마감 후 부모 명시 확인",
+      "ruleIds": [
+        "OLD_P08"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "p",
+          "rule": "OLD_P08",
+          "date": "2026-10-25",
+          "decision": "CONFIRMED",
+          "values": {
+            "weekly_room_clean_completed": false
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P08",
+          "date": "2026-10-25",
+          "key": "evaluate-OLD_P08-2026-10-25",
+          "at": "2026-10-26T00:00:00+09:00"
+        },
+        {
+          "op": "approve",
+          "at": "2026-10-26T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-27T00:00:00+09:00",
+          "effective": "2026-10-27T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 420,
+        "pendingPenalties": 0
+      },
+      "assumptions": [
+        "예정 목표 자동추정 없이 부모의 기간 확인을 입력한 구조시험."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S32",
+      "title": "예전 독서 토론 준비 미흡: 주 마감 후 부모 명시 확인",
+      "ruleIds": [
+        "OLD_P09"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "p",
+          "rule": "OLD_P09",
+          "date": "2026-10-25",
+          "decision": "CONFIRMED",
+          "values": {
+            "discussion_prep_adequate": false
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P09",
+          "date": "2026-10-25",
+          "key": "evaluate-OLD_P09-2026-10-25",
+          "at": "2026-10-26T00:00:00+09:00"
+        },
+        {
+          "op": "approve",
+          "at": "2026-10-26T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-27T00:00:00+09:00",
+          "effective": "2026-10-27T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 510,
+        "pendingPenalties": 0
+      },
+      "assumptions": [
+        "예정 목표 자동추정 없이 부모의 기간 확인을 입력한 구조시험."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S33",
+      "title": "비활성 약·옷·취침 / 전액몰수·×3 / 연속기준 미확정은 차단",
+      "ruleIds": [
+        "OLD_R10",
+        "OLD_P02",
+        "OLD_P04",
+        "OLD_P05",
+        "OLD_P07",
+        "OLD_P10",
+        "OLD_P12",
+        "OLD_P13",
+        "OLD_P14"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "OLD_R10",
+          "rule": "OLD_R10",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "streak_3day_completed": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_R10",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_R10-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "OLD_P02",
+          "rule": "OLD_P02",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "daily_study_failed_without_gitan": true,
+            "daily_study_failed_with_gitan": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P02",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P02-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "OLD_P04",
+          "rule": "OLD_P04",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {}
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P04",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P04-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "OLD_P05",
+          "rule": "OLD_P05",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "morning_med_checked": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P05",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P05-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "OLD_P07",
+          "rule": "OLD_P07",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "bedtime_before_2200": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P07",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P07-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "OLD_P10",
+          "rule": "OLD_P10",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {}
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P10",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P10-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "OLD_P12",
+          "rule": "OLD_P12",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "evening_med_before_2000": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P12",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P12-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "OLD_P13",
+          "rule": "OLD_P13",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "messy_dirty_clothes": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P13",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P13-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "OLD_P14",
+          "rule": "OLD_P14",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "cat_proofed_room": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "OLD_P14",
+          "date": "2026-10-19",
+          "key": "evaluate-OLD_P14-2026-10-19"
+        },
+        {
+          "op": "approve",
+          "at": "2026-10-19T21:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 600,
+        "grants": 1,
+        "pendingPenalties": 0
+      },
+      "assumptions": [],
+      "purpose": "옛 active여도 제품에서 제외된 정책 복원금지, 사유가 불명확한연속보너스도자동추론X"
+    },
+    {
+      "id": "S34",
+      "title": "과거 비활성 완화 방식: 비교안의80/50 배타 적용",
+      "ruleIds": [
+        "CMP_MITIGATION"
+      ],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": 600,
+          "asset": "MIN",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-18T12:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-19T00:00:00+09:00",
+          "effective": "2026-10-19T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "p",
+          "rule": "CMP_MITIGATION",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "failed": true,
+            "mitigated": true
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_MITIGATION",
+          "date": "2026-10-19",
+          "key": "evaluate-CMP_MITIGATION-2026-10-19"
+        },
+        {
+          "op": "approve",
+          "at": "2026-10-19T21:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 550,
+        "quotaCount": 1,
+        "pendingPenalties": 0
+      },
+      "assumptions": [
+        "과거 inactive -80/-50을 시험에서만 대조. 실제패널티 신규승인으로 보지 않음."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S35",
+      "title": "수행건 시험 + 월2회 인정: 10월초과·11월리셋",
+      "ruleIds": [
+        "CMP_MONTH_CAP"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "q0",
+          "rule": "CMP_MONTH_CAP",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_MONTH_CAP",
+          "date": "2026-10-19",
+          "key": "e0"
+        },
+        {
+          "op": "record",
+          "key": "q1",
+          "rule": "CMP_MONTH_CAP",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_MONTH_CAP",
+          "date": "2026-10-20",
+          "key": "e1"
+        },
+        {
+          "op": "record",
+          "key": "q2",
+          "rule": "CMP_MONTH_CAP",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_MONTH_CAP",
+          "date": "2026-10-21",
+          "key": "e2"
+        },
+        {
+          "op": "record",
+          "key": "q3",
+          "rule": "CMP_MONTH_CAP",
+          "date": "2026-11-01",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_MONTH_CAP",
+          "date": "2026-11-01",
+          "key": "e3"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-02T00:00:00+09:00",
+          "effective": "2026-11-02T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 360,
+        "occurrences": 4,
+        "limited": 1,
+        "quotaCount": 3
+      },
+      "assumptions": [
+        "월2회는 선택 제한관계의 시험가정, 실제룰에 추가하지 않음."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S36",
+      "title": "원장 반영 전 PASS 취소: 원본확인 유지·권리 취소",
+      "ruleIds": [
+        "NEW_MILK"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "m",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_MILK-2026-10-19"
+        },
+        {
+          "op": "record",
+          "key": "m-r2",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": false
+          },
+          "stickers": 0,
+          "revisionOf": "m"
+        },
+        {
+          "op": "repair",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "approve": true,
+          "at": "2026-10-19T21:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 1,
+        "verifications": 2,
+        "activeGrants": 0,
+        "ledgerMIN": 0,
+        "ledgerEntries": 0
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S37",
+      "title": "이미 적립한40분 취소: +40 원거래와 -40 상쇄",
+      "ruleIds": [
+        "NEW_MILK"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "m",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_MILK-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "m-r2",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": false
+          },
+          "stickers": 0,
+          "revisionOf": "m",
+          "at": "2026-10-20T18:00:00+09:00"
+        },
+        {
+          "op": "repair",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "approve": false,
+          "at": "2026-10-20T19:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "재검토 중 원장40",
+          "at": "2026-10-20T19:00:00+09:00",
+          "date": "2026-10-20"
+        },
+        {
+          "op": "repair",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "approve": true,
+          "at": "2026-10-20T20:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-21T00:00:00+09:00",
+          "effective": "2026-10-21T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "ledgerMIN": 0,
+        "ledgerEntries": 2,
+        "occurrences": 1,
+        "verifications": 2,
+        "activeGrants": 0
+      },
+      "assumptions": [],
+      "purpose": "",
+      "expectedSnapshots": {
+        "재검토 중 원장40": {
+          "ledgerMIN": 40,
+          "reviewRequired": 1
+        }
+      }
+    },
+    {
+      "id": "S38",
+      "title": "이미 외부 지급한1만포인트: 정정해도 자동 회수하지 않음",
+      "ruleIds": [
+        "NEW_SCHOOL"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "s0",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s1",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-20",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s2",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-21",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s3",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-22",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "s4",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "key": "evaluate-NEW_SCHOOL-2026-10-23",
+          "at": "2026-10-26T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-26T12:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "r",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": false
+          },
+          "stickers": 0,
+          "revisionOf": "s0",
+          "at": "2026-10-27T18:00:00+09:00"
+        },
+        {
+          "op": "repair",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-10-23",
+          "approve": false,
+          "at": "2026-10-27T19:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "externalPOINT": 10000,
+        "ledgerMIN": 0,
+        "reviewRequired": 1
+      },
+      "assumptions": [],
+      "purpose": "앱내-POINT/현금회수 기록을 자동생성하지 않음"
+    },
+    {
+      "id": "S39",
+      "title": "기록·판정·정산 재시도: 한 번만 반영",
+      "ruleIds": [
+        "NEW_MILK"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "once",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "once",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_MILK-2026-10-19"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "same-subject"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 1,
+        "verifications": 1,
+        "grants": 1,
+        "ledgerEntries": 1,
+        "ledgerMIN": 40
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S40",
+      "title": "같은 요청키에 다른값: 새 입력으로 취급하지 않고 거절",
+      "ruleIds": [
+        "NEW_MILK"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "same",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "same",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": false
+          },
+          "stickers": 0
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_MILK-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 1,
+        "verifications": 1,
+        "ledgerMIN": 40,
+        "rejected": 1
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S41",
+      "title": "백분율150 입력: 0~100 범위 밖 값 거절",
+      "ruleIds": [
+        "NEW_TEST"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "bad",
+          "rule": "NEW_TEST",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 150
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_TEST",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_TEST-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 0,
+        "grants": 0,
+        "ledgerMIN": 0,
+        "rejected": 1
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S42",
+      "title": "수량150은 백분율150과 다름: 수량조건의 정상값",
+      "ruleIds": [
+        "NEW_ARITH"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "many",
+          "rule": "NEW_ARITH",
+          "date": "2026-10-19",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 150
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_ARITH",
+          "date": "2026-10-19",
+          "key": "evaluate-NEW_ARITH-2026-10-19"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 1,
+        "ledgerMIN": 120,
+        "grants": 1
+      },
+      "assumptions": [
+        "현재앱은수량도0~100이지만 목표모델은COUNT범위를따로정함. 이 시험은그 확장설계검증."
+      ],
+      "purpose": ""
+    },
+    {
+      "id": "S43",
+      "title": "독립 특별보너스 소원: 정규조건·숫자잔액과 분리",
+      "ruleIds": [],
+      "steps": [
+        {
+          "op": "bonus",
+          "amount": null,
+          "asset": "WISH",
+          "reason": "시험용 시작 여유량/별도 자유보너스. 실제 지급 아님.",
+          "at": "2026-10-19T12:00:00+09:00",
+          "text": "롯데월드 가기"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-20T12:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-10-20T12:01:00+09:00"
+        }
+      ],
+      "expected": {
+        "externalWISH": 1,
+        "ledgerMIN": 0,
+        "grants": 1
+      },
+      "assumptions": [],
+      "purpose": ""
+    },
+    {
+      "id": "S44",
+      "title": "현재 다섯 룰 통합: 일별 수행·주간8개·11/1 시험·금요일 시험",
+      "ruleIds": [
+        "NEW_SCHOOL",
+        "NEW_MILK",
+        "NEW_GITAN",
+        "NEW_ARITH",
+        "NEW_TEST"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "arithmetic-event",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-01",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_ARITH",
+          "date": "2026-11-01",
+          "key": "evaluate-NEW_ARITH-2026-11-01"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-02T00:00:00+09:00",
+          "effective": "2026-11-02T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "all-school0",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-02",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "all-milk0",
+          "rule": "NEW_MILK",
+          "date": "2026-11-02",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "all-gitan0",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-02",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-02",
+          "key": "all-school-e0"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-11-02",
+          "key": "evaluate-NEW_MILK-2026-11-02"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-02",
+          "key": "evaluate-NEW_GITAN-2026-11-02"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-03T00:00:00+09:00",
+          "effective": "2026-11-03T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "all-school1",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-03",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 2
+        },
+        {
+          "op": "record",
+          "key": "all-milk1",
+          "rule": "NEW_MILK",
+          "date": "2026-11-03",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "all-gitan1",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-03",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-03",
+          "key": "all-school-e1"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-11-03",
+          "key": "evaluate-NEW_MILK-2026-11-03"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-03",
+          "key": "evaluate-NEW_GITAN-2026-11-03"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-04T00:00:00+09:00",
+          "effective": "2026-11-04T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "all-school2",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-04",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "all-milk2",
+          "rule": "NEW_MILK",
+          "date": "2026-11-04",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "all-gitan2",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-04",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-04",
+          "key": "all-school-e2"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-11-04",
+          "key": "evaluate-NEW_MILK-2026-11-04"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-04",
+          "key": "evaluate-NEW_GITAN-2026-11-04"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-05T00:00:00+09:00",
+          "effective": "2026-11-05T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "all-school3",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-05",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 2
+        },
+        {
+          "op": "record",
+          "key": "all-milk3",
+          "rule": "NEW_MILK",
+          "date": "2026-11-05",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "all-gitan3",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-05",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-05",
+          "key": "all-school-e3"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-11-05",
+          "key": "evaluate-NEW_MILK-2026-11-05"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-05",
+          "key": "evaluate-NEW_GITAN-2026-11-05"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-06T00:00:00+09:00",
+          "effective": "2026-11-06T00:00:00+09:00"
+        },
+        {
+          "op": "record",
+          "key": "all-school4",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-06",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 2
+        },
+        {
+          "op": "record",
+          "key": "all-milk4",
+          "rule": "NEW_MILK",
+          "date": "2026-11-06",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "record",
+          "key": "all-gitan4",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-06",
+          "decision": "CONFIRMED",
+          "values": {
+            "completed": true
+          },
+          "stickers": 1
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-06",
+          "key": "all-school-e4"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_MILK",
+          "date": "2026-11-06",
+          "key": "evaluate-NEW_MILK-2026-11-06"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_GITAN",
+          "date": "2026-11-06",
+          "key": "evaluate-NEW_GITAN-2026-11-06"
+        },
+        {
+          "op": "record",
+          "key": "all-test",
+          "rule": "NEW_TEST",
+          "date": "2026-11-06",
+          "decision": "CONFIRMED",
+          "values": {
+            "score": 80
+          }
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_TEST",
+          "date": "2026-11-06",
+          "key": "evaluate-NEW_TEST-2026-11-06"
+        },
+        {
+          "op": "snapshot",
+          "name": "금요일 자정 전",
+          "at": "2026-11-06T18:00:00+09:00",
+          "date": "2026-11-06"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-07T00:00:00+09:00",
+          "effective": "2026-11-07T00:00:00+09:00"
+        },
+        {
+          "op": "evaluate",
+          "rule": "NEW_SCHOOL",
+          "date": "2026-11-06",
+          "key": "all-final-school",
+          "at": "2026-11-09T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-11-09T12:00:00+09:00"
+        },
+        {
+          "op": "snapshot",
+          "name": "모든 기본·추가 권리의 이행 완료",
+          "at": "2026-11-09T12:01:00+09:00",
+          "date": "2026-11-09"
+        }
+      ],
+      "expected": {
+        "occurrences": 17,
+        "ledgerMIN": 640,
+        "externalPOINT": 45000,
+        "externalWON": 0,
+        "schoolStickerTotal": 8,
+        "pendingPenalties": 0
+      },
+      "assumptions": [
+        "미배정4룰은 시험가족에만 임시배정. 학교월~금5개기본+3칭찬=8개, 두학습각5일완료, 시험은현재저장80으로통과. 실제자녀의기록/지급이아님."
+      ],
+      "purpose": "",
+      "expectedSnapshots": {
+        "금요일 자정 전": {
+          "ledgerMIN": 440,
+          "entitledMIN": 640,
+          "entitledPOINT": 45000
+        },
+        "모든 기본·추가 권리의 이행 완료": {
+          "ledgerMIN": 640,
+          "externalPOINT": 45000
+        }
+      }
+    },
+    {
+      "id": "S45",
+      "title": "두 보상권 취소: 시간·현금 취소와 횟수예약1회 해제",
+      "ruleIds": [
+        "OLD_R06"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "once",
+          "rule": "OLD_R06",
+          "date": "2026-11-01",
+          "values": {
+            "gugudan_test_passed": true
+          },
+          "decision": "CONFIRMED"
+        },
+        {
+          "op": "evaluate",
+          "key": "first",
+          "rule": "OLD_R06",
+          "date": "2026-11-01"
+        },
+        {
+          "op": "record",
+          "key": "corrected",
+          "rule": "OLD_R06",
+          "date": "2026-11-01",
+          "values": {
+            "gugudan_test_passed": false
+          },
+          "decision": "CONFIRMED",
+          "revisionOf": "once",
+          "at": "2026-11-01T19:00:00+09:00"
+        },
+        {
+          "op": "repair",
+          "rule": "OLD_R06",
+          "date": "2026-11-01",
+          "approve": true,
+          "at": "2026-11-01T20:00:00+09:00"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-11-02T00:00:00+09:00",
+          "effective": "2026-11-02T00:00:00+09:00"
+        },
+        {
+          "op": "fulfill",
+          "at": "2026-11-02T12:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "occurrences": 1,
+        "verifications": 2,
+        "activeGrants": 0,
+        "ledgerMIN": 0,
+        "externalWON": 0,
+        "quotaCount": 0
+      },
+      "assumptions": [
+        "보상 사용·외부지급 전 취소. 실제 외부회수 없음."
+      ],
+      "purpose": "효과2개가 같은 인정조건에 붙어도 COUNT예약은1개·해제도1개"
+    },
+    {
+      "id": "S46",
+      "title": "85점이 보상·패널티 모두 충족: 임의 순서 대신 정책 충돌 보류",
+      "ruleIds": [
+        "CMP_CONFLICT"
+      ],
+      "steps": [
+        {
+          "op": "record",
+          "key": "conflict",
+          "rule": "CMP_CONFLICT",
+          "date": "2026-10-19",
+          "values": {
+            "score": 85
+          },
+          "decision": "CONFIRMED"
+        },
+        {
+          "op": "evaluate",
+          "rule": "CMP_CONFLICT",
+          "date": "2026-10-19",
+          "key": "conflict-evaluate"
+        },
+        {
+          "op": "settle",
+          "cutoff": "2026-10-20T00:00:00+09:00",
+          "effective": "2026-10-20T00:00:00+09:00"
+        }
+      ],
+      "expected": {
+        "grants": 0,
+        "ledgerMIN": 0,
+        "pendingPenalties": 0,
+        "blocked": 2
+      },
+      "assumptions": [
+        "겹친 범위는 시험용 결함. 부모가 방향을 확정하기 전 자동 선택·상계하지 않음."
+      ],
+      "purpose": "조건의 배열 순서를 미승인 우선순위로 사용하지 않음"
+    }
+  ]
+}

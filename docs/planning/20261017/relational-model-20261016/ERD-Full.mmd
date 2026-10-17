@@ -1,0 +1,603 @@
+erDiagram
+    families {
+        uuid id PK
+        text name
+        text timezone
+    }
+    principals {
+        uuid id PK
+        uuid auth_user_id
+    }
+    child_profiles {
+        uuid id PK
+        uuid family_id FK
+        uuid principal_id
+    }
+    ref_concepts {
+        uuid id PK
+        uuid family_id FK
+        text name
+        text category_code
+    }
+    asset_types {
+        uuid id PK
+        uuid family_id FK
+        text code
+        text unit
+        text provider_code
+        text route
+    }
+    effect_types {
+        uuid id PK
+        uuid family_id FK
+        text code
+        text name
+        text direction
+        uuid asset_id
+    }
+    sticker_types {
+        uuid id PK
+        uuid family_id FK
+        text code
+        text name
+        text direction
+        text icon_code
+        text image_url
+    }
+    activity_aliases {
+        uuid id PK
+        uuid family_id FK
+        uuid alias_ref_id
+        uuid canonical_ref_id
+        uuid approved_by
+        text reason
+    }
+    rule_series {
+        uuid id PK
+        uuid family_id FK
+        uuid activity_id
+        uuid stable_key
+        text flow
+    }
+    period_policies {
+        uuid id PK
+        uuid family_id FK
+        text code
+        text kind
+        text timezone
+        smallint week_start
+        string anchor_on
+        integer custom_days
+    }
+    special_events {
+        uuid id PK
+        uuid family_id FK
+        text name
+        string starts_at
+        string ends_at
+        text timezone
+    }
+    rule_versions {
+        uuid id PK
+        uuid family_id FK
+        uuid series_id
+        integer version_no
+        string effective_from
+        uuid previous_version_id
+        uuid published_by
+        text criteria
+        integer schema_version
+        text engine_version
+    }
+    metric_definitions {
+        uuid id PK
+        uuid family_id FK
+        uuid rule_version_id
+        text code
+        text value_kind
+        text unit_code
+        numeric min_value
+        numeric max_value
+    }
+    scope_sets {
+        uuid id PK
+        uuid family_id FK
+        text name
+        integer version_no
+    }
+    scope_members {
+        uuid id PK
+        uuid family_id FK
+        uuid scope_id
+        uuid activity_id
+        uuid series_id
+        uuid sticker_type_id
+    }
+    aggregation_specs {
+        uuid id PK
+        uuid family_id FK
+        uuid scope_id
+        uuid period_policy_id
+        uuid special_event_id
+        text operation
+        text input_metric_code
+        text source_kind
+        text denominator_mode
+        boolean allow_version_bridge
+    }
+    conditions {
+        uuid id PK
+        uuid family_id FK
+        uuid rule_version_id
+        uuid stable_key
+        text label
+        text direction
+        text mode
+        uuid aggregation_id
+        text conflict_group
+        text match_policy
+    }
+    predicate_groups {
+        uuid id PK
+        uuid family_id FK
+        uuid condition_id
+        uuid rule_version_id
+        integer group_no
+    }
+    predicates {
+        uuid id PK
+        uuid family_id FK
+        uuid group_id
+        uuid rule_version_id
+        uuid metric_id
+        boolean aggregate_result
+        text operator
+        numeric rhs_number
+        boolean rhs_boolean
+        string rhs_time
+        string rhs_instant
+    }
+    condition_effects {
+        uuid id PK
+        uuid family_id FK
+        uuid condition_id
+        uuid stable_key
+        smallint position
+        uuid effect_type_id
+        text direction
+        uuid asset_id
+        numeric amount
+        text text_value
+        text name_snapshot
+    }
+    limit_policy_series {
+        uuid id PK
+        uuid family_id FK
+        uuid stable_key
+        text name
+    }
+    limit_policies {
+        uuid id PK
+        uuid family_id FK
+        uuid policy_series_id
+        integer version_no
+        uuid scope_id
+        uuid period_policy_id
+        text direction
+        text limit_kind
+        uuid asset_id
+        numeric max_value
+        text allocation_mode
+        string effective_from
+    }
+    condition_limits {
+        uuid id PK
+        uuid family_id FK
+        uuid condition_id
+        uuid limit_policy_id
+        integer priority
+    }
+    assignments {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid series_id
+        uuid rule_version_id
+        text recording_kind
+        string starts_on
+        string ends_on
+        uuid special_event_id
+        integer expected_per_day
+        uuid created_by
+    }
+    assignment_weekdays {
+        uuid id PK
+        uuid family_id FK
+        uuid assignment_id
+        smallint weekday
+    }
+    occurrences {
+        uuid id PK
+        uuid family_id FK
+        uuid assignment_id
+        uuid child_id
+        uuid series_id
+        string business_date
+        integer sequence_no
+        string occurred_at
+        text kind
+        uuid origin_key
+        uuid rule_version_id
+    }
+    observations {
+        uuid id PK
+        uuid family_id FK
+        uuid occurrence_id
+        uuid actor_id
+        text actor_role
+        uuid request_key
+    }
+    verifications {
+        uuid id PK
+        uuid family_id FK
+        uuid occurrence_id
+        uuid rule_version_id
+        integer revision_no
+        uuid actor_id
+        uuid supersedes_id
+        text decision
+        text reason
+    }
+    verified_values {
+        uuid id PK
+        uuid family_id FK
+        uuid verification_id
+        uuid rule_version_id
+        uuid metric_id
+        numeric number_value
+        boolean boolean_value
+        string time_value
+        string instant_value
+    }
+    sticker_events {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid occurrence_id
+        uuid verification_id
+        uuid sticker_type_id
+        integer delta
+        text reason
+        uuid reversal_of_id
+        text dedupe_key
+    }
+    evaluation_subjects {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid series_id
+        text kind
+        uuid occurrence_id
+        uuid aggregation_id
+        string period_start
+        string period_end
+        text timezone_snapshot
+        uuid special_event_id
+        text origin_key
+    }
+    evaluations {
+        uuid id PK
+        uuid family_id FK
+        uuid subject_id
+        uuid rule_version_id
+        integer revision_no
+        text completeness
+        integer eligible_count
+        integer confirmed_count
+        integer hold_count
+        integer excluded_count
+        text engine_version
+        text input_digest
+    }
+    evaluation_inputs {
+        uuid id PK
+        uuid family_id FK
+        uuid evaluation_id
+        uuid verification_id
+        boolean included
+        text exclusion_reason
+    }
+    condition_results {
+        uuid id PK
+        uuid family_id FK
+        uuid evaluation_id
+        uuid rule_version_id
+        uuid condition_id
+        text result
+        numeric measured_value
+        text reason
+    }
+    limit_buckets {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid limit_policy_id
+        uuid policy_series_id
+        string period_start
+        string period_end
+        uuid special_event_id
+    }
+    admissions {
+        uuid id PK
+        uuid family_id FK
+        uuid condition_result_id
+        text status
+        text reason
+        uuid supersedes_id
+    }
+    admission_effects {
+        uuid id PK
+        uuid family_id FK
+        uuid admission_id
+        uuid effect_id
+        uuid asset_id
+        numeric allowed_amount
+        text allowed_text
+        text status
+    }
+    quota_entries {
+        uuid id PK
+        uuid family_id FK
+        uuid bucket_id
+        uuid admission_id
+        numeric delta
+        text phase
+        uuid reversal_of_id
+        text dedupe_key
+    }
+    manual_awards {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid effect_type_id
+        uuid asset_id
+        numeric amount
+        text text_value
+        text reason
+        uuid actor_id
+        uuid request_key
+    }
+    grants {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid admission_effect_id
+        uuid manual_award_id
+        uuid asset_id
+        text direction
+        numeric amount
+        text text_value
+        string business_date
+        text dedupe_key
+    }
+    grant_events {
+        uuid id PK
+        uuid family_id FK
+        uuid grant_id
+        uuid actor_id
+        text kind
+        text reason
+        uuid request_key
+    }
+    settlement_runs {
+        uuid id PK
+        uuid family_id FK
+        text run_key
+        string cutoff_at
+        string effective_at
+        text engine_version
+        text status
+    }
+    fulfillments {
+        uuid id PK
+        uuid family_id FK
+        uuid grant_id
+        uuid actor_id
+        numeric amount
+        text note
+        text dedupe_key
+    }
+    usage_requests {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid actor_id
+        uuid request_key
+        string requested_for
+        text reason
+    }
+    usage_items {
+        uuid id PK
+        uuid family_id FK
+        uuid usage_request_id
+        uuid asset_id
+        numeric amount
+    }
+    ledger_entries {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid asset_id
+        uuid grant_id
+        uuid usage_item_id
+        uuid reversal_of_id
+        uuid settlement_run_id
+        text kind
+        numeric delta
+        string business_date
+        string effective_at
+        text reason
+        text dedupe_key
+    }
+    residuals {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        uuid occurrence_id
+        string business_date
+        text reason_code
+        uuid origin_key
+    }
+    residual_decisions {
+        uuid id PK
+        uuid family_id FK
+        uuid residual_id
+        integer revision_no
+        text decision
+        uuid target_ref_id
+        uuid target_rule_version_id
+        uuid actor_id
+        string effective_from
+        text reason
+    }
+    daily_snapshots {
+        uuid id PK
+        uuid family_id FK
+        uuid child_id
+        string business_date
+        integer revision_no
+        string observed_at
+        integer hold_count
+        integer residual_count
+        integer pending_penalty_count
+        uuid settlement_run_id
+    }
+    snapshot_assets {
+        uuid id PK
+        uuid family_id FK
+        uuid snapshot_id
+        uuid asset_id
+        numeric available_amount
+        numeric pending_amount
+    }
+    source_bridges {
+        uuid id PK
+        uuid family_id FK
+        text source_system
+        text source_table
+        uuid source_id
+        text target_kind
+        uuid target_id
+        boolean already_fulfilled
+        string cutover_at
+    }
+    request_events {
+        uuid id PK
+        uuid family_id FK
+        uuid actor_id
+        uuid request_key
+        text action
+        text payload_hash
+    }
+    asset_types ||--o{ effect_types : "asset_id"
+    ref_concepts ||--o{ activity_aliases : "alias_ref_id"
+    ref_concepts ||--o{ activity_aliases : "canonical_ref_id"
+    ref_concepts ||--o{ rule_series : "activity_id"
+    rule_series ||--o{ rule_versions : "series_id"
+    rule_versions ||--o{ rule_versions : "previous_version_id"
+    rule_versions ||--o{ metric_definitions : "rule_version_id"
+    scope_sets ||--o{ scope_members : "scope_id"
+    ref_concepts ||--o{ scope_members : "activity_id"
+    rule_series ||--o{ scope_members : "series_id"
+    sticker_types ||--o{ scope_members : "sticker_type_id"
+    scope_sets ||--o{ aggregation_specs : "scope_id"
+    period_policies ||--o{ aggregation_specs : "period_policy_id"
+    special_events ||--o{ aggregation_specs : "special_event_id"
+    rule_versions ||--o{ conditions : "rule_version_id"
+    aggregation_specs ||--o{ conditions : "aggregation_id"
+    conditions ||--o{ predicate_groups : "condition_id"
+    rule_versions ||--o{ predicate_groups : "rule_version_id"
+    predicate_groups ||--o{ predicates : "group_id"
+    metric_definitions ||--o{ predicates : "metric_id"
+    rule_versions ||--o{ predicates : "rule_version_id"
+    conditions ||--o{ condition_effects : "condition_id"
+    effect_types ||--o{ condition_effects : "effect_type_id"
+    asset_types ||--o{ condition_effects : "asset_id"
+    limit_policy_series ||--o{ limit_policies : "policy_series_id"
+    scope_sets ||--o{ limit_policies : "scope_id"
+    period_policies ||--o{ limit_policies : "period_policy_id"
+    asset_types ||--o{ limit_policies : "asset_id"
+    conditions ||--o{ condition_limits : "condition_id"
+    limit_policies ||--o{ condition_limits : "limit_policy_id"
+    child_profiles ||--o{ assignments : "child_id"
+    rule_series ||--o{ assignments : "series_id"
+    rule_versions ||--o{ assignments : "rule_version_id"
+    special_events ||--o{ assignments : "special_event_id"
+    assignments ||--o{ assignment_weekdays : "assignment_id"
+    assignments ||--o{ occurrences : "assignment_id"
+    child_profiles ||--o{ occurrences : "child_id"
+    rule_series ||--o{ occurrences : "series_id"
+    rule_versions ||--o{ occurrences : "rule_version_id"
+    occurrences ||--o{ observations : "occurrence_id"
+    occurrences ||--o{ verifications : "occurrence_id"
+    rule_versions ||--o{ verifications : "rule_version_id"
+    verifications ||--o{ verifications : "supersedes_id"
+    verifications ||--o{ verified_values : "verification_id"
+    metric_definitions ||--o{ verified_values : "metric_id"
+    rule_versions ||--o{ verified_values : "rule_version_id"
+    child_profiles ||--o{ sticker_events : "child_id"
+    occurrences ||--o{ sticker_events : "occurrence_id"
+    verifications ||--o{ sticker_events : "verification_id"
+    sticker_types ||--o{ sticker_events : "sticker_type_id"
+    sticker_events ||--o{ sticker_events : "reversal_of_id"
+    child_profiles ||--o{ evaluation_subjects : "child_id"
+    rule_series ||--o{ evaluation_subjects : "series_id"
+    occurrences ||--o{ evaluation_subjects : "occurrence_id"
+    aggregation_specs ||--o{ evaluation_subjects : "aggregation_id"
+    special_events ||--o{ evaluation_subjects : "special_event_id"
+    evaluation_subjects ||--o{ evaluations : "subject_id"
+    rule_versions ||--o{ evaluations : "rule_version_id"
+    evaluations ||--o{ evaluation_inputs : "evaluation_id"
+    verifications ||--o{ evaluation_inputs : "verification_id"
+    evaluations ||--o{ condition_results : "evaluation_id"
+    conditions ||--o{ condition_results : "condition_id"
+    rule_versions ||--o{ condition_results : "rule_version_id"
+    child_profiles ||--o{ limit_buckets : "child_id"
+    limit_policies ||--o{ limit_buckets : "limit_policy_id"
+    limit_policy_series ||--o{ limit_buckets : "policy_series_id"
+    special_events ||--o{ limit_buckets : "special_event_id"
+    condition_results ||--o{ admissions : "condition_result_id"
+    admissions ||--o{ admissions : "supersedes_id"
+    admissions ||--o{ admission_effects : "admission_id"
+    condition_effects ||--o{ admission_effects : "effect_id"
+    asset_types ||--o{ admission_effects : "asset_id"
+    limit_buckets ||--o{ quota_entries : "bucket_id"
+    admissions ||--o{ quota_entries : "admission_id"
+    quota_entries ||--o{ quota_entries : "reversal_of_id"
+    child_profiles ||--o{ manual_awards : "child_id"
+    effect_types ||--o{ manual_awards : "effect_type_id"
+    asset_types ||--o{ manual_awards : "asset_id"
+    child_profiles ||--o{ grants : "child_id"
+    admission_effects ||--o{ grants : "admission_effect_id"
+    manual_awards ||--o{ grants : "manual_award_id"
+    asset_types ||--o{ grants : "asset_id"
+    grants ||--o{ grant_events : "grant_id"
+    grants ||--o{ fulfillments : "grant_id"
+    child_profiles ||--o{ usage_requests : "child_id"
+    usage_requests ||--o{ usage_items : "usage_request_id"
+    asset_types ||--o{ usage_items : "asset_id"
+    child_profiles ||--o{ ledger_entries : "child_id"
+    asset_types ||--o{ ledger_entries : "asset_id"
+    grants ||--o{ ledger_entries : "grant_id"
+    usage_items ||--o{ ledger_entries : "usage_item_id"
+    ledger_entries ||--o{ ledger_entries : "reversal_of_id"
+    settlement_runs ||--o{ ledger_entries : "settlement_run_id"
+    child_profiles ||--o{ residuals : "child_id"
+    occurrences ||--o{ residuals : "occurrence_id"
+    residuals ||--o{ residual_decisions : "residual_id"
+    ref_concepts ||--o{ residual_decisions : "target_ref_id"
+    rule_versions ||--o{ residual_decisions : "target_rule_version_id"
+    child_profiles ||--o{ daily_snapshots : "child_id"
+    settlement_runs ||--o{ daily_snapshots : "settlement_run_id"
+    daily_snapshots ||--o{ snapshot_assets : "snapshot_id"
+    asset_types ||--o{ snapshot_assets : "asset_id"

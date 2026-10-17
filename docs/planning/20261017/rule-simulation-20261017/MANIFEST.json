@@ -1,0 +1,27 @@
+{
+  "scope": "SIMULATION_ONLY",
+  "scenarios": 46,
+  "passed": 46,
+  "independent_checks": 246,
+  "operational_changes": false,
+  "files": {
+    "scenarios.json": "4a6f89c60428943ae86481bae2f59be4bd33409386e1ab5794fae84719106a55",
+    "source-old-conditions.json": "728b02d7113215272d1dc516d6aae550731f42e3d6d64ebddd9dff06ab48bc68",
+    "reference-model.sql": "62f3b4827c1bcf12714f92f2f04cdbb9f4af4c3589b78d824aca44d90b282c4b",
+    "package-lock.json": "3794c068ba5f56586e13d7ee6a18e868e49477f152214cadbdafcaaf6d499dfe",
+    "engine.mjs": "2edbe2e49a05dac5eb97f892aa61e9e00a4a5bcc385e8c9b8801e9ded8b70976",
+    "package.json": "2d1fcf61f43bcc85628417d653290f395fef7e322d6168e217f04d563153d270",
+    "condition-mapping.csv": "cc6de44b252dcf96661170534f598cfc118835e71e4830d8ebf3e24098641347",
+    "README.md": "230107263e900a4869790509b3d15b99deb33f9344d1fc58da3e12d1bf5c018a",
+    "Simulation-Results.csv": "adf3ad6f5db6839b9e9490879032b41ddd663ffc02e16088d0846143393e80eb",
+    "Play-Routine-Rule-Simulation-20261017.md": "90b1c084bd01b347dfaa0a3f13fe18b017b6af6f6d1f2dc3eca704945559747a",
+    "output/results.json": "9c6728d47384ba9a5154dda496eb39e0ecb9d9c058e72f9ac313e030a671ae68",
+    "output/trace.json": "a775970c9092744dd67487918000c52ea2c6b7b417fb78cc5088301f4cdd1f8d",
+    "output/relations.csv": "28090210d83fea70f5d8d127d6ef4c297e62ae38d455ba0f9e6107adad17c900",
+    "output/ledger.csv": "586dff5ddfa2ee36b5f77f02d9061db4bfca7414dd3dc56f53a50eca24fdb283",
+    "output/DB-state.json": "4ce48004e325b4f88239b960db2d5280972d735688872adb4057123893cc75e5",
+    "output/DB-dump.sql": "6c36b1d19c08029321671f1df699a6e8e0273bc89c612c7b70aaac0923f1197a",
+    "output/independent-checks.json": "1d23e623c3533905483f2fe0a7e00bc9d0ce9ad95f9234e13bf22fbac1886d5e",
+    "output/Table-Counts.csv": "7a1c40e0df93b4ba9dff7c2d2dd061aa5a4d84417dbb0419289cd231314b2db1"
+  }
+}

@@ -1,0 +1,22 @@
+flowchart TB
+    A["① 활동·종류 정본<br/>가족 · 자녀 · 활동 · 강화물 · 스티커 종류"]
+    B["② 불변 규칙 버전<br/>복수 측정 · AND/OR 조건 · 기본/추가 구간<br/>조건별 선택 보상 1~2개 · 패널티 방향"]
+    C["③ 배정과 실제 회차<br/>일별 / 필요시 여러 회 / 이벤트<br/>수행일 ≠ 보고 시각"]
+    D["④ 부모 확인 revision<br/>확정 값 · 종류별 스티커 · 확인 이유<br/>미확인 = HOLD / 실패 아님"]
+    E["⑤ 판정과 한도 인정<br/>일·주·월·이벤트 집계<br/>조건 충족 ≠ 인정 / 횟수·총량 예약"]
+    F["⑥ 권리와 승인<br/>보상권 / 차감 요청 / 자유 보너스<br/>패널티는 별도 부모 승인"]
+    G["⑦ 내부 원장<br/>시간·앱 포인트의 확정 잔액<br/>입출금 · 사용 · 상쇄 / 원거래 불변"]
+    H["⑦ 외부 이행<br/>실제 용돈·서비스 포인트·소원 지급<br/>내부 잔액과 중복 적립 금지"]
+    I["상태 화면·CSV·일별 사진<br/>오늘 예정 / 보유량 / 미확인 / 차감 대기 분리"]
+    A --> B --> C --> D --> E --> F
+    F --> G
+    F --> H
+    G --> I
+    H --> I
+    D -. "아직 분류 불가" .-> J["잔차 HOLD<br/>사람의 분류 결정 → 새 효력<br/>자동 보상·패널티 추정 금지"]
+    classDef policy fill:#eee9ff,stroke:#5531dd,color:#241747;
+    classDef fact fill:#e3f3ed,stroke:#559d89,color:#17372e;
+    classDef post fill:#fff4df,stroke:#c59b3c,color:#473710;
+    class A,B policy;
+    class C,D,E,F fact;
+    class G,H,I,J post;

@@ -1,0 +1,178 @@
+---
+config:
+  theme: base
+  themeVariables:
+    primaryColor: '#EEF5FF'
+    primaryTextColor: '#172033'
+    primaryBorderColor: '#2563A8'
+    lineColor: '#52657F'
+    tertiaryColor: '#F8FAFC'
+  er:
+    layoutDirection: LR
+---
+erDiagram
+    families {
+      text family_id PK "가족 tenant"
+    }
+    children {
+      text child_id PK
+      text family_id FK
+    }
+    regulations {
+      text regulation_id PK "규정 정체성"
+      text family_id FK
+      doc_kind kind
+    }
+    regulation_versions {
+      text regulation_version_id PK "불변 규정 버전"
+      text regulation_id FK
+      text family_id FK
+    }
+    rule_identities {
+      text rule_id PK "영구번호 정체성"
+      text permanent_number UK "T/Q/L-###"
+      text stable_scope_code UK
+    }
+    rule_versions {
+      text rule_version_id PK "불변 시행규칙 버전"
+      text rule_id FK
+      text family_id FK
+    }
+    rule_governing_versions {
+      text rule_governing_version_id PK "규정 근거 bridge"
+      text rule_version_id FK
+      text regulation_version_id FK
+    }
+    asset_versions {
+      text asset_version_id PK "강화물 정의 버전"
+      text asset_id FK "asset_identities는 도면 외"
+    }
+    rule_conditions {
+      text rule_condition_id PK "조건 정본"
+      text rule_version_id FK
+      text condition_code UK
+    }
+    rule_effects {
+      text rule_effect_id PK "조건별 효과"
+      text rule_version_id FK
+      text asset_version_id FK "nullable / STICKER는 NULL"
+      text condition_code FK
+    }
+    monthly_plans {
+      text plan_id PK "월별 운영계획"
+      date operating_month
+      text family_id FK
+    }
+    plan_rule_adoptions {
+      text adoption_id PK "규칙 버전 채택"
+      text plan_id FK
+      text child_id FK
+      text rule_version_id FK
+    }
+    scheduled_occurrences {
+      text occurrence_id PK "예정 회차"
+      text adoption_id FK
+      text child_id FK
+      text rule_version_id FK
+    }
+    source_events {
+      text source_event_id PK "append-only 사건"
+      text occurrence_id FK "nullable"
+      text rule_version_id FK "nullable"
+    }
+    parent_confirmations {
+      text confirmation_id PK "부모 판정"
+      text source_event_id FK
+      text parent_membership_id FK "family_memberships는 도면 외"
+    }
+    sticker_awards {
+      text sticker_award_id PK "스티커 수여"
+      text child_id FK
+      text sticker_type_id FK "sticker_types는 도면 외"
+      text source_event_id FK
+      text parent_confirmation_id FK
+    }
+    stable_rule_scopes {
+      text stable_scope_id PK "버전 독립 scope"
+      text stable_scope_code UK
+      period_kind period
+    }
+    aggregation_periods {
+      text aggregation_period_id PK "[start,end) 기간"
+      text child_id FK
+      text stable_scope_id FK
+      text governing_plan_id FK "nullable"
+    }
+    recognition_limit_buckets {
+      text bucket_id PK "생활 인정 한도"
+      text child_id FK
+      text stable_scope_id FK
+      integer limit_count
+    }
+    reward_rights {
+      text reward_right_id PK "보상권"
+      text aggregation_period_id FK "nullable"
+      text rule_version_id FK "nullable"
+      text asset_version_id FK
+    }
+    school_execution_batches {
+      text execution_batch_id PK "학교 이행 요청"
+      text aggregation_period_id FK
+    }
+    actual_reward_executions {
+      text execution_id PK "권리별 실제 이행"
+      text execution_batch_id FK
+      text reward_right_id FK
+    }
+    immutable_ledger_entries {
+      text ledger_entry_id PK "모형 원장"
+      text source_kind
+      text source_id
+      text family_id "FK 없음"
+    }
+
+    families ||--o{ children : "children.family_id"
+    families ||--o{ regulations : "regulations.family_id"
+    families ||--o{ rule_identities : "rule_identities.family_id"
+    families ||--o{ monthly_plans : "monthly_plans.family_id"
+    families ||--o{ stable_rule_scopes : "stable_rule_scopes.family_id"
+
+    regulations ||--o{ regulation_versions : "(regulation_id,family_id)"
+    rule_identities ||--o{ rule_versions : "(rule_id,family_id)"
+    rule_versions ||--o{ rule_governing_versions : "(rule_version_id,family_id)"
+    regulation_versions ||--o{ rule_governing_versions : "(regulation_version_id,family_id)"
+    rule_versions ||--o{ rule_conditions : "(rule_version_id,family_id)"
+    rule_versions ||--o{ rule_effects : "(rule_version_id,family_id)"
+    rule_conditions ||--o{ rule_effects : "(family_id,rule_version_id,condition_code)"
+    asset_versions o|--o{ rule_effects : "asset_version_id nullable"
+
+    monthly_plans ||--o{ plan_rule_adoptions : "(plan_id,family_id)"
+    children ||--o{ plan_rule_adoptions : "(child_id,family_id)"
+    rule_versions ||--o{ plan_rule_adoptions : "(rule_version_id,family_id)"
+    plan_rule_adoptions ||--o{ scheduled_occurrences : "(adoption_id,family_id)"
+    children ||--o{ scheduled_occurrences : "(child_id,family_id)"
+    rule_versions ||--o{ scheduled_occurrences : "(rule_version_id,family_id)"
+
+    children ||--o{ source_events : "(child_id,family_id)"
+    scheduled_occurrences o|--o{ source_events : "occurrence_id nullable"
+    rule_versions o|--o{ source_events : "rule_version_id nullable"
+    source_events ||--o{ parent_confirmations : "(source_event_id,family_id)"
+    children ||--o{ sticker_awards : "(child_id,family_id)"
+    source_events ||--o{ sticker_awards : "(source_event_id,family_id)"
+    parent_confirmations ||--o{ sticker_awards : "(parent_confirmation_id,family_id)"
+
+    children ||--o{ aggregation_periods : "(child_id,family_id)"
+    stable_rule_scopes ||--o{ aggregation_periods : "(stable_scope_id,family_id)"
+    monthly_plans o|--o{ aggregation_periods : "governing_plan_id nullable"
+    children ||--o{ recognition_limit_buckets : "(child_id,family_id)"
+    stable_rule_scopes ||--o{ recognition_limit_buckets : "(stable_scope_id,family_id)"
+
+    children ||--o{ reward_rights : "(child_id,family_id)"
+    aggregation_periods o|--o{ reward_rights : "aggregation_period_id nullable"
+    rule_versions o|--o{ reward_rights : "rule_version_id nullable"
+    asset_versions ||--o{ reward_rights : "(asset_version_id,family_id)"
+    aggregation_periods ||--o{ school_execution_batches : "(aggregation_period_id,family_id)"
+    school_execution_batches ||--o{ actual_reward_executions : "(execution_batch_id,family_id)"
+    reward_rights ||--o{ actual_reward_executions : "(reward_right_id,family_id)"
+
+    %% immutable_ledger_entries는 의도적으로 어느 엔터티와도 FK 선을 갖지 않는다.

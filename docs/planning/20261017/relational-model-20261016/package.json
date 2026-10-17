@@ -1,0 +1,13 @@
+{
+  "name": "play-routine-relational-design-verification",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Play Routine 관계형 모델의 독립 PostgreSQL 제약 검증. 운영 DB 접속 없음.",
+  "scripts": {
+    "verify": "node scripts/verify-model.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.10"
+  }
+}

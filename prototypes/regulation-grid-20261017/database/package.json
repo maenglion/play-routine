@@ -1,0 +1,13 @@
+{
+  "name": "play-routine-isolated-postgres-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "verify": "node verify-design.mjs",
+    "verify:samples": "node verify-samples.mjs"
+  },
+  "dependencies": {
+    "@electric-sql/pglite": "0.5.10"
+  }
+}

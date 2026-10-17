@@ -1,0 +1,25 @@
+{
+  "name": "play-routine-ordinance-prototype",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5176",
+    "build": "tsc --noEmit && vite build",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "react": "19.2.1",
+    "react-dom": "19.2.1",
+    "wouter": "3.7.1",
+    "lucide-react": "0.453.0"
+  },
+  "devDependencies": {
+    "vite": "7.1.9",
+    "typescript": "5.9.3",
+    "@types/react": "19.2.1",
+    "@types/react-dom": "19.2.1",
+    "@types/node": "22.13.8",
+    "vitest": "2.1.9"
+  }
+}

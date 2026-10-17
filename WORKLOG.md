@@ -639,3 +639,5 @@ Grok에 Supabase처리범위·보상분리·알림·승인 설계를 실제 검�
 사용자02:55:01 메시지로T007 쿠페이5~7개총10,000원/8개이상총15,000원·최고구간최종총액을재확정했다. 0021/0022/26개불변버전을덮어쓰지않고0023의`october_school_asset_decisions` append-only1행+관리함수를추가했다. 승인대상부모와DB_SESSION실행을구분하고학교계획자산만COUPAY_KRW로전환했다. 원래T007/채택/원사건/주간bucket정체성은유지해기존10,000원이있어도추가5,000원만발행하는구조를보존한다. get_board는기존인가함수를private로보존하여호출하고학교조건/확인대기표시만projection한다. 기존PENDING seed hash/원문은그대로이며확정이력존재시seed멱등재실행도허용했다.
 
 학교결정17개실DB반례는설치전DDL포함rollback/설치후재실행통과. 설치후운영56·감사16·결정17은3개live test(92.58초)로통과,기본161개passed18skip·타입/Netlify build통과. 기존public38개보존,seed dry-run inserted=false/26규칙/26채택/COUPAY확인. 부모규정DOM의10,000/15,000/5,000표시·자산보류제거·문제+칭찬hold유지확인. 자녀에도쿠페이표를추가했다. 실제관리결정commit으로새보상권·마감·이행은전혀만들지않았다. 바이올린NULL과일반원장/자동차감등기존후속은유지한다. 최신학교적용의GitHub·공개배포결과는확인후추가기록한다.
+
+최신학교소스14개변경은GitHub main `50cf0502968ee4d819eb0c18d866de3f3aae826e`로게시했다. Netlify production/main `6ad3b8b571d6283d200e7f7f`의정확commit일치·ready/published_at/자동배포를확인했다. 공개번들index-BkO1Fphb.js에새학교금액표와5→8차액5000문구가있고홈200/익명CSV401. 실제운영최종읽기COUPAY_KRW·불변결정1행·권리0·이행0이다. 보조Manus公開는첫검사에서이전번들이었으나배포완료알림후03:06:49 재검사에서index-BkO1Fphb.js·새부모/자녀금액표를확인했다. 양쪽공개에실제게시완료했고학교승인·확인·권리·충전을혼합하지않았다.

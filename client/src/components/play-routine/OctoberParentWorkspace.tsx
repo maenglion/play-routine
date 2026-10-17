@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  canQuickPassOctoberRow,
   closeOctoberSchoolWeek,
   confirmOctoberOccurrence,
   fulfillOctoberRight,
@@ -30,6 +31,13 @@ import {
   submitOctoberOccurrence,
 } from "@/lib/october-runtime-api";
 import { makeOctoberPreviewBoard as makePreviewBoard } from "@/lib/october-preview-data";
+import {
+  filterOctoberBoardByDomain,
+  octoberDomainFilterFromSearch,
+  octoberDomainFilterSearch,
+  octoberDomainFilterValue,
+  type OctoberDomainFilter,
+} from "@/lib/october-domain-filter";
 import type {
   OctoberBoard,
   OctoberDomain,
@@ -229,6 +237,15 @@ export default function OctoberParentWorkspace({
   const [activePane, setActivePane] = useState<OctoberPane>(() =>
     typeof window === "undefined" ? "board" : paneForHash(window.location.hash)
   );
+  const [domainFilter, setDomainFilter] = useState<OctoberDomainFilter>(() =>
+    typeof window === "undefined"
+      ? "ALL"
+      : octoberDomainFilterFromSearch(window.location.search)
+  );
+  const visible = useMemo(
+    () => filterOctoberBoardByDomain(board, domainFilter),
+    [board, domainFilter]
+  );
   const [reviewRow, setReviewRow] = useState<OctoberRow | null>(null);
   const [schoolStart, setSchoolStart] = useState("");
   const [schoolEnd, setSchoolEnd] = useState("");
@@ -332,6 +349,23 @@ export default function OctoberParentWorkspace({
   }, []);
 
   useEffect(() => {
+    const restore = () =>
+      setDomainFilter(octoberDomainFilterFromSearch(window.location.search));
+    window.addEventListener("popstate", restore);
+    return () => window.removeEventListener("popstate", restore);
+  }, []);
+
+  const changeDomainFilter = (value: string) => {
+    const next = octoberDomainFilterValue(value);
+    setDomainFilter(next);
+    window.history.replaceState(
+      window.history.state,
+      "",
+      `${window.location.pathname}${octoberDomainFilterSearch(window.location.search, next)}${window.location.hash}`
+    );
+  };
+
+  useEffect(() => {
     setSelectedChildId(current =>
       usableChildren.some(child => child.id === current)
         ? current
@@ -421,7 +455,7 @@ export default function OctoberParentWorkspace({
     const rule = ruleForOctoberRow(board?.rules ?? [], row);
     const draft = draftFor(row);
     const reason = draft.reason.trim() || null;
-    if (row.revision > 0 && !reason) {
+    if (row.confirmed_at !== null && !reason) {
       setServerError("정정(revision) 확인에는 변경 사유를 입력해 주세요.");
       return false;
     }
@@ -538,7 +572,7 @@ export default function OctoberParentWorkspace({
                   code: rule.code,
                   date: day,
                   slot,
-                  revision: 0,
+                  revision: 1,
                   state: "UNCONFIRMED",
                   self_reported: false,
                   confirmed_at: null,
@@ -721,7 +755,7 @@ export default function OctoberParentWorkspace({
         </div>
       </nav>
 
-      <div className="mt-6 grid gap-4 rounded-2xl bg-[#f9f6ef] p-4 sm:grid-cols-[1fr_1fr_auto]">
+      <div className="mt-6 grid gap-4 rounded-2xl bg-[#f9f6ef] p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
         <div className="space-y-1">
           <Label htmlFor="october-parent-child" className="text-xs">
             자녀
@@ -757,6 +791,22 @@ export default function OctoberParentWorkspace({
             disabled={loading || !!busy}
           />
         </div>
+        <div className="space-y-1">
+          <Label htmlFor="october-parent-kind" className="text-xs">
+            종류 필터
+          </Label>
+          <select
+            id="october-parent-kind"
+            value={domainFilter}
+            onChange={event => changeDomainFilter(event.target.value)}
+            className="flex h-10 w-full rounded-md border border-input bg-white px-3 text-sm"
+          >
+            <option value="ALL">전체 종류</option>
+            <option value="TASK">TASK · 할 일</option>
+            <option value="QUEST">QUEST · 도전</option>
+            <option value="LIFESTYLE">LIFESTYLE · 생활습관</option>
+          </select>
+        </div>
         <Button
           type="button"
           variant="outline"
@@ -768,6 +818,14 @@ export default function OctoberParentWorkspace({
           새로고침
         </Button>
       </div>
+      <p className="mt-2 text-xs text-[#737670]" aria-live="polite">
+        {domainFilter === "ALL"
+          ? "전체 종류"
+          : octoberDomainLabel(domainFilter)}{" "}
+        표시 · 규정 {visible.rules.length}개 / 수행일 행 {visible.rows.length}개
+        / 보상권 {visible.rights.length}개. 위 필터는 표시만 바꾸며 인정
+        한도·합계·저장한 기록은 바꾸지 않습니다.
+      </p>
 
       {serverError && (
         <div
@@ -824,6 +882,9 @@ export default function OctoberParentWorkspace({
             style={{ display: activePane === "board" ? undefined : "none" }}
             className="mt-7"
           >
+            <p className="mb-2 text-xs font-semibold text-[#666963]">
+              선택한 수행일 전체 종류 합계 · 필터와 무관
+            </p>
             <div className="grid grid-cols-3 gap-2 sm:gap-3 [&>div]:p-2 sm:[&>div]:p-4 [&_strong]:text-2xl sm:[&_strong]:text-3xl [&_span]:text-[10px] sm:[&_span]:text-xs">
               <div className="rounded-2xl bg-[#d4cfe7] p-4">
                 <span className="text-xs font-semibold">확인 대기</span>
@@ -841,7 +902,7 @@ export default function OctoberParentWorkspace({
                   <small className="ml-1 text-sm">분</small>
                 </strong>
                 <span className="text-xs text-[#315f4d]">
-                  권리 발행 전·잔액 아님
+                  부모 확인분 · 사용 가능 잔액 아님
                 </span>
               </div>
               <div className="rounded-2xl bg-[#f0e5c9] p-4">
@@ -864,7 +925,7 @@ export default function OctoberParentWorkspace({
                 규칙·차감·정정은 행을 선택해 근거를 입력합니다.
               </p>
               <OperationalBoardTable
-                rows={board?.rows ?? []}
+                rows={visible.rows}
                 rules={board?.rules ?? []}
                 disabled={isLiveActionDisabled}
                 busy={busy === "confirm"}
@@ -872,6 +933,11 @@ export default function OctoberParentWorkspace({
                 onOpenReview={row => setReviewRow(row)}
                 onAddLifestyle={addLifestyleSlot}
               />
+              <p className="mt-2 text-xs leading-5 text-[#737670]">
+                생활습관은 첫 행 PASS → 두 번째 실제 행동은 회차 추가 → 새 행
+                PASS입니다. 같은 행의 확인·정정은 해당 행동을 수정할 뿐 새
+                회차가 아닙니다.
+              </p>
             </section>
           </div>
 
@@ -913,7 +979,7 @@ export default function OctoberParentWorkspace({
                   </tr>
                 </thead>
                 <tbody>
-                  {(board?.rules ?? []).map(rule => (
+                  {visible.rules.map(rule => (
                     <tr key={rule.id} className="align-top hover:bg-[#fcfbf8]">
                       <td className="border-b border-black/5 px-3 py-3 font-bold text-[#4d2ddc]">
                         {rule.code}
@@ -935,19 +1001,28 @@ export default function OctoberParentWorkspace({
                           : `${rule.period} · 하루 ${rule.daily_limit}회`}
                       </td>
                       <td className="border-b border-black/5 px-3 py-3 text-[#315f4d]">
-                        {rule.code === "T-007" && board?.plan?.school_asset === "COUPAY_KRW"
+                        {rule.code === "T-007" &&
+                        board?.plan?.school_asset === "COUPAY_KRW"
                           ? "학교 스티커 0~4개: 무보상 · 5~7개: 쿠페이 총 10,000원 · 8개 이상: 쿠페이 총 15,000원 (5→8 차액 5,000원)"
                           : rule.effects.length
-                          ? rule.effects.map(octoberEffectLabel).join(" · ")
-                          : "학교 스티커"}
+                            ? rule.effects.map(octoberEffectLabel).join(" · ")
+                            : "학교 스티커"}
                       </td>
                       <td className="border-b border-black/5 px-3 py-3 text-[#8b5b15]">
-                        {(board?.plan?.school_asset === "COUPAY_KRW" && rule.code === "T-007"
-                          ? rule.pending_fields.filter(field => !field.includes("자산 최신 확인"))
-                          : rule.pending_fields).length
-                          ? (board?.plan?.school_asset === "COUPAY_KRW" && rule.code === "T-007"
-                              ? rule.pending_fields.filter(field => !field.includes("자산 최신 확인"))
-                              : rule.pending_fields).join(" · ")
+                        {(board?.plan?.school_asset === "COUPAY_KRW" &&
+                        rule.code === "T-007"
+                          ? rule.pending_fields.filter(
+                              field => !field.includes("자산 최신 확인")
+                            )
+                          : rule.pending_fields
+                        ).length
+                          ? (board?.plan?.school_asset === "COUPAY_KRW" &&
+                            rule.code === "T-007"
+                              ? rule.pending_fields.filter(
+                                  field => !field.includes("자산 최신 확인")
+                                )
+                              : rule.pending_fields
+                            ).join(" · ")
                           : "—"}
                       </td>
                     </tr>
@@ -976,12 +1051,14 @@ export default function OctoberParentWorkspace({
               </div>
             </div>
             <div className="mt-4 space-y-3">
-              {(board?.rights ?? []).length === 0 ? (
+              {visible.rights.length === 0 ? (
                 <p className="rounded-2xl bg-[#f5f3ed] p-4 text-sm text-[#737670]">
-                  이 자녀에게 발행된 10월 권리가 없습니다.
+                  {domainFilter === "ALL"
+                    ? "이 자녀에게 발행된 10월 권리가 없습니다."
+                    : "선택한 종류에 해당하는 보상권이 없습니다. 다른 종류의 기록은 보존되어 있습니다."}
                 </p>
               ) : (
-                (board?.rights ?? []).map(right => (
+                visible.rights.map(right => (
                   <RightCard
                     key={right.id}
                     right={right}
@@ -999,74 +1076,78 @@ export default function OctoberParentWorkspace({
                 ))
               )}
             </div>
-            <section
-              className="mt-8 rounded-2xl border border-[#d8cfae] bg-[#fcf9ef] p-5"
-              aria-labelledby="october-school-heading"
-            >
-              <h3 id="october-school-heading" className="font-bold">
-                학교 기간 마감
-              </h3>
-              <p className="mt-1 text-xs leading-5 text-[#625a40]">
-                기간은 부모가 직접 선택합니다. 시작일 이상, 종료일{" "}
-                <strong>미포함</strong> [start, end) 범위입니다. 월요일 시작을
-                임의로 가정하지 않고, 미확인·겹친 기간은 서버가 거절합니다.
-              </p>
-              {board?.plan?.school_asset === "PENDING" && (
-                <p className="mt-3 rounded-xl bg-[#f0e5c9] p-3 text-xs text-[#69521f]">
-                  학교 보상 자산은 확인 대기입니다. 쿠페이 10,000/15,000원 또는
-                  미디어 300/480분 중 확정 전에는, 기간 자료만 기록하고 보상권은
-                  발행하지 않습니다.
-                </p>
-              )}
-              {board?.plan?.school_asset === "COUPAY_KRW" && (
-                <p className="mt-3 rounded-xl bg-[#e4f1eb] p-3 text-xs leading-5 text-[#315f4d]">
-                  <strong>확정 쿠페이 보상표:</strong> 기본·칭찬 스티커 합계
-                  0~4개는 무보상, 5~7개는 쿠페이 총 10,000원, 8개 이상은 총
-                  15,000원입니다. 5개에서 8개로 올라가면 총액 차액 5,000원만
-                  안내하며, 스티커 효과와 금융 권리는 서로 섞지 않습니다.
-                </p>
-              )}
-              <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1">
-                  <Label htmlFor="october-school-start" className="text-xs">
-                    시작일
-                  </Label>
-                  <Input
-                    id="october-school-start"
-                    type="date"
-                    value={schoolStart}
-                    onChange={event => setSchoolStart(event.target.value)}
-                    disabled={isLiveActionDisabled}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="october-school-end" className="text-xs">
-                    종료일 (미포함)
-                  </Label>
-                  <Input
-                    id="october-school-end"
-                    type="date"
-                    min={schoolStart || undefined}
-                    value={schoolEnd}
-                    onChange={event => setSchoolEnd(event.target.value)}
-                    disabled={isLiveActionDisabled}
-                  />
-                </div>
-                <Button
-                  type="button"
-                  className="self-end bg-[#4d2ddc] text-white hover:bg-[#3d20c7]"
-                  disabled={isLiveActionDisabled || !schoolStart || !schoolEnd}
-                  onClick={() => void closeSchoolPeriod()}
-                >
-                  {busy === "close-school-week" ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <ClipboardCheck className="h-4 w-4" />
-                  )}{" "}
+            {(domainFilter === "ALL" || domainFilter === "TASK") && (
+              <section
+                className="mt-8 rounded-2xl border border-[#d8cfae] bg-[#fcf9ef] p-5"
+                aria-labelledby="october-school-heading"
+              >
+                <h3 id="october-school-heading" className="font-bold">
                   학교 기간 마감
-                </Button>
-              </div>
-            </section>
+                </h3>
+                <p className="mt-1 text-xs leading-5 text-[#625a40]">
+                  기간은 부모가 직접 선택합니다. 시작일 이상, 종료일{" "}
+                  <strong>미포함</strong> [start, end) 범위입니다. 월요일 시작을
+                  임의로 가정하지 않고, 미확인·겹친 기간은 서버가 거절합니다.
+                </p>
+                {board?.plan?.school_asset === "PENDING" && (
+                  <p className="mt-3 rounded-xl bg-[#f0e5c9] p-3 text-xs text-[#69521f]">
+                    학교 보상 자산은 확인 대기입니다. 쿠페이 10,000/15,000원
+                    또는 미디어 300/480분 중 확정 전에는, 기간 자료만 기록하고
+                    보상권은 발행하지 않습니다.
+                  </p>
+                )}
+                {board?.plan?.school_asset === "COUPAY_KRW" && (
+                  <p className="mt-3 rounded-xl bg-[#e4f1eb] p-3 text-xs leading-5 text-[#315f4d]">
+                    <strong>확정 쿠페이 보상표:</strong> 기본·칭찬 스티커 합계
+                    0~4개는 무보상, 5~7개는 쿠페이 총 10,000원, 8개 이상은 총
+                    15,000원입니다. 5개에서 8개로 올라가면 총액 차액 5,000원만
+                    안내하며, 스티커 효과와 금융 권리는 서로 섞지 않습니다.
+                  </p>
+                )}
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="october-school-start" className="text-xs">
+                      시작일
+                    </Label>
+                    <Input
+                      id="october-school-start"
+                      type="date"
+                      value={schoolStart}
+                      onChange={event => setSchoolStart(event.target.value)}
+                      disabled={isLiveActionDisabled}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="october-school-end" className="text-xs">
+                      종료일 (미포함)
+                    </Label>
+                    <Input
+                      id="october-school-end"
+                      type="date"
+                      min={schoolStart || undefined}
+                      value={schoolEnd}
+                      onChange={event => setSchoolEnd(event.target.value)}
+                      disabled={isLiveActionDisabled}
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    className="self-end bg-[#4d2ddc] text-white hover:bg-[#3d20c7]"
+                    disabled={
+                      isLiveActionDisabled || !schoolStart || !schoolEnd
+                    }
+                    onClick={() => void closeSchoolPeriod()}
+                  >
+                    {busy === "close-school-week" ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <ClipboardCheck className="h-4 w-4" />
+                    )}{" "}
+                    학교 기간 마감
+                  </Button>
+                </div>
+              </section>
+            )}
           </section>
         </>
       )}
@@ -1216,19 +1297,7 @@ function OperationalBoardTable({
         <tbody>
           {rows.map(row => {
             const rule = ruleForOctoberRow(rules, row);
-            const special = [
-              "Q-001",
-              "Q-003",
-              "T-005",
-              "T-007",
-              "L-013",
-            ].includes(row.code);
-            const penalty = rule?.effect_kind === "PENALTY";
-            const canQuickPass =
-              !isOctoberConfirmed(row.state) &&
-              !special &&
-              !penalty &&
-              row.revision === 0;
+            const canQuickPass = canQuickPassOctoberRow(row, rule);
             return (
               <tr key={row.id} className="align-top hover:bg-[#fcfbf8]">
                 <td className="sticky left-0 z-[1] border-b border-black/5 bg-white px-3 py-3 font-bold text-[#4d2ddc]">
@@ -1256,15 +1325,21 @@ function OperationalBoardTable({
                 <td className="border-b border-black/5 px-3 py-3 text-[#315f4d]">
                   {row.effects.length
                     ? row.effects.map(octoberEffectLabel).join(" · ")
-                    : rule?.effects.length
-                      ? rule.effects.map(octoberEffectLabel).join(" · ")
-                      : rule?.effect_kind === "SCHOOL"
-                        ? "학교 스티커"
-                        : "—"}
+                    : row.state === "LIMIT_EXCEEDED"
+                      ? "한도 초과 · 추가 보상 없음"
+                      : row.state === "REVIEW_REQUIRED"
+                        ? "검토 보류 · 미확정"
+                        : row.confirmed_at !== null
+                          ? "인정 효과 없음"
+                          : rule?.effects.length
+                            ? `조건: ${rule.effects.map(octoberEffectLabel).join(" · ")}`
+                            : rule?.effect_kind === "SCHOOL"
+                              ? "조건: 학교 스티커"
+                              : "—"}
                 </td>
                 <td className="border-b border-black/5 px-3 py-3">
                   {octoberStateLabel(row.state)}
-                  {row.revision > 0 ? ` · 정정 ${row.revision}` : ""}
+                  {row.revision > 0 ? ` · 기록 v${row.revision}` : ""}
                 </td>
                 <td className="border-b border-black/5 px-3 py-3">
                   {isOctoberConfirmed(row.state) && row.revision === 0 ? (
@@ -1293,7 +1368,7 @@ function OperationalBoardTable({
                       disabled={disabled || busy}
                       onClick={() => onOpenReview(row)}
                     >
-                      확인·정정
+                      {row.confirmed_at === null ? "확인하기" : "확인·정정"}
                     </Button>
                   )}
                   {rule?.domain === "LIFESTYLE" && (
@@ -1543,7 +1618,7 @@ function ReviewCard({
                 </Button>
               </>
             )}
-            {row.revision > 0 && (
+            {row.confirmed_at !== null && (
               <Button
                 type="button"
                 size="sm"

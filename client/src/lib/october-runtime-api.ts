@@ -314,3 +314,16 @@ export function isOctoberConfirmed(state: OctoberState): boolean {
     "LIMIT_EXCEEDED",
   ].includes(state);
 }
+
+/** Revision also advances on submissions: it does not mean a parent has confirmed. */
+export function canQuickPassOctoberRow(
+  row: OctoberRow,
+  rule: OctoberRule | undefined
+): boolean {
+  return (
+    row.confirmed_at === null &&
+    ["UNCONFIRMED", "SELF_REPORTED"].includes(row.state) &&
+    rule?.effect_kind === "REWARD" &&
+    !["Q-001", "Q-003", "T-005", "T-007", "L-013"].includes(row.code)
+  );
+}

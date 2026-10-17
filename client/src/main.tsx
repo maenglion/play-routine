@@ -6,6 +6,19 @@ import superjson from "superjson";
 import App from "./App";
 import "./index.css";
 
+function registerServiceWorker() {
+  // 개발·localhost에서는 SW를 등록하지 않아 이전 정적 자산이나 인증 흐름이 남지 않게 한다.
+  if (!import.meta.env.PROD || !window.isSecureContext || !("serviceWorker" in navigator)) return;
+
+  window.addEventListener("load", () => {
+    void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(error => {
+      console.warn("[PWA] Service worker registration failed", error);
+    });
+  }, { once: true });
+}
+
+registerServiceWorker();
+
 const queryClient = new QueryClient();
 
 queryClient.getQueryCache().subscribe(event => {

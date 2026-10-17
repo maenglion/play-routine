@@ -641,3 +641,15 @@ Grok에 Supabase처리범위·보상분리·알림·승인 설계를 실제 검�
 학교결정17개실DB반례는설치전DDL포함rollback/설치후재실행통과. 설치후운영56·감사16·결정17은3개live test(92.58초)로통과,기본161개passed18skip·타입/Netlify build통과. 기존public38개보존,seed dry-run inserted=false/26규칙/26채택/COUPAY확인. 부모규정DOM의10,000/15,000/5,000표시·자산보류제거·문제+칭찬hold유지확인. 자녀에도쿠페이표를추가했다. 실제관리결정commit으로새보상권·마감·이행은전혀만들지않았다. 바이올린NULL과일반원장/자동차감등기존후속은유지한다. 최신학교적용의GitHub·공개배포결과는확인후추가기록한다.
 
 최신학교소스14개변경은GitHub main `50cf0502968ee4d819eb0c18d866de3f3aae826e`로게시했다. Netlify production/main `6ad3b8b571d6283d200e7f7f`의정확commit일치·ready/published_at/자동배포를확인했다. 공개번들index-BkO1Fphb.js에새학교금액표와5→8차액5000문구가있고홈200/익명CSV401. 실제운영최종읽기COUPAY_KRW·불변결정1행·권리0·이행0이다. 보조Manus公開는첫검사에서이전번들이었으나배포완료알림후03:06:49 재검사에서index-BkO1Fphb.js·새부모/자녀금액표를확인했다. 양쪽공개에실제게시완료했고학교승인·확인·권리·충전을혼합하지않았다.
+
+### 2026-10-18 — 부모 종류 필터·최초 PASS 구분·민후 PWA
+
+사용자는 부모는 기존 표형 관리 구조로 확정하고 종류 필터를 요청했다. 전체/TASK/QUEST/LIFESTYLE 필터를 운영표·규정·권리 목록에 공통 적용하고 URL `kind`로 복원했다. 표시만 바꾸고 부모 확인 RPC payload·전체 종류 합계·일일 인정 한도·기존 사건은 바꾸지 않는다. 필터와 메뉴 전환 시 강화물/규칙 초안을 보존했다.
+
+회차 추가와 자녀 보고도 revision을 올리는 기존 DB 계약을 UI가 정정으로 오인해 최초 확인에 사유를 요구하던 문제를 수정했다. 부모 미확인 `UNCONFIRMED/SELF_REPORTED`의 일반 보상은 revision이1이상이어도 PASS 가능하다. 실제로 부모 확인된 행의 수정만 정정 사유를 요구한다. 특수 규칙·패널티·검토보류는 직접 확인 Dialog를 유지했다. 상태 옆의 정정N을 기록vN으로 바꾸고 미확인 조건과 한도초과/보류 결과를 구별했다. 사용자 실제 L001은 읽기 전용으로 PASS1건/15분권리·추가미확인2행/이행0을 확인했으며 임의 확인/삭제/정산하지 않았다. 첫PASS는 원사건/부모확인/보상권이고 사용 가능한 ledger잔액은 여전히 미연결이다.
+
+민후용 `/?role=child`는 자녀 비밀번호 로그인 UI만 기본 선택한다. 실제 권한은 기존 Supabase 세션 metadata와 활성 family_memberships에서 판정한다. 같은 도메인으로 부모·자녀 서비스를 사용하며 별도 Netlify 주소는 필요없다. 개발 전용 preview는 실제 기록/로그인이 아니고 production에서는 미허용이다. 기존 ChildDashboard/OctoberChildPanel/CSS/티켓 SVG 심볼·Quest 디자인은 변경하지 않았다. 재제공 Figma 링크는 이번 환경에서도403으로 읽히지 않았고, 기존 구현·원본 자산·저장 디자인 계약을 보존했다.
+
+PWA manifest standalone·start_url 자녀·192/512 PNG·Apple170/180 아이콘·프로덕션 securecontext/load후 SW를 추가했다. 기존 티켓SVG를 설치용 아이콘으로 재사용하고 새 브랜드를 생성하지 않았다. 검은 favicon은 실제 원본 파일/HTML참조를 찾지 못했으므로 변경하지 않았다. SW는 사용자/인증/API 데이터를 캐시하지 않고 문서만 네트워크 호출/오프라인 고정503안내. 자동쓰기/백그라운드동기화/푸시 없음. 민후 실제 기기 설치와 자동 로그인 유지는 사용자 확인 대기이며 설치지원만 구현했다.
+
+기본171passed/18외부live skipped·타입/Netlify build 통과. VM으로SW API무개입/온라인 통과/오프라인503,PNG규격/manifest/login권한비우회 검증. 브라우저로375px부모필터/자녀로그인, URL 필터 및 규정3개 복원, 초안유지·추가회차PASS버튼·기존티켓3SVG·플로팅바DOM유지 확인. DB migration/실제 writes 없음. 공개 게시 결과는 뒤에 별도 기록한다.

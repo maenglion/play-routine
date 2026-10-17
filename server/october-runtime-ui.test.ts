@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  canQuickPassOctoberRow,
   isScheduledOctoberTask,
   octoberBoardDisplayState,
   octoberBusinessDate,
@@ -92,6 +93,29 @@ const activeBoard = (rows: OctoberRow[] = []): OctoberBoard => ({
 });
 
 describe("10월 운영 UI 순수 표시·재시도 규칙", () => {
+  it("회차 추가·자녀 보고의 revision은 최초 부모 PASS를 막지 않는다", () => {
+    const rule = { ...rules[2], code: "L-001", effect_kind: "REWARD" as const };
+    const first = { ...row("life"), code: "L-001", revision: 1, slot: "extra" };
+    expect(canQuickPassOctoberRow(first, rule)).toBe(true);
+    expect(
+      canQuickPassOctoberRow({ ...first, state: "SELF_REPORTED" }, rule)
+    ).toBe(true);
+    expect(
+      canQuickPassOctoberRow(
+        { ...first, state: "PASS", confirmed_at: "2026-10-18T00:00:00Z" },
+        rule
+      )
+    ).toBe(false);
+    expect(
+      canQuickPassOctoberRow(first, { ...rule, effect_kind: "PENALTY" })
+    ).toBe(false);
+    expect(canQuickPassOctoberRow({ ...first, code: "Q-001" }, rule)).toBe(
+      false
+    );
+    expect(
+      canQuickPassOctoberRow({ ...first, state: "REVIEW_REQUIRED" }, rule)
+    ).toBe(false);
+  });
   it("로딩·오류·새 10월 규정 없음·준비 상태를 구분한다", () => {
     expect(
       octoberBoardDisplayState({ loading: true, error: null, board: null })

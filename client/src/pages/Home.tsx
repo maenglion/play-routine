@@ -13,6 +13,7 @@ import {
 } from "@/lib/auth-flow";
 import { getRememberMePreference, setRememberMePreference } from "@/lib/auth-storage";
 import { getAuthRedirectUrl, receiveAuthSession } from "@/lib/auth-callback";
+import { initialLoginSelectionFromSearch } from "@/lib/login-role-preference";
 import { initialAuthCallback, supabase } from "@/lib/supabase";
 import { RECOVERY_NOTICE, RECOVERY_SESSION_KEY, passwordsMatch, requestPasswordRecovery, requiresRecoverySetup } from "@/lib/password-recovery";
 import { trpc } from "@/lib/trpc";
@@ -44,8 +45,11 @@ type ChildInvitation = {
 type GuardianInvitation = { invitation_id: string; family_id: string; family_name: string; email_masked: string; expires_at: string };
 
 export default function Home() {
-  const [mode, setMode] = useState<AccountMode>("parent");
-  const [authMode, setAuthMode] = useState<AuthMode>("login");
+  const [initialLoginSelection] = useState(() => initialLoginSelectionFromSearch(window.location.search));
+  // ?role=child 는 자녀 탭을 여는 링크일 뿐이다. 이미 연결된 자녀는 기본 로그인으로 들어온다.
+  // 탭을 직접 바꿀 때의 첫 연결/가입 기본값은 아래 Tabs onValueChange에서 기존 규칙을 유지한다.
+  const [mode, setMode] = useState<AccountMode>(initialLoginSelection.mode);
+  const [authMode, setAuthMode] = useState<AuthMode>(initialLoginSelection.authMode);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
@@ -541,6 +545,7 @@ export default function Home() {
                       <button type="button" aria-pressed={authMode === "signup"} className={`rounded-lg px-3 py-2.5 transition ${authMode === "signup" ? "bg-white text-[#171713] shadow-sm" : "text-[#777a74]"}`} onClick={() => { setAuthMode("signup"); setEmailSent(false); }}>{mode !== "parent" ? "첫 연결" : "가입"}</button>
                     </div>
                     <div className="mt-5 rounded-2xl bg-[#cde5de] p-4 text-sm leading-6 text-[#315045]"><strong>(1)</strong> 부모 먼저 가입 <span className="mx-1.5">→</span> <strong>(2)</strong> 기입한 자녀 이메일로 자녀 로그인</div>
+                    <p className="mt-3 text-center text-xs leading-5 text-[#737670]">이 기기에서 자주 쓴다면 브라우저 메뉴에서 ‘홈 화면에 추가’를 선택해 앱처럼 열 수 있어요.</p>
                     <TabsContent value="parent" className="mt-5 space-y-5">
                       {authMode === "signup" && !emailSent && <div className="space-y-2"><Label htmlFor="display-name">부모 이름</Label><Input id="display-name" value={displayName} onChange={event => setDisplayName(event.target.value)} placeholder="이름" /></div>}
                     </TabsContent>

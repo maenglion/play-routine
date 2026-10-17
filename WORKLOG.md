@@ -653,3 +653,5 @@ Grok에 Supabase처리범위·보상분리·알림·승인 설계를 실제 검�
 PWA manifest standalone·start_url 자녀·192/512 PNG·Apple170/180 아이콘·프로덕션 securecontext/load후 SW를 추가했다. 기존 티켓SVG를 설치용 아이콘으로 재사용하고 새 브랜드를 생성하지 않았다. 검은 favicon은 실제 원본 파일/HTML참조를 찾지 못했으므로 변경하지 않았다. SW는 사용자/인증/API 데이터를 캐시하지 않고 문서만 네트워크 호출/오프라인 고정503안내. 자동쓰기/백그라운드동기화/푸시 없음. 민후 실제 기기 설치와 자동 로그인 유지는 사용자 확인 대기이며 설치지원만 구현했다.
 
 기본171passed/18외부live skipped·타입/Netlify build 통과. VM으로SW API무개입/온라인 통과/오프라인503,PNG규격/manifest/login권한비우회 검증. 브라우저로375px부모필터/자녀로그인, URL 필터 및 규정3개 복원, 초안유지·추가회차PASS버튼·기존티켓3SVG·플로팅바DOM유지 확인. DB migration/실제 writes 없음. 공개 게시 결과는 뒤에 별도 기록한다.
+
+부모필터/PWA 코드18파일은GitHub main `00e7040734270c506d255b933fbe9dd40cf839fa`에게시했고Netlifyproduction `6ad3c2af9928ad5d2dc7aca8`의main/정확커밋/ready/published/자동배포일치를확인했다. 양쪽공개index-DVn-H2MG.js의종류필터/PWA파일200·익명CSV401. Netlify브라우저에서는자녀탭·비밀번호login·securecontext·SW /sw.js activated·scope/·CacheStorage0·manifeststandalone/startchild를확인했다. manifest의기본응답이octet-stream으로나와Netlify에application/manifest+json·SW no-cache명시헤더를추가했다. 실제민후기기에앱을설치하거나계정로그인한것은아니며그단계는사용자확인대기다. ledger/자정정산은기존미구현후속으로유지하고새회차/정정을임의로처리하지않았다.

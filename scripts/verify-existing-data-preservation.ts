@@ -12,7 +12,7 @@ type Snapshot = { table: string; count: number; hash: string }[];
 try {
   await client.connect();
   const previous: Snapshot | null = action === "verify" ? JSON.parse(await readFile(destination, "utf8")) : null;
-  const tables = previous ? previous.map(row => row.table) : (await client.query("select tablename from pg_tables where schemaname='public' and tablename not like 'routine_%' order by tablename")).rows.map(row => row.tablename as string);
+  const tables = previous ? previous.map(row => row.table) : (await client.query("select tablename from pg_tables where schemaname='public' order by tablename")).rows.map(row => row.tablename as string);
   const snapshot: Snapshot = [];
   for (const table of tables) {
     if (!/^[a-z_][a-z0-9_]*$/.test(table)) throw new Error("테이블 이름 검증 실패");

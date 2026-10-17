@@ -10,6 +10,7 @@ import ParentReviewQueue from "./ParentReviewQueue";
 import ParentRewardSettings from "./ParentRewardSettings";
 import RoutineRuleWizard from "./RoutineRuleWizard";
 import RoutineParentPanel from "./RoutineParentPanel";
+import OctoberParentWorkspace from "./OctoberParentWorkspace";
 import { useState } from "react";
 import {
   focusReinforcerRegistration,
@@ -57,6 +58,8 @@ type ParentDashboardProps = {
       | "activity-assignments"
       | "routine-records"
       | "routine-rewards"
+      | "october-records"
+      | "october-rights"
   ) => void;
   onLogout: () => void;
   onProfileUpdated?: (child: ParentChildProfile) => void;
@@ -107,6 +110,10 @@ export default function ParentDashboard({
       </header>
 
       <main className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-12">
+        {family && <OctoberParentWorkspace familyId={family.id} timezone={family.timezone} children={children} preview={family.id === "preview"} />}
+        <details id="parent-previous-workspace" className="mt-5 rounded-2xl border border-black/10 p-4">
+        <summary className="cursor-pointer text-sm font-semibold">계정·강화물·내려받기 및 이전 규칙 관리</summary>
+        <p className="my-3 text-xs text-[#747670]">10월 신규 규칙은 위의 운영표에서 확인합니다. 기존 입력·규칙·보상 이력은 삭제하지 않고 보존합니다.</p>
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <div className="rounded-[22px] bg-[#d4cfe7] p-3 sm:p-5">
             <span className="text-xs font-semibold">연결된 자녀</span>
@@ -366,6 +373,8 @@ export default function ParentDashboard({
                   ["activity-records", "활동 체크·부모 확인 이력"],
                   ["routine-records", "데일리·Quest 확인 이력"],
                   ["routine-rewards", "구간별 보상권·이행 이력"],
+                  ["october-records", "10월 원사건·현재 확인 상태"],
+                  ["october-rights", "10월 보상·차감 예정 권리 상태"],
                 ] as const
               ).map(([dataset, label]) => (
                 <button
@@ -460,6 +469,7 @@ export default function ParentDashboard({
             </div>
           </>
         )}
+        </details>
       </main>
     </div>
   );

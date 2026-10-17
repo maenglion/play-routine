@@ -5,6 +5,8 @@ export function focusReinforcerRegistration(
   const section = root.getElementById("parent-reinforcers");
   if (!section) return false;
   const form = root.getElementById("reinforcer-registration-form");
+  const workspace = root.getElementById("parent-previous-workspace");
+  if (workspace && "open" in workspace) (workspace as HTMLDetailsElement).open = true;
   if (form && "open" in form) (form as HTMLDetailsElement).open = true;
   section.scrollIntoView({ behavior: "auto", block: "start" });
   root
@@ -19,6 +21,8 @@ export function openParentSettings(
 ): boolean {
   const section = root.getElementById(id);
   if (!section) return false;
+  const workspace = root.getElementById("parent-previous-workspace");
+  if (workspace && "open" in workspace) (workspace as HTMLDetailsElement).open = true;
   if ("open" in section) (section as HTMLDetailsElement).open = true;
   section.scrollIntoView({ behavior: "auto", block: "start" });
   section.querySelector<HTMLElement>("summary")?.focus({ preventScroll: true });

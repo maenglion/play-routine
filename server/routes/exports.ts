@@ -3,7 +3,55 @@ import type { Express, Request } from "express";
 import { Pool } from "pg";
 import { getSupabaseConnectionString } from "../supabaseConnection";
 
-type Dataset = "children" | "invitations" | "auth-links" | "activity-records" | "activity-assignments" | "routine-records" | "routine-rewards";
+type Dataset =
+  | "children"
+  | "invitations"
+  | "auth-links"
+  | "activity-records"
+  | "activity-assignments"
+  | "routine-records"
+  | "routine-rewards"
+  | "october-records"
+  | "october-rights";
+
+const EXPORT_DATASETS: readonly Dataset[] = [
+  "children",
+  "invitations",
+  "auth-links",
+  "activity-records",
+  "activity-assignments",
+  "routine-records",
+  "routine-rewards",
+  "october-records",
+  "october-rights",
+];
+
+/**
+ * 0021_october_runtime.sql가 제공할 occurrence projection의 공개 CSV 순서다.
+ * 감사 원문이나 child-visible 사유는 포함하지 않고, 부모 확인 사유만 별도 열로 둔다.
+ */
+export const OCTOBER_RECORD_CSV_COLUMNS = [
+  "code",
+  "name",
+  "date",
+  "slot",
+  "state",
+  "revision",
+  "recognized_count",
+  "parent_verified_at",
+  "effect_json",
+  "parent_reason",
+] as const;
+
+/** 현재 right 스냅샷의 공개 CSV 순서다. 이행 사건 원문은 별도 행으로 내보내지 않는다. */
+export const OCTOBER_RIGHT_CSV_COLUMNS = [
+  "asset",
+  "quantity",
+  "fulfilled",
+  "status",
+  "source_date",
+  "issued_at",
+] as const;
 
 let pool: Pool | null = null;
 
@@ -45,9 +93,17 @@ export function csvCell(value: unknown) {
 export function toCsv(rows: Record<string, unknown>[]) {
   if (rows.length === 0) return "status\r\nno_data\r\n";
   const headers = Object.keys(rows[0]);
+  return toCsvWithColumns(headers, rows);
+}
+
+/** 고정 스키마 CSV는 빈 결과여도 소비자가 열 구조를 알 수 있게 헤더를 유지한다. */
+export function toCsvWithColumns(
+  columns: readonly string[],
+  rows: Record<string, unknown>[],
+) {
   return [
-    headers.map(csvCell).join(","),
-    ...rows.map(row => headers.map(header => csvCell(row[header])).join(",")),
+    columns.map(csvCell).join(","),
+    ...rows.map(row => columns.map(column => csvCell(row[column])).join(",")),
   ].join("\r\n");
 }
 
@@ -70,6 +126,53 @@ async function parentFamilyForAuthUser(authUserId: string, requestedFamilyId?: s
 }
 
 async function exportRows(dataset: Dataset, familyId: string) {
+  // occurrence event나 request/audit payload가 아닌, 현재 occurrence 스냅샷만 내보낸다.
+  // 모든 family-scoped FK join은 id와 family_id를 함께 비교해 교차 가족 결합을 막는다.
+  if (dataset === "october-records") {
+    return (
+      await getPool().query(
+        `select
+           ri.stable_code as code,
+           rv.name as name,
+           o.business_date as date,
+           o.slot,
+           o.state,
+           o.current_revision as revision,
+           o.recognized_count,
+           o.confirmed_at as parent_verified_at,
+           o.effects::text as effect_json,
+           o.reason as parent_reason
+         from public.october_occurrences o
+         join public.october_rule_versions rv
+           on rv.id = o.rule_version_id and rv.family_id = o.family_id
+         join public.october_rule_identities ri
+           on ri.id = rv.rule_identity_id and ri.family_id = rv.family_id
+         where o.family_id = $1
+         order by o.business_date, o.slot, ri.stable_code, o.id`,
+        [familyId],
+      )
+    ).rows;
+  }
+
+  // right 자체의 현재 fulfilled_quantity를 내보낸다. fulfillment 행/사유는 포함하지 않는다.
+  if (dataset === "october-rights") {
+    return (
+      await getPool().query(
+        `select
+           r.asset,
+           r.quantity,
+           r.fulfilled_quantity as fulfilled,
+           r.status,
+           r.source_date,
+           r.issued_at
+         from public.october_rights r
+         where r.family_id = $1
+         order by r.source_date, r.issued_at, r.id`,
+        [familyId],
+      )
+    ).rows;
+  }
+
   if (dataset === "routine-records") {
     return (await getPool().query(`select o.id as occurrence_id, cp.display_name as child_name,
       o.business_date as source_business_date, r.name as rule_name, r.version as rule_version,
@@ -198,7 +301,7 @@ export function registerExportRoutes(app: Express) {
       }
 
       const dataset = String(req.query.dataset ?? "children") as Dataset;
-      if (!["children", "invitations", "auth-links", "activity-records", "activity-assignments", "routine-records", "routine-rewards"].includes(dataset)) {
+      if (!EXPORT_DATASETS.includes(dataset)) {
         return res.status(400).json({ error: "INVALID_DATASET" });
       }
 
@@ -209,13 +312,19 @@ export function registerExportRoutes(app: Express) {
       if (!familyId) return res.status(403).json({ error: "PARENT_ACCESS_REQUIRED" });
 
       const rows = await exportRows(dataset, familyId);
+      const octoberColumns =
+        dataset === "october-records"
+          ? OCTOBER_RECORD_CSV_COLUMNS
+          : dataset === "october-rights"
+            ? OCTOBER_RIGHT_CSV_COLUMNS
+            : null;
       const date = new Date().toISOString().slice(0, 10).replaceAll("-", "");
       res.setHeader("Content-Type", "text/csv; charset=utf-8");
       res.setHeader(
         "Content-Disposition",
         `attachment; filename="play-routine-${dataset}-${date}.csv"`,
       );
-      return res.send(`\uFEFF${toCsv(rows)}`);
+      return res.send(`\uFEFF${octoberColumns ? toCsvWithColumns(octoberColumns, rows) : toCsv(rows)}`);
     } catch (error) {
       console.error("[CSV Export] failed", (error as {code?:string})?.code ?? "EXPORT_ERROR");
       return res.status(500).json({ error: "EXPORT_FAILED" });

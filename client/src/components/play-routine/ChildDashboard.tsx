@@ -22,6 +22,7 @@ import { familyBusinessDate, summarizeActivityDay } from "@/lib/activity-flow";
 import ChildRewardList from "./ChildRewardList";
 import RoutineChildPanel from "./RoutineChildPanel";
 import ChildActivityList, { activityCategoryLabels } from "./ChildActivityList";
+import OctoberChildPanel, { type OctoberChildSummary } from "./OctoberChildPanel";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 export type ChildProfile = {
@@ -72,16 +73,22 @@ export default function ChildDashboard({
     return () => window.clearInterval(timer);
   }, [timezone]);
   useEffect(() => {if (activeTab === 'home') setDay(today);}, [today,activeTab]);
-  const activity = useActivityDay(profile?.id, day, preview);
+  const [octoberActive, setOctoberActive] = useState<boolean | null>(profile ? null : false);
+  const [octoberSummary, setOctoberSummary] = useState<OctoberChildSummary>({ pending_minutes: 0, penalty_minutes: 0, unconfirmed: 0, rows: 0, confirmed: 0 });
+  const updateOctoberPlan = useCallback((active: boolean) => setOctoberActive(active), []);
+  const updateOctoberSummary = useCallback((value: OctoberChildSummary) => setOctoberSummary(value), []);
+  useEffect(() => { setOctoberActive(profile ? null : false); }, [profile?.id]);
+  const activity = useActivityDay(octoberActive === false ? profile?.id : undefined, day, preview);
   const stats = summarizeActivityDay(activity.rows);
   const [routineSummary, setRoutineSummary] = useState({ loading: true, error: false, missing: 0, total: 0, confirmed: 0 });
   const updateRoutineSummary = useCallback((value: typeof routineSummary) => setRoutineSummary(value), []);
-  const combinedTotal = stats.total + routineSummary.total;
-  const combinedConfirmed = stats.confirmed + routineSummary.confirmed;
-  const missingCount = stats.missing + (routineSummary.error ? 0 : routineSummary.missing);
+  const combinedTotal = octoberActive ? octoberSummary.rows : stats.total + routineSummary.total;
+  const combinedConfirmed = octoberActive ? octoberSummary.confirmed : stats.confirmed + routineSummary.confirmed;
+  const missingCount = octoberActive ? octoberSummary.unconfirmed : stats.missing + (routineSummary.error ? 0 : routineSummary.missing);
   const [dismissedMissing, setDismissedMissing] = useState<string | null>(null);
   const missingKey = `${profile?.id}:${day}`;
-  const showMissing = activeTab === "home" && !activity.loading && !activity.error && (!profile || !routineSummary.loading) && missingCount > 0 && dismissedMissing !== missingKey;
+  const readyForMissing = octoberActive === true || (octoberActive === false && !activity.loading && !activity.error && (!profile || !routineSummary.loading));
+  const showMissing = activeTab === "home" && readyForMissing && missingCount > 0 && dismissedMissing !== missingKey;
   const visibleRows = activity.rows.filter(row=>filter==='all'||(filter==='done'?row.child_reported||row.verification_status==='CONFIRMED':!row.child_reported&&row.verification_status!=='CONFIRMED'));
   const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -173,7 +180,7 @@ export default function ChildDashboard({
                 <CalendarDays className="h-[18px] w-[18px]" />
                 {new Intl.DateTimeFormat("ko-KR", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit", weekday: "short" }).format(new Date())}
               </div>
-              <div className="mt-3 flex items-center justify-between gap-2"><h2 className="text-[30px] font-bold tracking-[-0.055em]">매일 한걸음씩</h2><Button variant="ghost" size="icon" onClick={()=>void activity.refresh()} disabled={activity.loading} aria-label="할 일 새로고침"><RefreshCw className={`h-4 w-4 ${activity.loading?"animate-spin":""}`}/></Button></div>
+              <div className="mt-3 flex items-center justify-between gap-2"><h2 className="text-[30px] font-bold tracking-[-0.055em]">매일 한걸음씩</h2>{octoberActive === false && <Button variant="ghost" size="icon" onClick={()=>void activity.refresh()} disabled={activity.loading} aria-label="할 일 새로고침"><RefreshCw className={`h-4 w-4 ${activity.loading?"animate-spin":""}`}/></Button>}</div>
             </section>
 
             <section className="ticket-frame mt-7">
@@ -182,10 +189,10 @@ export default function ChildDashboard({
               <div className="flex min-h-[132px] flex-col justify-center border-r border-dashed border-[#d9d6cf] px-7">
                 <span className="flex items-center gap-2 text-xs font-semibold text-[#8a8b8d]"><img src="/manus-storage/artifact_today_54fa0ca5.svg" alt="" className="h-6 w-6" />오늘 모으는 중</span>
                 <div className="mt-2 flex items-baseline gap-1 text-[#8d8f91]">
-                  <strong className="text-[34px] leading-none tracking-[-0.05em]">{activity.loading ? "—" : stats.positiveMinutes}</strong>
+                  <strong className="text-[34px] leading-none tracking-[-0.05em]">{octoberActive === null || activity.loading ? "—" : octoberActive ? octoberSummary.pending_minutes : stats.positiveMinutes}</strong>
                   <span className="text-sm font-semibold">min</span>
                 </div>
-                <span className="mt-2 inline-flex w-fit rounded-full bg-[#efefec] px-2.5 py-1 text-[10px] font-semibold text-[#777a7d]">기존 시간 룰 예정분</span>
+                <span className="mt-2 inline-flex w-fit rounded-full bg-[#efefec] px-2.5 py-1 text-[10px] font-semibold text-[#777a7d]">{octoberActive ? "10월 확인분 · 정산 전" : "기존 시간 룰 예정분"}</span>
               </div>
               <div className="flex min-h-[132px] flex-col justify-center px-7">
                 <span className="flex items-center gap-2 text-xs font-semibold text-[#4d2ddc]"><img src="/manus-storage/artifact_amount_80f85ebe.svg" alt="" className="h-6 w-6" />현재 보유량</span>
@@ -198,7 +205,9 @@ export default function ChildDashboard({
             </div>
             </section>
 
-            {profile && <div className="mt-8"><RoutineChildPanel key={profile.id} childId={profile.id} day={day} preview={preview} onSummaryChange={updateRoutineSummary} /></div>}
+            {profile && <div className="mt-8"><OctoberChildPanel key={profile.id} familyId={profile.family_id} childId={profile.id} timezone={timezone} day={day} preview={preview} onPlanState={updateOctoberPlan} onSummary={updateOctoberSummary} /></div>}
+            {profile && octoberActive === false && <div className="mt-8"><RoutineChildPanel key={profile.id} childId={profile.id} day={day} preview={preview} onSummaryChange={updateRoutineSummary} /></div>}
+            {octoberActive === false && <>
             <section className="mt-9">
               <div className="grid grid-cols-3 rounded-full bg-[#333a44] p-1 text-xs font-semibold text-white">
                 {([['all','기존 시간 룰',stats.total],['done','체크 완료',activity.rows.filter(row=>row.child_reported||row.verification_status==='CONFIRMED').length],['open','미체크',stats.missing]] as const).map(([key,label,count])=><button key={key} type="button" onClick={()=>setFilter(key)} aria-pressed={filter===key} className={`rounded-full px-2 py-3 ${filter===key?'bg-[#4d2ddc]':'text-white/70'}`}>{label}<span className="ml-1">{count}</span></button>)}
@@ -208,6 +217,7 @@ export default function ChildDashboard({
               <ChildActivityList emptyMessage={filter==="done"?"아직 체크 완료한 할 일이 없어요.":filter==="open"?"체크하지 않은 할 일이 없어요.":undefined} rows={visibleRows} loading={activity.loading} error={activity.error} reporting={activity.reporting} onReport={row=>void activity.report(row)} onRefresh={()=>void activity.refresh()} />
             </section>
             {profile && <div className="mt-8"><ChildRewardList childId={profile.id} preview={preview} /></div>}
+            </>}
             <section className="mt-10 pb-4">
               <div className="flex items-end gap-2"><h2 className="text-2xl font-bold tracking-[-0.05em] text-[#333a44]">부모 확인 진행률</h2><strong className="pb-0.5 text-xl text-[#4d2ddc]">{combinedTotal?Math.round(combinedConfirmed/combinedTotal*100):0}%</strong></div>
               {Object.entries(activityCategoryLabels).map(([code,label])=>{
@@ -225,8 +235,9 @@ export default function ChildDashboard({
             <h2 className="text-2xl font-bold">{activeTab==='calendar'?'날짜별 할 일':'나의 확인 기록'}</h2>
             <label className="block text-sm font-semibold" htmlFor="child-activity-date">수행 날짜</label><input id="child-activity-date" type="date" value={day} max={today} onChange={e=>{if(e.target.value&&e.target.value<=today)setDay(e.target.value);}} className="w-full rounded-xl border border-black/10 bg-white px-4 py-3"/>
             <p className="text-xs leading-5 text-[#737670]">지나간 날짜의 체크도 해당 수행일로 남겨요. 부모가 확인한 예정분은 정산 전이며 사용 가능 잔액이 아니에요.</p>
-            {profile && <RoutineChildPanel key={profile.id} childId={profile.id} day={day} preview={preview} onSummaryChange={updateRoutineSummary} />}
-            <ChildActivityList rows={activity.rows} loading={activity.loading} error={activity.error} reporting={activity.reporting} onReport={row=>void activity.report(row)} onRefresh={()=>void activity.refresh()}/>
+            {profile && <OctoberChildPanel key={profile.id} familyId={profile.family_id} childId={profile.id} timezone={timezone} day={day} preview={preview} onPlanState={updateOctoberPlan} onSummary={updateOctoberSummary} />}
+            {profile && octoberActive === false && <RoutineChildPanel key={profile.id} childId={profile.id} day={day} preview={preview} onSummaryChange={updateRoutineSummary} />}
+            {octoberActive === false && <ChildActivityList rows={activity.rows} loading={activity.loading} error={activity.error} reporting={activity.reporting} onReport={row=>void activity.report(row)} onRefresh={()=>void activity.refresh()}/>}
           </section>
         )}
 

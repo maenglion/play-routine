@@ -356,7 +356,7 @@ export default function Home() {
     }
   };
 
-  const downloadCsv = async (dataset: "children" | "invitations" | "auth-links" | "activity-records" | "activity-assignments" | "routine-records" | "routine-rewards") => {
+  const downloadCsv = async (dataset: "children" | "invitations" | "auth-links" | "activity-records" | "activity-assignments" | "routine-records" | "routine-rewards" | "october-records" | "october-rights") => {
     const parent = memberships.find(row => ["OWNER_PARENT", "PARENT"].includes(row.role));
     if (!session?.access_token || !parent) return;
     setBusy(true);

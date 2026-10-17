@@ -32,4 +32,18 @@ describe.runIf(live)("실제 10월 운영 DB 롤백 반례", () => {
     expect(stdout).toContain('"rollback": true');
     expect(stdout).toContain('"seedOrFactsCommitted": false');
   }, 190000);
+  it("학교 자산 결정의 불변 이력·보존·권한을 검사한다", async () => {
+    const { stdout } = await run(
+      "pnpm",
+      ["exec", "tsx", "scripts/verify-october-school-confirmation-live.ts"],
+      {
+        cwd: process.cwd(),
+        env: process.env,
+        timeout: 120000,
+        maxBuffer: 1024 * 1024,
+      }
+    );
+    expect(stdout).toContain('"rollback": true');
+    expect(stdout).toContain('"noAutomaticCloseOrRightsOrFulfillment": true');
+  }, 130000);
 });

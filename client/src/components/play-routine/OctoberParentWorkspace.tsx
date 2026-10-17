@@ -935,13 +935,19 @@ export default function OctoberParentWorkspace({
                           : `${rule.period} · 하루 ${rule.daily_limit}회`}
                       </td>
                       <td className="border-b border-black/5 px-3 py-3 text-[#315f4d]">
-                        {rule.effects.length
+                        {rule.code === "T-007" && board?.plan?.school_asset === "COUPAY_KRW"
+                          ? "학교 스티커 0~4개: 무보상 · 5~7개: 쿠페이 총 10,000원 · 8개 이상: 쿠페이 총 15,000원 (5→8 차액 5,000원)"
+                          : rule.effects.length
                           ? rule.effects.map(octoberEffectLabel).join(" · ")
                           : "학교 스티커"}
                       </td>
                       <td className="border-b border-black/5 px-3 py-3 text-[#8b5b15]">
-                        {rule.pending_fields.length
-                          ? rule.pending_fields.join(" · ")
+                        {(board?.plan?.school_asset === "COUPAY_KRW" && rule.code === "T-007"
+                          ? rule.pending_fields.filter(field => !field.includes("자산 최신 확인"))
+                          : rule.pending_fields).length
+                          ? (board?.plan?.school_asset === "COUPAY_KRW" && rule.code === "T-007"
+                              ? rule.pending_fields.filter(field => !field.includes("자산 최신 확인"))
+                              : rule.pending_fields).join(" · ")
                           : "—"}
                       </td>
                     </tr>
@@ -1010,6 +1016,14 @@ export default function OctoberParentWorkspace({
                   학교 보상 자산은 확인 대기입니다. 쿠페이 10,000/15,000원 또는
                   미디어 300/480분 중 확정 전에는, 기간 자료만 기록하고 보상권은
                   발행하지 않습니다.
+                </p>
+              )}
+              {board?.plan?.school_asset === "COUPAY_KRW" && (
+                <p className="mt-3 rounded-xl bg-[#e4f1eb] p-3 text-xs leading-5 text-[#315f4d]">
+                  <strong>확정 쿠페이 보상표:</strong> 기본·칭찬 스티커 합계
+                  0~4개는 무보상, 5~7개는 쿠페이 총 10,000원, 8개 이상은 총
+                  15,000원입니다. 5개에서 8개로 올라가면 총액 차액 5,000원만
+                  안내하며, 스티커 효과와 금융 권리는 서로 섞지 않습니다.
                 </p>
               )}
               <div className="mt-4 grid gap-3 sm:grid-cols-3">

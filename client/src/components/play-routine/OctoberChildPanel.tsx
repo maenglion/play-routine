@@ -432,6 +432,14 @@ export default function OctoberChildPanel({
             </div>
           </div>
           <div className="mt-5 space-y-5">
+            {board?.plan?.school_asset === "COUPAY_KRW" && (
+              <p className="rounded-xl bg-[#e4f1eb] p-3 text-xs leading-5 text-[#315f4d]">
+                학교 스티커 합계가 0~4개면 무보상, 5~7개면 쿠페이 총
+                10,000원, 8개 이상이면 총 15,000원이에요. 5개에서 8개로
+                올라가면 차액 5,000원만 안내해요. 스티커와 금융 보상은
+                별도로 표시해요.
+              </p>
+            )}
             {(["TASK", "QUEST"] as OctoberDomain[]).map(domain => (
               <ChildDomain
                 key={domain}

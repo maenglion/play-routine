@@ -49,10 +49,17 @@ export async function seedOctoberRuntime(
   if (existing.rowCount) {
     if (
       existing.rowCount !== 1 ||
-      existing.rows[0].source_snapshot.seed_sha256 !== seedHash ||
-      existing.rows[0].school_asset !== "PENDING"
+      existing.rows[0].source_snapshot.seed_sha256 !== seedHash
     )
       throw new Error("OCTOBER_SEED_EXISTING_PLAN_MISMATCH");
+    if (existing.rows[0].school_asset !== "PENDING") {
+      const decision = await client.query(
+        "select 1 from public.october_school_asset_decisions where plan_id=$1 and school_asset=$2 and decision_code='SCHOOL_COUPAY_CONFIRMATION_20261018'",
+        [existing.rows[0].id, existing.rows[0].school_asset]
+      );
+      if (decision.rowCount !== 1)
+        throw new Error("OCTOBER_SEED_SCHOOL_DECISION_MISSING");
+    }
     const count = await client.query(
       "select count(*)::int n from public.october_plan_adoptions where family_id=$1 and child_profile_id=$2 and plan_id=$3",
       [familyId, childId, existing.rows[0].id]
@@ -64,7 +71,7 @@ export async function seedOctoberRuntime(
       planId: existing.rows[0].id,
       ruleCount: 26,
       adoptionCount: 26,
-      schoolAsset: "PENDING",
+      schoolAsset: existing.rows[0].school_asset,
       seedHash,
     };
   }

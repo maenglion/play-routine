@@ -1,6 +1,6 @@
 import { writeFile } from "node:fs/promises";
 import { approvedOctoberRules } from "../server/october-seed-data";
-const rules = approvedOctoberRules("PENDING").map(rule => ({
+const rules = approvedOctoberRules("COUPAY_KRW").map(rule => ({
   ...rule,
   id: `preview-${rule.code}`,
 }));
@@ -15,7 +15,7 @@ export function makeOctoberPreviewBoard(day:string): OctoberBoard {
     if(s.eventDates)return s.eventDates.includes(day);
     return !s.supportDays || s.supportDays.includes(weekday);
   }).map(rule=>({id:"preview-row-"+rule.code,rule_id:rule.id,code:rule.code,date:day,slot:"daily",revision:0,state:"UNCONFIRMED" as const,self_reported:false,confirmed_at:null,reason:null,metrics:{},effects:[],recognized_count:0}));
-  return {plan:{id:"preview-october-plan",month:"2026-10-01",effective_from:"2026-10-18",status:"ACTIVE",school_asset:"PENDING"},rules:octoberPreviewRules,rows,rights:[],summary:{pending_minutes:0,penalty_minutes:0,unconfirmed:rows.filter(row=>!row.code.startsWith("L-")).length}};
+  return {plan:{id:"preview-october-plan",month:"2026-10-01",effective_from:"2026-10-18",status:"ACTIVE",school_asset:"COUPAY_KRW"},rules:octoberPreviewRules,rows,rights:[],summary:{pending_minutes:0,penalty_minutes:0,unconfirmed:rows.filter(row=>!row.code.startsWith("L-")).length}};
 }
 `;
 await writeFile("client/src/lib/october-preview-data.ts", output);
